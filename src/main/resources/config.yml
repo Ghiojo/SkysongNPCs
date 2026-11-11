@@ -1,0 +1,9 @@
+# SkysongNPCs settings.
+#
+# Keys missing from this file are added from the plugin's defaults on start and
+# on /snpc reload, so new options appear here after an update. A file with a
+# YAML mistake is not applied: the plugin keeps the values it read before and
+# says so in the console.
+#
+# Each feature adds its own section here as it is released (database, access
+# presets, choice rules, placing limits, follow distance).

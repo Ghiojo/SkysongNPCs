@@ -1,0 +1,56 @@
+package org.skysongdev.skysongnpcs.api;
+
+import org.bukkit.Bukkit;
+import org.bukkit.plugin.RegisteredServiceProvider;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+
+/**
+ * Entry point of the SkysongNPCs API, the supported way for other plugins (SkysongEconomy
+ * first of all) to work with managed Citizens NPCs. Classes outside the
+ * {@code org.skysongdev.skysongnpcs.api} package are internal and may change without notice.
+ *
+ * <p>SkysongNPCs registers this API with Bukkit's {@link org.bukkit.plugin.ServicesManager}
+ * at the end of its {@code onEnable} and removes it in {@code onDisable}. Plugins that use it
+ * add {@code depend: [SkysongNPCs]} (or {@code softdepend}) to their plugin.yml, so they
+ * enable after SkysongNPCs, and get it with {@link #get()}:
+ *
+ * <pre>{@code
+ * SkysongNpcsApi npcs = SkysongNpcsApi.get();
+ * }</pre>
+ *
+ * <p>Every method must be called on the server's main thread. Methods return
+ * {@link java.util.Optional} rather than {@code null} when something may be missing.
+ *
+ * <p>SkysongNPCs implements this interface; other plugins must not.
+ */
+@ApiStatus.NonExtendable
+public interface SkysongNpcsApi {
+
+    /**
+     * The API registered by SkysongNPCs.
+     *
+     * @return the API
+     * @throws IllegalStateException when SkysongNPCs is not installed or not enabled yet
+     */
+    static @NotNull SkysongNpcsApi get() {
+        RegisteredServiceProvider<SkysongNpcsApi> registration =
+                Bukkit.getServicesManager().getRegistration(SkysongNpcsApi.class);
+        if (registration == null) {
+            throw new IllegalStateException("The SkysongNPCs API is not available: SkysongNPCs is not enabled."
+                    + " Add 'depend: [SkysongNPCs]' to your plugin.yml and check that SkysongNPCs is installed"
+                    + " and started without errors.");
+        }
+        return registration.getProvider();
+    }
+
+    /**
+     * The version of the API that the installed SkysongNPCs implements, as
+     * {@code major.minor.patch}. A plugin can compare it with the version it was built
+     * against and log a clear message instead of failing with {@link NoSuchMethodError}.
+     * Adding methods raises the minor version; removing or changing one raises the major.
+     *
+     * @return the API version, for example {@code "0.1.0"}
+     */
+    @NotNull String apiVersion();
+}

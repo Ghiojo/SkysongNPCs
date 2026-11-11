@@ -1,0 +1,16 @@
+# Every text SkysongNPCs sends, in MiniMessage: https://docs.advntr.dev/minimessage/format.html
+# <prefix> in any text is replaced by the prefix below. Words in <angle_brackets> that
+# are not colours or styles are filled in by the plugin, as plain text.
+#
+# Texts missing from this file are added from the plugin's defaults on start and on
+# /snpc reload, so new texts appear here after an update.
+
+prefix: "<dark_aqua>[NPCs]</dark_aqua> "
+
+# /snpc on its own. <version>: the plugin version.
+info: "<prefix><gray>SkysongNPCs <white><version></white>."
+
+reload:
+  done: "<prefix><green>Reloaded config.yml and messages.yml."
+  # <files>: the files with mistakes, which keep their previous values.
+  failed: "<prefix><red>Not applied, because of a mistake in <files>. The previous values stay; the console says what is wrong."

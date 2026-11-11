@@ -1,4 +1,18 @@
 name: SkysongNPCs
-version: '1.0'
-main: org.skysongdev.skysongNPCs.SkysongNPCs
-api-version: '1.21'
+version: '${version}'
+main: org.skysongdev.skysongnpcs.SkysongNPCs
+api-version: '1.21.11'
+authors: [Ghiojo]
+description: Gives Citizens NPCs owners, interaction groups, stat sheets, abilities and items.
+
+# Citizens holds the NPCs, SkysongStats their stat sheets, and Skysong_Items the
+# items that place and pick them up, so all three must enable first.
+depend: [Citizens, SkysongStats, Skysong_Items]
+# Optional: SkysongWardrobe for NPC wardrobes, LuckPerms for lp: groups, and
+# WorldGuard for the npc-place region flag.
+softdepend: [SkysongWardrobe, LuckPerms, WorldGuard]
+
+permissions:
+  skysongnpcs.admin:
+    description: Staff. Do everything with every NPC, and reload the plugin's files.
+    default: op
