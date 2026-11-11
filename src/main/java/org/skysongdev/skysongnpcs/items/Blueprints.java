@@ -7,6 +7,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.OptionalInt;
 
 /** Reads and makes blueprint items through their {@link BlueprintTags}. */
 public final class Blueprints {
@@ -63,6 +64,22 @@ public final class Blueprints {
             return tags.string(item, tag).map(UUID::fromString);
         } catch (IllegalArgumentException notAUuid) {
             return Optional.empty();
+        }
+    }
+
+    // M14
+
+    /** The stat points the blueprint gives its NPC; empty for the template's, or when the tag is no whole number of 0 or more. */
+    public OptionalInt points(@Nullable ItemStack item) {
+        Optional<String> value = tags.string(item, BlueprintTags.POINTS);
+        if (value.isEmpty()) {
+            return OptionalInt.empty();
+        }
+        try {
+            int points = Integer.parseInt(value.get());
+            return points < 0 ? OptionalInt.empty() : OptionalInt.of(points);
+        } catch (NumberFormatException notANumber) {
+            return OptionalInt.empty();
         }
     }
 }

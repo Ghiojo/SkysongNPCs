@@ -1,0 +1,89 @@
+package org.skysongdev.skysongnpcs.api.choices;
+
+import org.bukkit.entity.Player;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.UUID;
+
+/**
+ * An NPC's pending choices and its first setup.
+ *
+ * <p>Stat points: 1 point = +1 base on an eligible stat, never above the stat's cap. They come
+ * in grants, each with a source, so a plugin can take back the unspent points it gave without
+ * touching anyone else's. Spent points stay spent until staff respec the NPC.
+ *
+ * <p>A new NPC from a template starts in {@link org.skysongdev.skysongnpcs.api.npc.NpcState#SETUP}:
+ * whoever has the {@code choose} action picks its ancestry, then spends its points, from the
+ * menu. When every step is done it becomes PLACED and
+ * {@link org.skysongdev.skysongnpcs.api.event.NpcSetupCompleteEvent} fires.
+ *
+ * <p>Main thread only. Nothing here checks permissions: a plugin acting for a player checks
+ * that player's access itself. SkysongNPCs implements this interface; other plugins must not.
+ *
+ * @since 0.14.0
+ */
+@ApiStatus.NonExtendable
+public interface NpcChoices {
+
+    /**
+     * Gives an NPC stat points.
+     *
+     * @param npc      the NPC's Citizens UUID
+     * @param source   who gives them, such as {@code economy:smithy}; at most 64 characters
+     * @param amount   how many, 1 or more
+     * @param eligible the stats they may go on, by SkysongStats stat id or alias; empty for
+     *                 the NPC's default eligible stats
+     * @return the grant
+     * @throws IllegalArgumentException when the NPC is not managed, the amount is below 1,
+     *                                  the source is blank or too long, or a stat does not exist
+     */
+    @NotNull PointGrant grantPoints(@NotNull UUID npc, @NotNull String source, int amount,
+                                    @NotNull Collection<String> eligible);
+
+    /**
+     * Takes back unspent points a source gave, newest grant first. Spent points stay.
+     *
+     * @param max how many at most
+     * @return how many were taken
+     */
+    int takeUnspentPoints(@NotNull UUID npc, @NotNull String source, int max);
+
+    /** The NPC's point grants, oldest first; empty for an unmanaged NPC. */
+    @NotNull List<PointGrant> pointGrants(@NotNull UUID npc);
+
+    /** Every unspent point the NPC has. */
+    int unspentPoints(@NotNull UUID npc);
+
+    /** The unspent points one source gave the NPC. */
+    int unspentPoints(@NotNull UUID npc, @NotNull String source);
+
+    /**
+     * Spends points on a stat, as if a player chose it, and fires
+     * {@link org.skysongdev.skysongnpcs.api.event.NpcChoiceResolvedEvent}.
+     *
+     * @param stat   a SkysongStats stat id or alias
+     * @param amount 1 or more
+     */
+    @NotNull SpendResult spendPoints(@NotNull UUID npc, @NotNull String stat, int amount);
+
+    /**
+     * Gives back every spent choice: the stats lose what points added, and the points (and
+     * other plugins' choices, such as proficiency picks) are unspent again.
+     *
+     * @return how many choices were given back
+     */
+    int respec(@NotNull UUID npc);
+
+    /** Whether the NPC is waiting for its first setup. */
+    boolean inSetup(@NotNull UUID npc);
+
+    /**
+     * Opens the NPC's setup for a player when it is in setup, otherwise its choice menu.
+     *
+     * @return false when the NPC is not managed
+     */
+    boolean open(@NotNull Player player, @NotNull UUID npc);
+}

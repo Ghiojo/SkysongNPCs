@@ -8,6 +8,7 @@ import org.skysongdev.skysongnpcs.api.access.Access;
 import org.skysongdev.skysongnpcs.api.inventory.NpcInventories;
 import org.skysongdev.skysongnpcs.api.groups.PlayerGroups;
 import org.skysongdev.skysongnpcs.api.appearance.NpcAppearance;
+import org.skysongdev.skysongnpcs.api.choices.NpcChoices;
 import org.skysongdev.skysongnpcs.api.menu.NpcMenu;
 import org.skysongdev.skysongnpcs.api.movement.NpcMovement;
 import org.skysongdev.skysongnpcs.api.items.NpcItems;
@@ -123,7 +124,7 @@ public interface SkysongNpcsApi {
      * NPC inventories and equipment: open them for a player by their access, or read them.
      *
      * @return the inventories part of the API
-     * @since 0.8.0
+     * @since 0.12.0
      */
     @NotNull NpcInventories inventories();
 
@@ -166,4 +167,15 @@ public interface SkysongNpcsApi {
      * @since 0.12.0
      */
     @NotNull NpcAppearance appearance();
+
+    // M14
+
+    /**
+     * Pending choices and the first setup: grant, take back and spend stat points, respec,
+     * and open the choice menu.
+     *
+     * @return the choices part of the API
+     * @since 0.14.0
+     */
+    @NotNull NpcChoices choices();
 }

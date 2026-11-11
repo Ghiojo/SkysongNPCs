@@ -17,6 +17,7 @@ import org.skysongdev.skysongnpcs.sheets.CarriedItems;
 import org.skysongdev.skysongnpcs.sheets.NpcSheetService;
 import org.skysongdev.skysongnpcs.sheets.StatSheets;
 import org.skysongdev.skysongnpcs.storage.DatabaseSettings;
+import org.skysongdev.skysongnpcs.storage.InMemoryChoiceStore;
 import org.skysongdev.skysongnpcs.storage.InMemoryGrantStore;
 import org.skysongdev.skysongnpcs.storage.InMemoryGroupStore;
 import org.skysongdev.skysongnpcs.storage.InMemoryNpcItemStore;
@@ -81,7 +82,7 @@ public class OfflineSkysongNPCs extends SkysongNPCs {
     protected Stores openStores(DatabaseSettings settings) {
         return new Stores(new InMemoryNpcStore(), new InMemoryGrantStore(), new InMemoryPolicyStore(),
                 new InMemoryGroupStore(),
-                new InMemoryNpcItemStore());
+                new InMemoryNpcItemStore(), new InMemoryChoiceStore());
     }
 
     @Override
@@ -225,5 +226,16 @@ public class OfflineSkysongNPCs extends SkysongNPCs {
 
     public FakeAppearanceDriver fakeAppearance() {
         return fakeAppearance;
+    }
+
+    // M14: stat bases come from the fake sheets.
+
+    public FakeItemTags fakeItemTags() {
+        return fakeItemTags;
+    }
+
+    @Override
+    protected org.skysongdev.skysongnpcs.choices.StatBases hookStatBases() {
+        return fakeSheets::base;
     }
 }

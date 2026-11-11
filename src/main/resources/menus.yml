@@ -47,6 +47,10 @@ npc-menu:
     "skysongnpcs:pickup":
       slot: 22
       material: BUNDLE
+    # M14: Assign points (setup while the NPC waits for it).
+    "skysongnpcs:choices":
+      slot: 10
+      material: EXPERIENCE_BOTTLE
 
 # --- M8: appearance ---
 # The one-row menu the Appearance button opens. Its buttons are back, name, skin, nameplate, pose, sitting

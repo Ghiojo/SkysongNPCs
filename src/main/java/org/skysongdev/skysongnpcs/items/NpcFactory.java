@@ -1,6 +1,7 @@
 package org.skysongdev.skysongnpcs.items;
 
 import org.bukkit.Location;
+import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
 import org.skysongdev.skysongnpcs.api.npc.NpcOwner;
 import org.skysongdev.skysongnpcs.npc.NpcRecord;
@@ -8,6 +9,8 @@ import org.skysongdev.skysongnpcs.npc.NpcRegistry;
 import org.skysongdev.skysongnpcs.templates.NpcTemplate;
 import org.skysongdev.skysongnpcs.templates.TemplateRegistry;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
@@ -44,6 +47,17 @@ public final class NpcFactory {
      * @throws RuntimeException when the record or the sheet could not be made; the NPC is gone again
      */
     public Optional<NpcRecord> create(NpcTemplate template, @Nullable String name, NpcOwner owner, Location location) {
+        return create(template, name, owner, location, null);
+    }
+
+    /**
+     * M14: makes the NPC from a blueprint item, which the {@link Created} hooks may read
+     * (such as its npc_points tag).
+     *
+     * @param blueprint the item that placed it, or null
+     */
+    public Optional<NpcRecord> create(NpcTemplate template, @Nullable String name, NpcOwner owner, Location location,
+                                      @Nullable ItemStack blueprint) {
         String shownName = name == null || name.isBlank() ? template.name() : name;
         Optional<UUID> spawned = spawner.spawn(template.entityType(), shownName, template.skin(), location);
         if (spawned.isEmpty()) {
@@ -54,6 +68,9 @@ public final class NpcFactory {
             NpcRecord record = registry.create(npc, owner, template.id());
             if (template.sheet()) {
                 sheets.create(npc, template);
+            }
+            for (Created hook : created) {
+                hook.created(record, template, blueprint);
             }
             return Optional.of(record);
         } catch (RuntimeException failed) {
@@ -68,5 +85,21 @@ public final class NpcFactory {
     @FunctionalInterface
     public interface SheetMaker {
         void create(UUID npc, NpcTemplate template);
+    }
+
+    // M14: other parts set up a new NPC after it is made.
+
+    private final List<Created> created = new ArrayList<>();
+
+    /** Adds a hook every new NPC goes through, after its record and sheet exist. */
+    public void addCreatedHook(Created hook) {
+        created.add(hook);
+    }
+
+    /** Sets up a new NPC; a hook that throws undoes the NPC like any other failed step. */
+    @FunctionalInterface
+    public interface Created {
+        /** @param blueprint the item that placed it; null when the API made it */
+        void created(NpcRecord npc, NpcTemplate template, @Nullable ItemStack blueprint);
     }
 }

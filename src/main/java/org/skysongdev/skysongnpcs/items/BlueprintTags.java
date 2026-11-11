@@ -24,7 +24,11 @@ public final class BlueprintTags implements Listener {
     /** The ticket an NPC item carries; only the NPC's current ticket places it. */
     public static final String TICKET = "npc_ticket";
 
-    static final List<String> ALL = List.of(BLUEPRINT, NAME, NPC_ID, TICKET);
+    // M14
+    /** Optional: the stat points the placed NPC starts with, instead of the template's. A whole number, 0 or more. */
+    public static final String POINTS = "npc_points";
+
+    static final List<String> ALL = List.of(BLUEPRINT, NAME, NPC_ID, TICKET, POINTS);
 
     private final Plugin plugin;
 

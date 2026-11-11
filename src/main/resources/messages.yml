@@ -483,3 +483,98 @@ reissue:
   placed: "<prefix><red><npc> is out in the world, not picked up. Use /snpc pickup instead."
   not-online: "<prefix><red><player> is not online."
   who: "<prefix><red>Name the player who gets the item: /snpc reissue <white>player</white>."
+
+# --- M14: choices and first setup ---
+# <npc>: the NPC's name. <points>: stat points. <stat>: a stat's id.
+choices:
+  # The Assign points button in the NPC menu. <pending>: choices left to make.
+  button:
+    name: "<gold>Assign points"
+    lore:
+      - "<gray>Choices to make: <white><pending>"
+  # The same button while the NPC waits for its first setup.
+  setup-button:
+    name: "<gold>Set up"
+    lore:
+      - "<gray>This NPC is waiting for its first setup."
+  not-allowed: "<prefix><red>You may not make <npc>'s choices."
+  # Sent when the last setup step is confirmed.
+  setup-complete: "<prefix><green><npc> is set up and ready."
+  # /snpc respec (staff). <choices>: how many were given back.
+  respec: "<prefix><green>Gave back <choices> choice(s) of <npc>."
+  back:
+    name: "<gray>Back"
+    lore: []
+  # The choice menu, after setup.
+  menu:
+    title: "<dark_gray><npc>: choices"
+    close:
+      name: "<gray>Close"
+      lore: []
+  points:
+    # The stat points page in the choice menu.
+    icon:
+      name: "<gold>Stat points"
+      lore:
+        - "<gray>Unspent: <white><points>"
+        - "<gray>1 point = +1 to a stat."
+    title: "<dark_gray><npc>: stat points"
+    # One per stat. <base>: its base now, <cap>: the highest points may take it, <adding>: points put on it so far.
+    stat:
+      name: "<white><stat>"
+      lore:
+        - "<gray>Base: <white><base></white> (max <cap>)"
+        - "<gray>Adding: <green>+<adding>"
+        - "<dark_gray>Left-click +1, right-click -1"
+    no-cap: "none"
+    left:
+      name: "<gold><points> point(s) left"
+      lore: []
+    confirm:
+      name: "<green>Confirm"
+      lore:
+        - "<gray>Saves the points you put on."
+        - "<gray>Points left over stay for later: <white><points>"
+    spent: "<prefix><green><npc>: +<points> <stat>."
+    # <reason>: why, such as "above cap".
+    refused: "<prefix><red>Could not put <points> point(s) on <stat>: <reason>."
+    # /snpc points (staff).
+    granted: "<prefix><green>Gave <npc> <points> stat point(s)."
+    taken: "<prefix><green>Took <points> unspent staff point(s) from <npc>."
+    # <stats>: what was typed.
+    unknown-stat: "<prefix><red>Not every stat in <stats> is a SkysongStats stat."
+    list:
+      empty: "<prefix><gray><npc> has no stat points."
+      header: "<prefix><gray><npc>'s stat points (<points> unspent):"
+      # <source>: who gave them, <amount>, <spent>, <stats>: where they may go.
+      entry: "<gray> - <white><source></white>: <spent>/<amount> spent, on <stats>"
+  # The ancestry step of the setup.
+  ancestry:
+    title: "<dark_gray><npc>: ancestry"
+    other:
+      name: "<white>Other"
+      lore:
+        - "<gray>No ancestry: for animals and creatures."
+    other-name: "Other"
+    # <ancestry>: the one picked.
+    confirm:
+      name: "<green>Confirm <ancestry>"
+      lore: []
+    # A stat a choice may raise. <amount>: by how much, with its sign.
+    stat-option:
+      name: "<white><stat> <amount>"
+      lore: []
+    package-line: "<gray><stat> <amount>"
+    # <choice>: the choice's name, <picks>: how many to pick, <picked>: how many are picked.
+    choice:
+      name: "<gold><choice>"
+      lore:
+        - "<gray>Pick <white><picks></white> (<picked> picked)"
+    next:
+      name: "<green>Next"
+      lore: []
+    # <problems>: what SkysongStats says is wrong.
+    problems: "<prefix><red>Those picks don't fit: <problems>"
+    failed: "<prefix><red>SkysongStats did not take <ancestry>. Try again or tell staff."
+    saved: "<prefix><green><npc> is now <ancestry>."
+
