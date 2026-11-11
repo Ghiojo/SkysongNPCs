@@ -193,7 +193,7 @@ public final class AccessCommand implements SubCommand {
      * {@code perm:NODE}, or {@code TYPE:ID} for a type another plugin registered. Player names
      * become UUIDs.
      */
-    private Optional<AccessGroup> group(CommandSender sender, String text) {
+    Optional<AccessGroup> group(CommandSender sender, String text) {
         AccessGroup typed;
         try {
             typed = AccessGroup.parse(text);
@@ -244,7 +244,7 @@ public final class AccessCommand implements SubCommand {
     }
 
     /** A group as players read it: player names instead of UUIDs. */
-    private String groupName(AccessGroup group) {
+    String groupName(AccessGroup group) {
         if (!group.type().equals(AccessGroup.PLAYER)) {
             return group.toString();
         }
@@ -286,7 +286,7 @@ public final class AccessCommand implements SubCommand {
     }
 
     /** Groups while the first word is typed, then action ids and presets for the word being typed. */
-    private SuggestionProvider<CommandSourceStack> suggestions() {
+    SuggestionProvider<CommandSourceStack> suggestions() {
         return (context, builder) -> {
             String typed = builder.getRemaining();
             if (!typed.startsWith("\"") && !typed.contains(" ")) {

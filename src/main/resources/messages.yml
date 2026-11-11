@@ -143,3 +143,35 @@ place:
   character-limit: "<prefix><red>This character already has <limit> NPC(s) out. Pick one up first."
   chunk-limit: "<prefix><red>This area already holds <limit> NPC(s)."
   failed: "<prefix><red>Something went wrong making the NPC, so it was not placed and you keep the item. The console says what."
+
+# --- M5: access policies (/snpc policy) ---
+# A policy is a named set of grants many NPCs follow at once. <policy>: its name.
+# <owner>: who it belongs to. <members>: how many NPCs follow it. <npc>, <group> and
+# <actions> as in access, above.
+policy:
+  # How a plugin's policy's owner is written. <plugin>: the plugin's name.
+  owner-plugin: "plugin <plugin>"
+  show: "<prefix><gray><npc> follows policy <white><policy></white> of <owner>."
+  show-none: "<prefix><gray><npc> follows no policy."
+  list-header: "<prefix><gray>Policies:"
+  list-entry: "<gray> - <white><policy></white> <dark_gray>(<owner>)</dark_gray>: <members> NPC(s)"
+  list-empty: "<prefix><gray>No policies yet. Make one with /snpc policy create <white>name</white>."
+  info-header: "<prefix><gray>Policy <white><policy></white> of <owner>, followed by <members> NPC(s), lets in:"
+  info-entry: "<gray> - <white><group></white>: <actions>"
+  info-empty: "<prefix><gray>Policy <white><policy></white> of <owner> lets nobody in yet. <members> NPC(s) follow it."
+  created: "<prefix><green>Made policy <policy>. Add grants with /snpc policy grant <policy> and put NPCs in it with /snpc policy assign <policy>."
+  deleted: "<prefix><green>Deleted policy <policy>. Its <members> NPC(s) now follow no policy."
+  taken: "<prefix><red>There is already a policy called <policy>."
+  bad-id: "<prefix><red><policy> can't be a policy name: use lower-case letters, digits, - _ and . only."
+  # <limit>: the limit in config.yml.
+  limit: "<prefix><red>This character already has <limit> policies."
+  unknown: "<prefix><red>There is no policy called <policy>."
+  not-yours: "<prefix><red>Policy <policy> is not yours."
+  no-character: "<prefix><red>Play a character first: policies belong to characters."
+  granted: "<prefix><green><group> now has <actions> on every NPC following <policy>."
+  revoked: "<prefix><green><group> now has only <actions> on NPCs following <policy>."
+  revoked-all: "<prefix><green><group> no longer has any access through <policy>."
+  not-granted: "<prefix><yellow>Policy <policy> gives <group> nothing."
+  assigned: "<prefix><green><npc> now follows policy <policy>."
+  already: "<prefix><yellow><npc> already follows policy <policy>."
+  unassigned: "<prefix><green><npc> no longer follows policy <policy>."

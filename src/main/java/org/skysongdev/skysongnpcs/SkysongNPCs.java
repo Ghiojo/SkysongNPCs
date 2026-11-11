@@ -62,6 +62,13 @@ import org.skysongdev.skysongnpcs.sheets.StatsReloadListener;
 import org.skysongdev.skysongnpcs.templates.TemplateRegistry;
 import org.skysongdev.skysongnpcs.worldguard.WorldGuardPlaceRegions;
 
+// M5: access policies
+import org.skysongdev.skysongnpcs.commands.PolicyCommand;
+import org.skysongdev.skysongnpcs.policy.EventFiringPolicyChanges;
+import org.skysongdev.skysongnpcs.policy.PolicyListener;
+import org.skysongdev.skysongnpcs.policy.PolicyRegistry;
+import org.skysongdev.skysongnpcs.storage.PolicyStore;
+
 import java.io.File;
 import java.util.List;
 import java.util.logging.Level;
@@ -89,6 +96,9 @@ public class SkysongNPCs extends JavaPlugin {
     private boolean worldGuard;
     private Blueprints blueprints;
     private NpcFactory factory;
+    // M5: access policies
+    private PolicyStore policyStore;
+    private PolicyRegistry policies;
 
     /** M17: WorldGuard is optional; its flags must be registered before it enables, so here. */
     @Override
@@ -108,6 +118,7 @@ public class SkysongNPCs extends JavaPlugin {
             Stores stores = openStores(configuration.database());
             store = stores.npcs();
             grantStore = stores.grants();
+            policyStore = stores.policies();
         } catch (RuntimeException failed) {
             getLogger().log(Level.SEVERE, "Could not reach the database in config.yml (" + configuration.database()
                     + "). SkysongNPCs is disabled.", failed);
@@ -126,6 +137,12 @@ public class SkysongNPCs extends JavaPlugin {
         grants.load();
         access = new AccessService(grants, characters, new ActionPresets(() -> configuration.config()), getLogger());
         getServer().getPluginManager().registerEvents(new AccessListener(access), this);
+
+        // M5: access policies. NPCs also allow what the policy they follow grants.
+        policies = new PolicyRegistry(policyStore, new EventFiringPolicyChanges(getServer().getPluginManager()));
+        policies.load();
+        access.usePolicies(policies);
+        getServer().getPluginManager().registerEvents(new PolicyListener(policies), this);
 
         // M11: stat sheets and templates
         StatSheets statSheets = hookSheets();
@@ -147,18 +164,21 @@ public class SkysongNPCs extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new MenuListener(menu), this);
         hookMenuClicks(menu);
 
+        AccessCommand accessCommand = new AccessCommand(targeting, access, configuration);
         List<SubCommand> subCommands = List.of(
                 new ReloadCommand(configuration, List.of(templates)),
                 new AdoptCommand(targeting),
                 new ReleaseCommand(targeting),
                 new OwnerCommand(targeting),
-                new AccessCommand(targeting, access, configuration),
+                accessCommand,
                 new MenuCommand(targeting, menu),
                 // M11: stat sheets and templates
                 new SheetCommand(targeting, access, sheets, templates, configuration),
                 new StatsCommand(targeting, sheets),
                 new ModifierCommand(targeting, sheets),
-                new ProficiencyCommand(targeting, sheets));
+                new ProficiencyCommand(targeting, sheets),
+                // M5: access policies
+                new PolicyCommand(targeting, access, accessCommand, policies, configuration));
         NpcCommands commands = new NpcCommands(subCommands, configuration, getPluginMeta().getVersion());
         getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS,
                 event -> commands.register(event.registrar()));
@@ -174,13 +194,17 @@ public class SkysongNPCs extends JavaPlugin {
 
         // Last, so other plugins only see the API once everything behind it is ready.
         getServer().getServicesManager().register(SkysongNpcsApi.class, new SkysongNpcsApiImpl(registry, citizens, access, menu,
-                        sheets, templates, factory, blueprints),
+                        sheets, templates, factory, blueprints, policies),
                 this, ServicePriority.Normal);
     }
 
     @Override
     public void onDisable() {
         getServer().getServicesManager().unregisterAll(this);
+        if (policyStore != null) {
+            policyStore.close();
+            policyStore = null;
+        }
         if (grantStore != null) {
             grantStore.close();
             grantStore = null;
@@ -291,5 +315,12 @@ public class SkysongNPCs extends JavaPlugin {
     /** For tests that place NPCs against the running plugin. */
     public NpcFactory factory() {
         return factory;
+    }
+
+    // M5: access policies
+
+    /** The access policies; null while the plugin is disabled. */
+    public PolicyRegistry policies() {
+        return policies;
     }
 }
