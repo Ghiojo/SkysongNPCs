@@ -22,7 +22,7 @@ repositories {
         filter {
             includeModule 'com.github.Ghiojo', 'Skysong-Special-Items'
             includeModule 'com.github.Ghiojo', 'SkysongWardrobe'
-            includeModule 'com.github.Ghiojo.SkysongStats', 'api'
+            includeModule 'com.github.Ghiojo', 'SkysongStats'
         }
     }
     // The Citizens repository only serves Citizens.
@@ -46,7 +46,7 @@ repositories {
 
 // The other Skysong plugins' APIs, at their release tags. Each ships inside its own plugin
 // jar on the server, so they are compileOnly and never shaded.
-def skysongStatsApi = 'com.github.Ghiojo.SkysongStats:api:1.4.0'
+def skysongStatsApi = 'com.github.Ghiojo:SkysongStats:1.4.0'
 def skysongItemsApi = 'com.github.Ghiojo:Skysong-Special-Items:1.0.1'
 def skysongWardrobeApi = 'com.github.Ghiojo:SkysongWardrobe:1.0.0'
 // 2.0.43 is the last Citizens built for 1.21.11. citizens-main carries the API too, and its

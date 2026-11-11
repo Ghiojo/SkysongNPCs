@@ -90,7 +90,7 @@ class OwnershipCommandsTest {
 
     @Test
     void adoptNeedsATarget() throws CommandSyntaxException {
-        plugin.fakeCitizens().target(null);
+        plugin.fakeCitizens().target((UUID) null);
 
         commands.run(staff, "snpc adopt");
 
