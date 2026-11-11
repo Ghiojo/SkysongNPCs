@@ -3,6 +3,9 @@ package org.skysongdev.skysongnpcs.apiimpl;
 import org.skysongdev.skysongnpcs.api.sheet.NpcEffects;
 import org.skysongdev.skysongnpcs.sheets.SheetEffects;
 import org.jetbrains.annotations.NotNull;
+import org.skysongdev.skysongnpcs.abilities.AbilitiesMenu;
+import org.skysongdev.skysongnpcs.abilities.AbilityService;
+import org.skysongdev.skysongnpcs.api.ability.NpcAbilities;
 import org.skysongdev.skysongnpcs.access.AccessService;
 import org.skysongdev.skysongnpcs.api.SkysongNpcsApi;
 import org.skysongdev.skysongnpcs.api.access.Access;
@@ -34,7 +37,7 @@ import org.skysongdev.skysongnpcs.picks.ProficiencyPicks;
 /** The plugin's implementation of {@link SkysongNpcsApi}; each milestone adds its part here. */
 public final class SkysongNpcsApiImpl implements SkysongNpcsApi {
     /** Raised with every change to the api module, as {@link SkysongNpcsApi#apiVersion()} describes. */
-    public static final String API_VERSION = "0.15.0";
+    public static final String API_VERSION = "0.16.0";
 
     private final Npcs npcs;
     private final Access access;
@@ -55,6 +58,9 @@ public final class SkysongNpcsApiImpl implements SkysongNpcsApi {
     private final NpcAppearance appearance;
     private final NpcChoices choices;
 
+    // M16
+    private final NpcAbilities abilities;
+
     public SkysongNpcsApiImpl(NpcRegistry registry, NpcLookup citizens, AccessService access, NpcMenu menu,
                               NpcSheetService sheets, TemplateRegistry templates,
                               NpcFactory factory, Blueprints blueprints,
@@ -63,7 +69,8 @@ public final class SkysongNpcsApiImpl implements SkysongNpcsApi {
                               PlayerGroupRegistry groups, SheetEffects effects,
                               AppearanceService appearance,
                               NpcPickup pickup, StatPoints points, ChoiceMenu choiceMenu,
-                              ProficiencyPicks picks) {
+                              ProficiencyPicks picks,
+                              AbilityService abilities, AbilitiesMenu abilitiesMenu) {
         this.npcs = new NpcsImpl(registry, citizens, factory);
         this.access = new AccessImpl(registry, access);
         this.menu = menu;
@@ -76,6 +83,7 @@ public final class SkysongNpcsApiImpl implements SkysongNpcsApi {
         this.effects = new NpcEffectsImpl(registry, sheets, effects);
         this.appearance = new NpcAppearanceImpl(appearance);
         this.choices = new NpcChoicesImpl(registry, points, choiceMenu, picks);
+        this.abilities = new NpcAbilitiesImpl(abilities, abilitiesMenu);
     }
 
     @Override
@@ -157,5 +165,12 @@ public final class SkysongNpcsApiImpl implements SkysongNpcsApi {
     @Override
     public @NotNull NpcChoices choices() {
         return choices;
+    }
+
+    // M16
+
+    @Override
+    public @NotNull NpcAbilities abilities() {
+        return abilities;
     }
 }

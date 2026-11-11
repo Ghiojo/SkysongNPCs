@@ -121,6 +121,18 @@ public final class SkysongStatsSheets implements StatSheets {
         return ProficiencyResult.DONE;
     }
 
+    // M16: abilities
+
+    @Override
+    public Optional<String> proficiencyTier(UUID npc, String proficiency) {
+        if (!exists(npc)) {
+            return Optional.empty();
+        }
+        return stats().proficiencies().find(proficiency)
+                .flatMap(found -> stats().proficiencies().tier(character(npc), found))
+                .map(Tier::id);
+    }
+
     private static ModifierLine line(Modifier modifier) {
         return new ModifierLine(modifier.id(), modifier.target(), modifier.amount());
     }

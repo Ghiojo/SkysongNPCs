@@ -3,6 +3,8 @@ package org.skysongdev.skysongnpcs.items;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
@@ -81,5 +83,19 @@ public final class Blueprints {
         } catch (NumberFormatException notANumber) {
             return OptionalInt.empty();
         }
+    }
+
+    // M16
+
+    /**
+     * The abilities the blueprint gives its NPC: the {@code npc_abilities} tag as a comma list
+     * of ability ids, lowercased. Empty when the item has no such tag, for the template's.
+     */
+    public Optional<List<String>> abilities(@Nullable ItemStack item) {
+        return tags.string(item, BlueprintTags.ABILITIES).map(value -> Arrays.stream(value.split(","))
+                .map(id -> id.trim().toLowerCase(Locale.ROOT))
+                .filter(id -> !id.isEmpty())
+                .distinct()
+                .toList());
     }
 }

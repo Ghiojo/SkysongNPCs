@@ -4,6 +4,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.skysongdev.skysongnpcs.api.ability.NpcAbilities;
 import org.skysongdev.skysongnpcs.api.access.Access;
 import org.skysongdev.skysongnpcs.api.inventory.NpcInventories;
 import org.skysongdev.skysongnpcs.api.groups.PlayerGroups;
@@ -178,4 +179,14 @@ public interface SkysongNpcsApi {
      * @since 0.14.0
      */
     @NotNull NpcChoices choices();
+
+    // M16: abilities
+
+    /**
+     * Abilities: list the ones abilities.yml defines, and grant, revoke and list an NPC's.
+     *
+     * @return the abilities part of the API
+     * @since 0.16.0
+     */
+    @NotNull NpcAbilities abilities();
 }

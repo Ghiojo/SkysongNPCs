@@ -52,6 +52,11 @@ npc-menu:
       slot: 10
       material: EXPERIENCE_BOTTLE
 
+    # M16: opens the abilities menu.
+    "skysongnpcs:abilities":
+      slot: 21
+      material: ENCHANTED_BOOK
+
 # --- M8: appearance ---
 # The one-row menu the Appearance button opens. Its buttons are back, name, skin, nameplate, pose, sitting
 # and glow; each may set slot (0 to 8) and material. Texts are in messages.yml

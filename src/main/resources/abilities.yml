@@ -1,0 +1,30 @@
+# NPC abilities. Each section is one ability, keyed by its id: 1 to 32 lowercase
+# letters, digits or _. Staff grant them with /snpc abilities grant <id>, templates
+# list them under abilities:, blueprint items with the npc_abilities tag, and other
+# plugins through the API.
+#
+#   name:         its one-word name, MiniMessage (default: the id, capitalised)
+#   description:  what hovering it on the stat sheet shows, and the lore in the
+#                 abilities menu; a text, or a list for several lines
+#   icon:         the item the abilities menu draws it with (default BOOK)
+#   modifiers:    stat: amount, saved SkysongStats modifiers it adds; max_<bar> for a
+#                 bar's max
+#   points:       extra stat points to assign: amount, and eligible (stats they may
+#                 go to; leave out for the NPC's usual ones)
+#   picks:        proficiency picks: a list of skill, tier and count
+#   proficiencies: proficiency: tier, raised to at least that tier while the NPC has it
+#
+# Editing this file and running /snpc reload changes every NPC with the ability:
+# modifiers are added again, extra points and picks are given, and points or picks
+# it no longer gives are taken back while unspent (spent ones stay). An ability
+# removed from the file is taken away from every NPC, with its effects. A file
+# with a mistake is not applied, and the abilities read before stay.
+
+brawler:
+  name: "<red>Brawler"
+  description:
+    - "<gray>Fights with fists and grit."
+    - "<gray>+1 strength."
+  icon: IRON_SWORD
+  modifiers:
+    strength: 1

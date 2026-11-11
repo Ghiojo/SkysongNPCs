@@ -49,3 +49,7 @@ allow-other: true
 #       tier: proficient
 #       count: 2
 proficiency-picks: []
+
+# M16: abilities from abilities.yml the NPC starts with. A blueprint's npc_abilities
+# tag (a comma list) replaces this list.
+abilities: []

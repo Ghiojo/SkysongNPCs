@@ -40,6 +40,7 @@ import org.skysongdev.skysongnpcs.commands.ReleaseCommand;
 import org.skysongdev.skysongnpcs.commands.ReloadCommand;
 import org.skysongdev.skysongnpcs.commands.SubCommand;
 import org.skysongdev.skysongnpcs.config.PluginConfiguration;
+import org.skysongdev.skysongnpcs.config.Reloadable;
 import org.skysongdev.skysongnpcs.menu.InfoButton;
 import org.skysongdev.skysongnpcs.menu.MenuListener;
 import org.skysongdev.skysongnpcs.menu.NpcMenuService;
@@ -157,6 +158,20 @@ import org.skysongdev.skysongnpcs.picks.StartingPicks;
 import org.skysongdev.skysongnpcs.picks.TemplatePicks;
 import org.skysongdev.skysongnpcs.storage.PickStore;
 
+// M16: abilities
+import org.skysongdev.skysongnpcs.abilities.AbilitiesButton;
+import org.skysongdev.skysongnpcs.abilities.AbilitiesMenu;
+import org.skysongdev.skysongnpcs.abilities.AbilityChoices;
+import org.skysongdev.skysongnpcs.abilities.AbilityListener;
+import org.skysongdev.skysongnpcs.abilities.AbilityRegistry;
+import org.skysongdev.skysongnpcs.abilities.AbilityService;
+import org.skysongdev.skysongnpcs.abilities.AbilityText;
+import org.skysongdev.skysongnpcs.abilities.PluginAbilityChoices;
+import org.skysongdev.skysongnpcs.abilities.StartingAbilities;
+import org.skysongdev.skysongnpcs.abilities.TemplateAbilities;
+import org.skysongdev.skysongnpcs.commands.AbilitiesCommand;
+import org.skysongdev.skysongnpcs.storage.AbilityStore;
+
 import java.io.File;
 import java.util.List;
 import java.util.Optional;
@@ -231,6 +246,11 @@ public class SkysongNPCs extends JavaPlugin {
         }
     }
 
+    // M16: abilities
+    private AbilityStore abilityStore;
+    private AbilityService abilities;
+    private AbilitiesMenu abilitiesMenu;
+
     @Override
     public void onEnable() {
         configuration = new PluginConfiguration(this);
@@ -245,6 +265,9 @@ public class SkysongNPCs extends JavaPlugin {
             itemStore = stores.items();
             choiceStore = stores.choices();
             pickStore = stores.picks();
+
+            // M16: abilities
+            abilityStore = stores.abilities();
         } catch (RuntimeException failed) {
             getLogger().log(Level.SEVERE, "Could not reach the database in config.yml (" + configuration.database()
                     + "). SkysongNPCs is disabled.", failed);
@@ -322,16 +345,40 @@ public class SkysongNPCs extends JavaPlugin {
         wardrobeGateway.guard(this, wardrobes);
         new WardrobeButton(wardrobes, access, citizens, configuration).register(this, menu);
         getServer().getPluginManager().registerEvents(new WardrobeViewListener(wardrobes), this);
+        // M16: abilities, from abilities.yml; reloads bring every NPC in line with the file.
+        AbilityRegistry abilityFile = new AbilityRegistry(new File(getDataFolder(), "abilities.yml"),
+                () -> saveResource("abilities.yml", false), statSheets, proficiencies::skillId, getLogger());
+        abilityFile.reload();
+        abilities = new AbilityService(registry, abilityFile, abilityStore, statSheets, hookAbilityChoices(),
+                event -> getServer().getPluginManager().callEvent(event));
+        abilities.load();
+        // Brought in line with abilities.yml further down, once stat points and picks exist.
+        TemplateAbilities templateAbilities = new TemplateAbilities(new File(getDataFolder(), "templates"), getLogger());
+        templateAbilities.reload();
+        AbilityText abilityText = new AbilityText(configuration);
+        abilitiesMenu = new AbilitiesMenu(registry, citizens, abilities, abilityText, configuration);
+        getServer().getPluginManager().registerEvents(abilitiesMenu, this);
+        getServer().getPluginManager().registerEvents(new AbilityListener(abilities), this);
+        new AbilitiesButton(abilities, abilitiesMenu, configuration).register(this, menu, access);
+        Reloadable abilityReload = () -> {
+            if (!abilityFile.reload()) {
+                return List.of("abilities.yml");
+            }
+            abilities.syncAll();
+            return List.of();
+        };
 
         List<SubCommand> subCommands = List.of(
-                new ReloadCommand(configuration, List.of(templates, choiceSettings, templateChoices, templatePicks)),
+                new ReloadCommand(configuration, List.of(templates, choiceSettings, templateChoices, templatePicks,
+                        templateAbilities, abilityReload)),
                 new AdoptCommand(targeting),
                 new ReleaseCommand(targeting),
                 new OwnerCommand(targeting),
                 accessCommand,
                 new MenuCommand(targeting, menu),
                 // M11: stat sheets and templates
-                new SheetCommand(targeting, access, sheets, templates, configuration),
+                new SheetCommand(targeting, access, sheets, templates, configuration,
+                        npc -> abilityText.sheetLine(abilities.of(npc))),
                 new StatsCommand(targeting, sheets),
                 new ModifierCommand(targeting, sheets),
                 new ProficiencyCommand(targeting, sheets),
@@ -417,6 +464,10 @@ public class SkysongNPCs extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new PicksListener(picks), this);
         subCommands = Stream.concat(subCommands.stream(), Stream.of(
                 new PicksCommand(targeting, access, picks))).toList();
+
+        // M16: abilities (/snpc abilities)
+        subCommands = Stream.concat(subCommands.stream(),
+                Stream.of(new AbilitiesCommand(targeting, access, abilities, abilitiesMenu, abilityText))).toList();
         NpcCommands commands = new NpcCommands(subCommands, configuration, getPluginMeta().getVersion());
         getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS,
                 event -> commands.register(event.registrar()));
@@ -433,6 +484,9 @@ public class SkysongNPCs extends JavaPlugin {
         factory.addCreatedHook(new StartingPoints(statPoints, templateChoices, blueprints));
         // M15: and its template's proficiency picks.
         factory.addCreatedHook(new StartingPicks(picks, templatePicks));
+        // M16: abilities, now that the stat points and picks they give exist; and a new NPC's starting abilities.
+        abilities.syncAll();
+        factory.addCreatedHook(new StartingAbilities(abilities, templateAbilities, blueprints, getLogger()));
 
         // M18: picking NPCs up into items, and placing them again only from the current item.
         NpcTickets tickets = new NpcTickets(itemStore, getLogger());
@@ -447,7 +501,7 @@ public class SkysongNPCs extends JavaPlugin {
         getServer().getServicesManager().register(SkysongNpcsApi.class, new SkysongNpcsApiImpl(registry, citizens, access, menu,
                         sheets, templates, factory, blueprints, policies,
                         containers, movement, groups, effects, appearance,
-                        pickup, statPoints, choiceMenu, picks),
+                        pickup, statPoints, choiceMenu, picks, abilities, abilitiesMenu),
                 this, ServicePriority.Normal);
     }
 
@@ -473,6 +527,11 @@ public class SkysongNPCs extends JavaPlugin {
         if (choiceStore != null) {
             choiceStore.close();
             choiceStore = null;
+        }
+        // M16: abilities
+        if (abilityStore != null) {
+            abilityStore.close();
+            abilityStore = null;
         }
         if (grantStore != null) {
             grantStore.close();
@@ -720,5 +779,22 @@ public class SkysongNPCs extends JavaPlugin {
     /** The choice menu and setup; null while the plugin is disabled. */
     public ChoiceMenu choiceMenu() {
         return choiceMenu;
+    }
+
+    // M16: abilities
+
+    /** Where abilities put the stat points and picks they give: M14's and M15's choices. */
+    protected AbilityChoices hookAbilityChoices() {
+        return new PluginAbilityChoices(() -> statPoints, () -> picks);
+    }
+
+    /** NPCs' abilities; null while the plugin is disabled. */
+    public AbilityService abilities() {
+        return abilities;
+    }
+
+    /** The abilities menu; null while the plugin is disabled. */
+    public AbilitiesMenu abilitiesMenu() {
+        return abilitiesMenu;
     }
 }

@@ -76,6 +76,11 @@ public interface StatSheets {
     /** Sets a proficiency's tier. */
     ProficiencyResult setProficiency(UUID npc, String proficiency, String tier);
 
+    // M16: abilities
+
+    /** A proficiency's tier on the NPC's sheet; empty when it has no sheet or there is no such proficiency. */
+    Optional<String> proficiencyTier(UUID npc, String proficiency);
+
     /** How {@link #editStat} changes a base value. */
     enum StatEdit { SET, ADD, REDUCE }
 
