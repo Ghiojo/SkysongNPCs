@@ -201,3 +201,25 @@ containers:
         - "<gray>Click to change what <npc> wears and holds."
       lore-view:
         - "<gray>Click to see what <npc> wears and holds."
+
+# --- M10: wardrobe (/snpc wardrobe and the menu's Wardrobe button). <npc>: the NPC's name. ---
+wardrobe:
+  # The menu button. lore-edit for players who may dress the NPC, lore-view for those who may only look.
+  button:
+    name: "<white>Wardrobe"
+    lore-edit:
+      - "<gray>Dress <white><npc></white>."
+    lore-view:
+      - "<gray>See what <white><npc></white> wears."
+  # The title of the read-only view, for players with wardrobe-view only.
+  view-title: "<dark_gray><npc>'s wardrobe"
+  nothing-worn: "<prefix><gray><npc> wears nothing from a wardrobe."
+  # Also sent when /sw npc or another plugin tries to open a managed NPC's wardrobe for them.
+  not-allowed: "<prefix><red>You may not open <npc>'s wardrobe."
+  view-only: "<prefix><red>You may only look at <npc>'s wardrobe: use /snpc wardrobe."
+  stored: "<prefix><red><npc> is packed into its item, so its wardrobe stays closed."
+  unavailable: "<prefix><red>NPC wardrobes need SkysongWardrobe, which is not running."
+  not-found: "<prefix><red>Citizens no longer has <npc>."
+  not-a-player-npc: "<prefix><red><npc> is not a player NPC, so it has no wardrobe."
+  in-use: "<prefix><red>Someone else is dressing <npc> right now."
+  closed: "<prefix><red>Wardrobes are closed until staff fix SkysongWardrobe's wardrobe.yml."
