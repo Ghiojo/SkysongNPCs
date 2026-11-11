@@ -3,6 +3,7 @@ package org.skysongdev.skysongnpcs;
 import org.bukkit.plugin.InvalidDescriptionException;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.mockbukkit.mockbukkit.MockBukkit;
+import org.skysongdev.skysongnpcs.appearance.AppearanceDriver;
 import org.skysongdev.skysongnpcs.characters.CharacterLookup;
 import org.skysongdev.skysongnpcs.inventory.NpcContainers;
 import org.skysongdev.skysongnpcs.cloning.NpcCloning;
@@ -52,6 +53,8 @@ public class OfflineSkysongNPCs extends SkysongNPCs {
     private final FakeNpcContainers fakeContainers = new FakeNpcContainers();
     // M10: wardrobe
     private final FakeWardrobe fakeWardrobe = new FakeWardrobe();
+    // M8: appearance
+    private final FakeAppearanceDriver fakeAppearance = new FakeAppearanceDriver();
 
     /** Loads it with the commands and permissions of the real plugin.yml. */
     public static OfflineSkysongNPCs load() {
@@ -209,5 +212,16 @@ public class OfflineSkysongNPCs extends SkysongNPCs {
 
     public FakeSheetEffects fakeEffects() {
         return fakeEffects;
+    }
+
+    // M8: appearance
+
+    @Override
+    protected AppearanceDriver hookAppearance() {
+        return fakeAppearance;
+    }
+
+    public FakeAppearanceDriver fakeAppearance() {
+        return fakeAppearance;
     }
 }

@@ -9,6 +9,8 @@ import org.skysongdev.skysongnpcs.api.access.Access;
 import org.skysongdev.skysongnpcs.api.inventory.NpcInventories;
 import org.skysongdev.skysongnpcs.api.groups.PlayerGroups;
 import org.skysongdev.skysongnpcs.groups.PlayerGroupRegistry;
+import org.skysongdev.skysongnpcs.api.appearance.NpcAppearance;
+import org.skysongdev.skysongnpcs.appearance.AppearanceService;
 import org.skysongdev.skysongnpcs.api.menu.NpcMenu;
 import org.skysongdev.skysongnpcs.api.movement.NpcMovement;
 import org.skysongdev.skysongnpcs.api.items.NpcItems;
@@ -27,7 +29,7 @@ import org.skysongdev.skysongnpcs.policy.PolicyRegistry;
 /** The plugin's implementation of {@link SkysongNpcsApi}; each milestone adds its part here. */
 public final class SkysongNpcsApiImpl implements SkysongNpcsApi {
     /** Raised with every change to the api module, as {@link SkysongNpcsApi#apiVersion()} describes. */
-    public static final String API_VERSION = "0.11.0";
+    public static final String API_VERSION = "0.12.0";
 
     private final Npcs npcs;
     private final Access access;
@@ -44,13 +46,16 @@ public final class SkysongNpcsApiImpl implements SkysongNpcsApi {
     private final PlayerGroups groups;
     // M12
     private final NpcEffects effects;
+    // M8: appearance
+    private final NpcAppearance appearance;
 
     public SkysongNpcsApiImpl(NpcRegistry registry, NpcLookup citizens, AccessService access, NpcMenu menu,
                               NpcSheetService sheets, TemplateRegistry templates,
                               NpcFactory factory, Blueprints blueprints,
                               PolicyRegistry policies,
                               NpcInventories inventories, NpcMovement movement,
-                              PlayerGroupRegistry groups, SheetEffects effects) {
+                              PlayerGroupRegistry groups, SheetEffects effects,
+                              AppearanceService appearance) {
         this.npcs = new NpcsImpl(registry, citizens, factory);
         this.access = new AccessImpl(registry, access);
         this.menu = menu;
@@ -61,6 +66,7 @@ public final class SkysongNpcsApiImpl implements SkysongNpcsApi {
         this.movement = movement;
         this.groups = new PlayerGroupsImpl(groups, access);
         this.effects = new NpcEffectsImpl(registry, sheets, effects);
+        this.appearance = new NpcAppearanceImpl(appearance);
     }
 
     @Override
@@ -128,5 +134,12 @@ public final class SkysongNpcsApiImpl implements SkysongNpcsApi {
     @Override
     public @NotNull NpcEffects effects() {
         return effects;
+    }
+
+    // M8: appearance
+
+    @Override
+    public @NotNull NpcAppearance appearance() {
+        return appearance;
     }
 }

@@ -343,3 +343,103 @@ ancestry:
     any-stat: "any setup stat"
     # <options>: the packages, numbered.
     packages: "<gray> <white><number>=</white> <name>: one of <options>"
+# --- M8: appearance (/snpc name, skin, nameplate, pose, sit, glow, appearance) ---
+# <npc>: the NPC's name.
+appearance:
+  not-allowed: "<prefix><red>You may not change that about <npc>."
+  # Sent instead of Citizens' /npc, /trait... on a Skysong NPC, for anyone but staff.
+  citizens-command: "<prefix><red><npc> is a Skysong NPC: change it with /snpc. Citizens' own commands are for staff."
+  name:
+    # <old>: the name before.
+    done: "<prefix><green>Renamed <old> to <npc>."
+    blank: "<prefix><red>Give the NPC a name."
+    # <max>: the longest name allowed (config.yml).
+    too-long: "<prefix><red>NPC names can be at most <max> characters long."
+    formatting: "<prefix><red>You may not use colours or styles in NPC names."
+  skin:
+    # <skin>: the player whose skin it now wears.
+    done: "<prefix><green><npc> now wears <skin>'s skin."
+    # <source>: what was typed.
+    bad-source: "<prefix><red><source> is neither a player name nor an http(s) link to a skin image."
+    not-player-shaped: "<prefix><red><npc> is not player-shaped, so it has no skin."
+    url-working: "<prefix><gray>Getting the skin for <npc>, this takes a few seconds..."
+    url-done: "<prefix><green><npc> now wears the skin from that link."
+    # <reason>: what went wrong, in English.
+    url-failed: "<prefix><red>Could not get a skin from that link for <npc>: <reason>"
+    # Only sent when SkysongWardrobe is installed: it draws an outfit over the new skin
+    # the next time the wardrobe is closed.
+    wardrobe-hint: "<prefix><gray>If <npc> wears an outfit, open and close its wardrobe to dress it again."
+  nameplate:
+    # <nameplate>: one of nameplates below.
+    done: "<prefix><green><npc>'s name is now <nameplate>."
+  nameplates:
+    show: "always shown"
+    hide: "hidden"
+    hover: "shown when looked at"
+  pose:
+    # <pose>: one of poses below.
+    done: "<prefix><green><npc> is now <pose>."
+  poses:
+    stand: "standing"
+    crouch: "crouching"
+    lie: "lying down"
+  sit:
+    "on": "<prefix><green><npc> sits down."
+    "off": "<prefix><green><npc> gets up."
+  sitting:
+    "yes": "sitting"
+    "no": "not sitting"
+  glow:
+    # <colour>: the colour's name.
+    "on": "<prefix><green><npc> now glows <colour>."
+    "off": "<prefix><green><npc> no longer glows."
+    # <colours>: every colour.
+    unknown: "<prefix><red><colour> is not a colour. Use off or one of: <colours>."
+    none: "off"
+  no-skin: "none"
+  # The Appearance menu and the NPC menu's Appearance button. Every text may use <npc>,
+  # and the menu's buttons also <skin>, <nameplate>, <pose>, <sitting> and <glow>: how the
+  # NPC looks now.
+  menu:
+    title: "<dark_gray><npc>: appearance"
+    button:
+      name: "<white>Appearance"
+      lore:
+        - "<gray>Name, skin, nameplate, pose,"
+        - "<gray>sitting and glowing"
+    back:
+      name: "<white>Back"
+      lore: []
+    name:
+      name: "<white>Name"
+      lore:
+        - "<gray>Now: <white><npc>"
+        - "<yellow>Click to type a new one"
+      prompt: "<prefix><gray><click:suggest_command:'/snpc name '><u>Click here</u></click> and type <npc>'s new name."
+    skin:
+      name: "<white>Skin"
+      lore:
+        - "<gray>Now: <white><skin>"
+        - "<yellow>Click to choose another"
+      prompt: "<prefix><gray><click:suggest_command:'/snpc skin '><u>Click here</u></click> and type a player name or a link to a skin image for <npc>."
+    nameplate:
+      name: "<white>Nameplate"
+      lore:
+        - "<gray>Now: <white><nameplate>"
+        - "<yellow>Click to change"
+    pose:
+      name: "<white>Pose"
+      lore:
+        - "<gray>Now: <white><pose>"
+        - "<yellow>Click to change"
+    sitting:
+      name: "<white>Sitting"
+      lore:
+        - "<gray>Now: <white><sitting>"
+        - "<yellow>Click to sit or get up"
+    glow:
+      name: "<white>Glowing"
+      lore:
+        - "<gray>Now: <white><glow>"
+        - "<yellow>Left-click: on or off"
+        - "<yellow>Right-click: next colour"
