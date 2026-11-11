@@ -16,6 +16,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
@@ -31,7 +32,7 @@ import java.util.logging.Logger;
  * {@code perm:} against permissions, and other types against the plugin that provides them.
  */
 public final class AccessService {
-    /** Types a plugin cannot register: ours now, and the {@code lp:} and {@code group:} groups to come. */
+    /** Types a plugin cannot register: ours, including the {@code group:} and {@code lp:} built-ins (M4). */
     static final Set<String> RESERVED_TYPES = Set.of(AccessGroup.PLAYER, AccessGroup.PERMISSION, "lp", "group");
 
     private final AccessRegistry grants;
@@ -41,6 +42,8 @@ public final class AccessService {
     private final Map<String, Registration> providers = new LinkedHashMap<>();
     // M5: access policies
     private PolicyGrants policies = PolicyGrants.NONE;
+    // M4: SkysongNPCs' own group types (group:, lp:), which plugins cannot register.
+    private final Map<String, GroupProvider> builtIns = new LinkedHashMap<>();
 
     public AccessService(AccessRegistry grants, CharacterLookup characters, ActionPresets presets, Logger logger) {
         this.grants = grants;
@@ -125,14 +128,16 @@ public final class AccessService {
                 return player.hasPermission(group.id());
             }
             default -> {
-                Registration registration = providers.get(group.type());
-                if (registration == null) {
+                GroupProvider builtIn = builtIns.get(group.type());
+                Registration registration = builtIn != null ? null : providers.get(group.type());
+                if (builtIn == null && registration == null) {
                     return false;
                 }
                 try {
-                    return registration.provider().contains(group.id(), player, profile);
+                    return (builtIn != null ? builtIn : registration.provider()).contains(group.id(), player, profile);
                 } catch (RuntimeException failed) {
-                    logger.log(Level.WARNING, registration.plugin().getName() + " failed to tell whether "
+                    String who = builtIn != null ? "SkysongNPCs" : registration.plugin().getName();
+                    logger.log(Level.WARNING, who + " failed to tell whether "
                             + player.getName() + " is in " + group + "; treated as not.", failed);
                     return false;
                 }
@@ -164,12 +169,27 @@ public final class AccessService {
 
     /** The provider of a group type, empty for {@code player}, {@code perm} and unregistered types. */
     public Optional<GroupProvider> provider(String type) {
-        return Optional.ofNullable(providers.get(type.toLowerCase(Locale.ROOT))).map(Registration::provider);
+        String key = type.toLowerCase(Locale.ROOT);
+        GroupProvider builtIn = builtIns.get(key);
+        if (builtIn != null) {
+            return Optional.of(builtIn);
+        }
+        return Optional.ofNullable(providers.get(key)).map(Registration::provider);
     }
 
-    /** The registered group types, in the order they were registered. */
+    /** The group types with a provider: SkysongNPCs' own first, then the registered ones in the order they were registered. */
     public Set<String> providerTypes() {
-        return Collections.unmodifiableSet(providers.keySet());
+        Set<String> types = new LinkedHashSet<>(builtIns.keySet());
+        types.addAll(providers.keySet());
+        return Collections.unmodifiableSet(types);
+    }
+
+    /** M4: answers one of SkysongNPCs' own reserved group types ({@code group}, {@code lp}). */
+    public void registerBuiltIn(String type, GroupProvider provider) {
+        if (!RESERVED_TYPES.contains(type) || type.equals(AccessGroup.PLAYER) || type.equals(AccessGroup.PERMISSION)) {
+            throw new IllegalArgumentException("Not a built-in group type: " + type);
+        }
+        builtIns.put(type, provider);
     }
 
     public boolean isStaff(Player player) {

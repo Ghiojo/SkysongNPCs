@@ -22,6 +22,14 @@ import org.skysongdev.skysongnpcs.cloning.NpcCloning;
 import org.skysongdev.skysongnpcs.cloning.RebuildingSheetCopier;
 import org.skysongdev.skysongnpcs.cloning.SheetCopier;
 import org.skysongdev.skysongnpcs.commands.AccessCommand;
+import org.skysongdev.skysongnpcs.commands.GroupCommand;
+import org.skysongdev.skysongnpcs.groups.LuckPermsGroups;
+import org.skysongdev.skysongnpcs.groups.PlayerGroupProvider;
+import org.skysongdev.skysongnpcs.groups.PlayerGroupRegistry;
+import org.skysongdev.skysongnpcs.api.groups.PlayerGroup;
+import org.skysongdev.skysongnpcs.api.groups.PlayerGroups;
+import org.skysongdev.skysongnpcs.api.access.GroupProvider;
+import org.skysongdev.skysongnpcs.storage.GroupStore;
 import org.skysongdev.skysongnpcs.citizens.CitizensNpcSpawner;
 import org.skysongdev.skysongnpcs.commands.AdoptCommand;
 import org.skysongdev.skysongnpcs.commands.MenuCommand;
@@ -99,6 +107,7 @@ import org.skysongdev.skysongnpcs.movement.NpcMover;
 
 import java.io.File;
 import java.util.List;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.stream.Stream;
 
@@ -132,6 +141,9 @@ public class SkysongNPCs extends JavaPlugin {
     private ContainerService containers;
     // M10: wardrobe
     private NpcWardrobes wardrobes;
+    // M4
+    private GroupStore groupStore;
+    private PlayerGroupRegistry groups;
 
     // M7: movement
     private MovementService movement;
@@ -155,6 +167,7 @@ public class SkysongNPCs extends JavaPlugin {
             store = stores.npcs();
             grantStore = stores.grants();
             policyStore = stores.policies();
+            groupStore = stores.groups();
         } catch (RuntimeException failed) {
             getLogger().log(Level.SEVERE, "Could not reach the database in config.yml (" + configuration.database()
                     + "). SkysongNPCs is disabled.", failed);
@@ -196,6 +209,12 @@ public class SkysongNPCs extends JavaPlugin {
         NpcCloning cloning = new NpcCloning(hookSheetCopier(), sheets, getLogger());
         getServer().getPluginManager().registerEvents(new CloneListener(cloning), this);
         listenForNpcRemovals(cloning);
+
+        // M4: player groups (group:) and LuckPerms groups (lp:) for grants.
+        groups = new PlayerGroupRegistry(groupStore, grants, policies);
+        groups.load();
+        access.registerBuiltIn(PlayerGroup.TYPE, new PlayerGroupProvider(groups));
+        hookLuckPerms().ifPresent(luckPerms -> access.registerBuiltIn(PlayerGroups.LUCKPERMS_TYPE, luckPerms));
 
         NpcTargeting targeting = new NpcTargeting(registry, citizens, characters, configuration);
 
@@ -243,6 +262,10 @@ public class SkysongNPCs extends JavaPlugin {
         subCommands = Stream.concat(subCommands.stream(),
                 new MovementCommands(targeting, citizens, access, movement, configuration).subCommands().stream()).toList();
 
+        // M4: player groups (/snpc group)
+        subCommands = Stream.concat(subCommands.stream(),
+                Stream.of(new GroupCommand(targeting, groups, configuration))).toList();
+
         NpcCommands commands = new NpcCommands(subCommands, configuration, getPluginMeta().getVersion());
         getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS,
                 event -> commands.register(event.registrar()));
@@ -259,7 +282,7 @@ public class SkysongNPCs extends JavaPlugin {
         // Last, so other plugins only see the API once everything behind it is ready.
         getServer().getServicesManager().register(SkysongNpcsApi.class, new SkysongNpcsApiImpl(registry, citizens, access, menu,
                         sheets, templates, factory, blueprints, policies,
-                        containers, movement),
+                        containers, movement, groups),
                 this, ServicePriority.Normal);
     }
 
@@ -269,6 +292,10 @@ public class SkysongNPCs extends JavaPlugin {
         if (policyStore != null) {
             policyStore.close();
             policyStore = null;
+        }
+        if (groupStore != null) {
+            groupStore.close();
+            groupStore = null;
         }
         if (grantStore != null) {
             grantStore.close();
@@ -439,5 +466,17 @@ public class SkysongNPCs extends JavaPlugin {
     /** Moves NPCs; null while the plugin is disabled. */
     public MovementService movement() {
         return movement;
+    }
+
+    // M4: player groups
+
+    /** The lp: group provider, when LuckPerms is installed. */
+    protected Optional<GroupProvider> hookLuckPerms() {
+        return LuckPermsGroups.hook(getServer());
+    }
+
+    /** The player groups; null while the plugin is disabled. */
+    public PlayerGroupRegistry groups() {
+        return groups;
     }
 }

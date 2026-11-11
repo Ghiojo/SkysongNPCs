@@ -6,6 +6,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.skysongdev.skysongnpcs.api.access.Access;
 import org.skysongdev.skysongnpcs.api.inventory.NpcInventories;
+import org.skysongdev.skysongnpcs.api.groups.PlayerGroups;
 import org.skysongdev.skysongnpcs.api.menu.NpcMenu;
 import org.skysongdev.skysongnpcs.api.movement.NpcMovement;
 import org.skysongdev.skysongnpcs.api.items.NpcItems;
@@ -131,4 +132,14 @@ public interface SkysongNpcsApi {
      * @since 0.9.0
      */
     @NotNull NpcMovement movement();
+
+    // M4
+
+    /**
+     * Player groups ({@code group:<id>}) and LuckPerms groups ({@code lp:<group>}) that grants can name.
+     *
+     * @return the groups part of the API
+     * @since 0.10.0
+     */
+    @NotNull PlayerGroups groups();
 }
