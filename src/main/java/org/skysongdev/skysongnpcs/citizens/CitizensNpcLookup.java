@@ -44,6 +44,16 @@ public final class CitizensNpcLookup implements NpcLookup {
         return found == null ? npc.toString() : found.getName();
     }
 
+    // M7: movement
+
+    @Override
+    public void select(CommandSender sender, UUID npc) {
+        NPC found = registry().getByUniqueId(npc);
+        if (found != null) {
+            CitizensAPI.getDefaultNPCSelector().select(sender, found);
+        }
+    }
+
     private static NPCRegistry registry() {
         return CitizensAPI.getNPCRegistry();
     }

@@ -223,3 +223,36 @@ wardrobe:
   not-a-player-npc: "<prefix><red><npc> is not a player NPC, so it has no wardrobe."
   in-use: "<prefix><red>Someone else is dressing <npc> right now."
   closed: "<prefix><red>Wardrobes are closed until staff fix SkysongWardrobe's wardrobe.yml."
+# --- M7: movement ---
+# /snpc select, tphere, follow, look, and the menu's Movement button. <npc>: the NPC's name.
+movement:
+  selected: "<prefix><green>Selected <npc>. NPC commands act on it whenever you are not looking at another NPC."
+  select-not-allowed: "<prefix><red>You can't do anything with <npc>."
+  not-allowed: "<prefix><red>You may not do that with <npc>."
+  not-placed: "<prefix><red><npc> is not out in the world."
+  teleported: "<prefix><green>Brought <npc> to you."
+  other-world: "<prefix><red><npc> is in another world."
+  # <max>: config.yml's movement.teleport.max-distance.
+  too-far: "<prefix><red><npc> is more than <max> blocks away."
+  # <target>: who it follows. <distance>: how close it stays, in blocks.
+  follow-on: "<prefix><green><npc> now follows <target>, staying <distance> blocks away."
+  follow-off: "<prefix><green><npc> stopped following."
+  # <max>: config.yml's movement.follow.max-distance.
+  follow-above-max: "<prefix><red>NPCs can follow at most <max> blocks away."
+  follow-not-others: "<prefix><red>NPCs can only follow the player who asks."
+  # <player>: the name typed.
+  player-offline: "<prefix><red><player> is not online."
+  # <range>: in blocks.
+  look-on: "<prefix><green><npc> now looks at players within <range> blocks."
+  look-off: "<prefix><green><npc> stopped looking at players."
+  # <max>: config.yml's movement.look.max-range.
+  look-above-max: "<prefix><red>NPCs can look at most <max> blocks away."
+  # The Movement button. Its lore shows only the lines the viewer may use.
+  button:
+    name: "<white>Movement"
+    teleport: "<gray>Left-click: <white>bring here"
+    # <state>: on or off, below.
+    follow: "<gray>Right-click: <white>follow you <dark_gray>(<state>)"
+    look: "<gray>Shift-click: <white>look at players <dark_gray>(<state>)"
+    "on": "on"
+    "off": "off"

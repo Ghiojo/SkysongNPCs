@@ -6,6 +6,7 @@ import org.skysongdev.skysongnpcs.api.SkysongNpcsApi;
 import org.skysongdev.skysongnpcs.api.access.Access;
 import org.skysongdev.skysongnpcs.api.inventory.NpcInventories;
 import org.skysongdev.skysongnpcs.api.menu.NpcMenu;
+import org.skysongdev.skysongnpcs.api.movement.NpcMovement;
 import org.skysongdev.skysongnpcs.api.items.NpcItems;
 import org.skysongdev.skysongnpcs.api.npc.Npcs;
 import org.skysongdev.skysongnpcs.api.sheet.NpcSheets;
@@ -22,7 +23,7 @@ import org.skysongdev.skysongnpcs.policy.PolicyRegistry;
 /** The plugin's implementation of {@link SkysongNpcsApi}; each milestone adds its part here. */
 public final class SkysongNpcsApiImpl implements SkysongNpcsApi {
     /** Raised with every change to the api module, as {@link SkysongNpcsApi#apiVersion()} describes. */
-    public static final String API_VERSION = "0.8.0";
+    public static final String API_VERSION = "0.9.0";
 
     private final Npcs npcs;
     private final Access access;
@@ -33,12 +34,14 @@ public final class SkysongNpcsApiImpl implements SkysongNpcsApi {
     private final Policies policies;
     // M9
     private final NpcInventories inventories;
+    // M7: movement
+    private final NpcMovement movement;
 
     public SkysongNpcsApiImpl(NpcRegistry registry, NpcLookup citizens, AccessService access, NpcMenu menu,
                               NpcSheetService sheets, TemplateRegistry templates,
                               NpcFactory factory, Blueprints blueprints,
                               PolicyRegistry policies,
-                              NpcInventories inventories) {
+                              NpcInventories inventories, NpcMovement movement) {
         this.npcs = new NpcsImpl(registry, citizens, factory);
         this.access = new AccessImpl(registry, access);
         this.menu = menu;
@@ -46,6 +49,7 @@ public final class SkysongNpcsApiImpl implements SkysongNpcsApi {
         this.items = new NpcItemsImpl(blueprints, factory);
         this.policies = new PoliciesImpl(registry, policies);
         this.inventories = inventories;
+        this.movement = movement;
     }
 
     @Override
@@ -92,5 +96,12 @@ public final class SkysongNpcsApiImpl implements SkysongNpcsApi {
     @Override
     public @NotNull NpcInventories inventories() {
         return inventories;
+    }
+
+    // M7: movement
+
+    @Override
+    public @NotNull NpcMovement movement() {
+        return movement;
     }
 }

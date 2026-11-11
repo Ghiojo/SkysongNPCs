@@ -183,4 +183,16 @@ public class OfflineSkysongNPCs extends SkysongNPCs {
     public NpcCloning cloning() {
         return cloning;
     }
+
+    // M7: movement
+    private final FakeMover fakeMover = new FakeMover();
+
+    @Override
+    protected org.skysongdev.skysongnpcs.movement.NpcMover hookMover() {
+        return fakeMover;
+    }
+
+    public FakeMover fakeMover() {
+        return fakeMover;
+    }
 }

@@ -34,3 +34,8 @@ npc-menu:
     "skysongnpcs:wardrobe":
       slot: 14
       material: LEATHER_CHESTPLATE
+
+    # M7: movement
+    "skysongnpcs:movement":
+      slot: 11
+      material: LEAD

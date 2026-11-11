@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.skysongdev.skysongnpcs.api.access.Access;
 import org.skysongdev.skysongnpcs.api.inventory.NpcInventories;
 import org.skysongdev.skysongnpcs.api.menu.NpcMenu;
+import org.skysongdev.skysongnpcs.api.movement.NpcMovement;
 import org.skysongdev.skysongnpcs.api.items.NpcItems;
 import org.skysongdev.skysongnpcs.api.npc.Npcs;
 import org.skysongdev.skysongnpcs.api.sheet.NpcSheets;
@@ -120,4 +121,14 @@ public interface SkysongNpcsApi {
      * @since 0.8.0
      */
     @NotNull NpcInventories inventories();
+
+    // M7: movement
+
+    /**
+     * Movement: teleport NPCs, make them follow someone, and make them look at nearby players.
+     *
+     * @return the movement part of the API
+     * @since 0.9.0
+     */
+    @NotNull NpcMovement movement();
 }
