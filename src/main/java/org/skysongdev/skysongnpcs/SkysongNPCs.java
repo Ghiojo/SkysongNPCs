@@ -70,6 +70,7 @@ import org.skysongdev.skysongnpcs.commands.SheetCommand;
 import org.skysongdev.skysongnpcs.commands.StatsCommand;
 import org.skysongdev.skysongnpcs.sheets.CarriedItems;
 import org.skysongdev.skysongnpcs.sheets.NpcSheetService;
+import org.skysongdev.skysongnpcs.sheets.SheetButton;
 import org.skysongdev.skysongnpcs.sheets.SheetGuarantee;
 import org.skysongdev.skysongnpcs.sheets.SkysongStatsSheets;
 import org.skysongdev.skysongnpcs.sheets.StatSheets;
@@ -376,6 +377,12 @@ public class SkysongNPCs extends JavaPlugin {
             return List.of();
         };
 
+        // The NPC menu's Sheet button shows the sheet as /snpc sheet does.
+        SheetCommand sheetCommand = new SheetCommand(targeting, access, sheets, templates, configuration,
+                npc -> abilityText.sheetLine(abilities.of(npc)));
+        new SheetButton(configuration, npc -> citizens.name(npc.id()), sheetCommand::showSheet)
+                .register(this, menu, access);
+
         List<SubCommand> subCommands = List.of(
                 new ReloadCommand(configuration, List.of(templates, choiceSettings, templateChoices, templatePicks,
                         templateAbilities, abilityReload)),
@@ -385,8 +392,7 @@ public class SkysongNPCs extends JavaPlugin {
                 accessCommand,
                 new MenuCommand(targeting, menu),
                 // M11: stat sheets and templates
-                new SheetCommand(targeting, access, sheets, templates, configuration,
-                        npc -> abilityText.sheetLine(abilities.of(npc))),
+                sheetCommand,
                 new StatsCommand(targeting, sheets),
                 new ModifierCommand(targeting, sheets),
                 new ProficiencyCommand(targeting, sheets),

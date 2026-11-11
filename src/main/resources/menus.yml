@@ -56,6 +56,10 @@ npc-menu:
     "skysongnpcs:abilities":
       slot: 21
       material: ENCHANTED_BOOK
+    # Shows the NPC's stat sheet in chat (stats-view), as /snpc sheet does.
+    "skysongnpcs:sheet":
+      slot: 20
+      material: BOOK
 
 # --- M8: appearance ---
 # The one-row menu the Appearance button opens. Its buttons are back, name, skin, nameplate, pose, sitting

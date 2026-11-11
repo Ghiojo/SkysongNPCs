@@ -108,6 +108,11 @@ sheet:
   unknown-template: "<prefix><red>There is no NPC template called <template>."
   # <reason>: what went wrong, in English, such as a stat that left stats.yml.
   failed: "<prefix><red>Could not give <npc> a stat sheet: <reason>"
+  # The NPC menu's Sheet button (stats-view): shows the sheet in chat, as /snpc sheet does.
+  button:
+    name: "<gold>Stat sheet"
+    lore:
+      - "<yellow>Click to see <npc>'s sheet in chat."
 
 # /snpc stats <stat> <set|add|reduce> <amount> (staff). <stat>: the name typed.
 stats:
