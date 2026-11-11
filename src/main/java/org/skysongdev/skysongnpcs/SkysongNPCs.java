@@ -70,6 +70,7 @@ import org.skysongdev.skysongnpcs.commands.SheetCommand;
 import org.skysongdev.skysongnpcs.commands.StatsCommand;
 import org.skysongdev.skysongnpcs.sheets.CarriedItems;
 import org.skysongdev.skysongnpcs.sheets.NpcSheetService;
+import org.skysongdev.skysongnpcs.sheets.SheetGuarantee;
 import org.skysongdev.skysongnpcs.sheets.SkysongStatsSheets;
 import org.skysongdev.skysongnpcs.sheets.StatSheets;
 import org.skysongdev.skysongnpcs.sheets.StatsReloadListener;
@@ -204,6 +205,7 @@ public class SkysongNPCs extends JavaPlugin {
     // M11: stat sheets and templates
     private TemplateRegistry templates;
     private NpcSheetService sheets;
+    private SheetGuarantee sheetGuarantee;
     // M12: injuries, conditions and ancestry
     private SheetEffects effects;
     // M17
@@ -309,6 +311,12 @@ public class SkysongNPCs extends JavaPlugin {
         TemplatePicks templatePicks = new TemplatePicks(new File(getDataFolder(), "templates"), proficiencies, getLogger());
         templatePicks.reload();
         sheets = new NpcSheetService(registry, statSheets, hookCarriedItems());
+        // Every managed NPC has a stat sheet: adopting makes it in the same step, and NPCs
+        // registered without one (before this rule, or whose character was deleted) get one now.
+        sheetGuarantee = new SheetGuarantee(registry, sheets, templates::get,
+                () -> configuration.config().getString("sheets.adopt-template", ""), getLogger());
+        registry.onAdopt(record -> sheetGuarantee.ensure(record.id()));
+        sheetGuarantee.repairAll();
         // SkysongStats does not save item counts, so they are sent again on every start.
         sheets.recountAll(true);
         listenForStatsReloads(sheets);
@@ -316,7 +324,7 @@ public class SkysongNPCs extends JavaPlugin {
         getServer().getScheduler().runTaskTimer(this, () -> sheets.recountAll(false), recountTicks, recountTicks);
 
         // M13: cloning. A copy gets its own copy of the original's sheet; a removed NPC's sheet is deleted.
-        NpcCloning cloning = new NpcCloning(hookSheetCopier(), sheets, getLogger());
+        NpcCloning cloning = new NpcCloning(hookSheetCopier(), sheets, sheetGuarantee::ensure, getLogger());
         getServer().getPluginManager().registerEvents(new CloneListener(cloning), this);
         listenForNpcRemovals(cloning);
 
@@ -579,7 +587,7 @@ public class SkysongNPCs extends JavaPlugin {
 
     /** Counts every NPC's items again after a SkysongStats reload. */
     protected void listenForStatsReloads(NpcSheetService sheets) {
-        getServer().getPluginManager().registerEvents(new StatsReloadListener(sheets), this);
+        getServer().getPluginManager().registerEvents(new StatsReloadListener(sheets, sheetGuarantee::repairAll), this);
     }
 
     // M13: cloning

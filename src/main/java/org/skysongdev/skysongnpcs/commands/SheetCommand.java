@@ -26,7 +26,9 @@ import java.util.function.Function;
  * {@code /snpc sheet}: shows the targeted NPC's stat sheet in chat to whoever has its
  * stats-view action (its owner and staff always do). {@code /snpc sheet create [template]}
  * (staff) gives a managed NPC a sheet from a template, by default the one it came from, or
- * with every stat at its stats.yml start value when it has none.
+ * with every stat at its stats.yml start value when it has none. Every managed NPC gets a
+ * sheet when it is registered, so this is only needed when its SkysongStats character was
+ * deleted by hand; the plugin also repairs those on start and after a SkysongStats reload.
  */
 public final class SheetCommand implements SubCommand {
     private static final String TEMPLATE = "template";
@@ -72,7 +74,7 @@ public final class SheetCommand implements SubCommand {
                         })
                         .then(RequiredArgumentBuilder.<CommandSourceStack, String>argument(TEMPLATE, StringArgumentType.word())
                                 .suggests(SheetTargeting.suggest(() -> templates.all().stream()
-                                        .filter(NpcTemplate::sheet).map(NpcTemplate::id).toList()))
+                                        .map(NpcTemplate::id).toList()))
                                 .executes(context -> {
                                     create(context.getSource().getSender(), StringArgumentType.getString(context, TEMPLATE));
                                     return Command.SINGLE_SUCCESS;
@@ -121,8 +123,6 @@ public final class SheetCommand implements SubCommand {
             Optional<NpcTemplate> template = templates.get(id);
             if (template.isEmpty()) {
                 npcs.send(sender, "sheet.unknown-template", Map.of("template", id));
-            } else if (!template.get().sheet()) {
-                npcs.send(sender, "sheet.template-without-sheet", Map.of("template", id));
             } else {
                 targeting.sheets().create(npc.get().id(), template.get());
                 npcs.send(sender, "sheet.created-from", Map.of("npc", name, "template", id));

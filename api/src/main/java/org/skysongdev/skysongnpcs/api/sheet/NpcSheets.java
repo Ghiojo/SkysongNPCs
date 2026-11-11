@@ -15,6 +15,11 @@ import java.util.UUID;
  * {@link #character(UUID)}. SkysongNPCs keeps the items an NPC carries counted toward its
  * item-tag stats (Arcrot...) by itself.
  *
+ * <p>Every managed NPC has a sheet: SkysongNPCs makes it when the NPC is adopted, made from a
+ * template or copied, and gives one back to an NPC found without one on start and after a
+ * SkysongStats reload. {@link #hasSheet} is false for a managed NPC only while its character
+ * was deleted by hand and not yet repaired.
+ *
  * <p>SkysongNPCs implements this interface; other plugins must not.
  */
 @ApiStatus.NonExtendable
@@ -37,7 +42,8 @@ public interface NpcSheets {
     @NotNull Optional<CharacterId> character(@NotNull UUID npc);
 
     /**
-     * Gives a managed NPC a stat sheet.
+     * Gives a managed NPC a stat sheet. Managed NPCs have one from the start, so this only
+     * replaces one deleted in SkysongStats before SkysongNPCs repairs it.
      *
      * @param npc   the NPC's Citizens UUID
      * @param stats starting base values by SkysongStats stat id or alias; the stats left out
@@ -54,7 +60,7 @@ public interface NpcSheets {
      * @param npc      the NPC's Citizens UUID
      * @param template a template's id, the name of its file in {@code templates/}
      * @return the new sheet's character id
-     * @throws IllegalArgumentException when there is no such template, it gives no sheet, or
+     * @throws IllegalArgumentException when there is no such template, or
      *                                  as {@link #create(UUID, Map)}
      * @throws IllegalStateException    when the NPC has a sheet already
      */

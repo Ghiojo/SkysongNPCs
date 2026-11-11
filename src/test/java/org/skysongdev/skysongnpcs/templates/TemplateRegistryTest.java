@@ -70,7 +70,6 @@ class TemplateRegistryTest {
         assertEquals(EntityType.WOLF, dog.entityType());
         assertEquals("Rex", dog.name());
         assertNull(dog.skin());
-        assertTrue(dog.sheet());
         assertEquals(Map.of("strength", 3, "hp", 12), dog.stats());
     }
 
@@ -84,7 +83,6 @@ class TemplateRegistryTest {
         assertEquals(EntityType.PLAYER, clerk.entityType());
         assertEquals("clerk", clerk.name());
         assertEquals("Notch", clerk.skin());
-        assertTrue(clerk.sheet());
         assertEquals(Map.of(), clerk.stats());
     }
 
@@ -123,12 +121,22 @@ class TemplateRegistryTest {
     void refusesWrongValues() throws IOException {
         write("not_number", "stats:\n  hp: lots\n");
         write("twice", "stats:\n  str: 1\n  strength: 2\n");
-        write("sheet_word", "sheet: maybe\n");
         write("Capital", "name: Capital\n");
 
-        assertEquals(List.of("templates/Capital.yml", "templates/not_number.yml", "templates/sheet_word.yml",
-                "templates/twice.yml"), templates.reload());
+        assertEquals(List.of("templates/Capital.yml", "templates/not_number.yml", "templates/twice.yml"),
+                templates.reload());
         assertTrue(templates.all().isEmpty());
+    }
+
+    @Test
+    void theOldSheetKeyIsIgnored() throws IOException {
+        // Every Skysong NPC has a stat sheet, so sheet: false no longer turns it off.
+        write("ghost", "sheet: false\n");
+        write("sheet_word", "sheet: maybe\n");
+
+        assertEquals(List.of(), templates.reload());
+        assertTrue(templates.get("ghost").isPresent());
+        assertTrue(templates.get("sheet_word").isPresent());
     }
 
     private void write(String id, String yaml) throws IOException {

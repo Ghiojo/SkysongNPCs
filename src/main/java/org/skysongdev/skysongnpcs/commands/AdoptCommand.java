@@ -14,7 +14,7 @@ import java.util.UUID;
 /**
  * {@code /snpc adopt [player] [profile]} (staff): makes the targeted Citizens NPC a Skysong
  * NPC. Without a player the server owns it; with a player and no profile, the character
- * they are playing now.
+ * they are playing now. The NPC gets its stat sheet in the same step.
  */
 public final class AdoptCommand implements SubCommand {
     private final NpcTargeting targeting;
@@ -47,7 +47,13 @@ public final class AdoptCommand implements SubCommand {
                     Map.of("npc", name, "owner", targeting.ownerName(existing.get().owner())));
             return;
         }
-        targeting.registry().adopt(npc.get(), owner);
+        try {
+            targeting.registry().adopt(npc.get(), owner);
+        } catch (RuntimeException failed) {
+            // Its stat sheet could not be made, so it was not adopted.
+            targeting.send(sender, "adopt.failed", Map.of("npc", name, "reason", String.valueOf(failed.getMessage())));
+            return;
+        }
         targeting.send(sender, "adopt.done", Map.of("npc", name, "owner", targeting.ownerName(owner)));
     }
 }

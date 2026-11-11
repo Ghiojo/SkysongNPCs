@@ -18,8 +18,6 @@ public final class StartingPicks implements NpcFactory.Created {
 
     @Override
     public void created(NpcRecord npc, NpcTemplate template, @Nullable ItemStack blueprint) {
-        if (template.sheet()) {
-            templates.grant(picks, npc.id(), template.id());
-        }
+        templates.grant(picks, npc.id(), template.id());
     }
 }

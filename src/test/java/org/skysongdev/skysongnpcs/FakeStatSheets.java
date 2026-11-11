@@ -25,6 +25,8 @@ public final class FakeStatSheets implements StatSheets {
     /** Every setItems call, in order. */
     public final List<List<ItemStack>> itemCalls = new ArrayList<>();
     private int nextModifier = 1;
+    /** When true, SkysongStats will not make sheets, as when the id belongs to another plugin. */
+    public boolean refuseCreate;
 
     /** A stat's base value on an NPC's sheet. */
     public int value(UUID npc, String stat) {
@@ -43,6 +45,17 @@ public final class FakeStatSheets implements StatSheets {
         return tiers.getOrDefault(npc, Map.of()).get(proficiency);
     }
 
+    /**
+     * Deletes an NPC's sheet, as if someone deleted its character in SkysongStats. Every
+     * managed NPC gets a sheet when it is registered, so tests that need one without a sheet,
+     * or a sheet with other starting values, delete it first.
+     */
+    public void delete(UUID npc) {
+        sheets.remove(npc);
+        modifiers.remove(npc);
+        tiers.remove(npc);
+    }
+
     @Override
     public boolean exists(UUID npc) {
         return sheets.containsKey(npc);
@@ -50,7 +63,7 @@ public final class FakeStatSheets implements StatSheets {
 
     @Override
     public boolean create(UUID npc, Map<String, Integer> stats) {
-        if (sheets.containsKey(npc)) {
+        if (refuseCreate || sheets.containsKey(npc)) {
             return false;
         }
         Map<String, Integer> values = new LinkedHashMap<>();

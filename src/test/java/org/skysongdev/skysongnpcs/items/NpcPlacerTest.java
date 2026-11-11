@@ -32,7 +32,6 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** Placing NPCs from blueprint items: {@link NpcPlacer} against the running plugin. */
@@ -116,10 +115,11 @@ class NpcPlacerTest {
     }
 
     @Test
-    void aTemplateWithoutSheetGivesNoSheet() {
+    void theOldSheetFalseKeyStillGivesASheet() {
+        // Every Skysong NPC has a stat sheet, whatever the template says.
         assertEquals(NpcPlacer.Result.PLACED, placer.place(alice, blueprint("ghost", null, 1), ground(0, 0)).result());
 
-        assertFalse(plugin.fakeSheets().exists(onlyNpc()));
+        assertTrue(plugin.fakeSheets().exists(onlyNpc()));
     }
 
     @Test

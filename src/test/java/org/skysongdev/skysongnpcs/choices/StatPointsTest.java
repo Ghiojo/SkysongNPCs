@@ -45,6 +45,7 @@ class StatPointsTest {
         NpcRegistry registry = plugin.registry();
         npc = plugin.fakeCitizens().add("Guard");
         registry.adopt(npc, NpcOwner.server());
+        plugin.fakeSheets().delete(npc);
         sheets.create(npc, Map.of("strength", 2, "hp", 10));
         points = newPoints();
     }
@@ -159,6 +160,7 @@ class StatPointsTest {
         points.spend(npc, "str", 1, null);
         UUID copy = plugin.fakeCitizens().add("Guard");
         plugin.registry().copied(npc, copy);
+        plugin.fakeSheets().delete(copy);
         sheets.create(copy, Map.of("strength", 3));
 
         points.copy(npc, copy);

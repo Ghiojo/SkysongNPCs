@@ -34,6 +34,10 @@ class NpcSheetServiceTest {
         stats = plugin.fakeSheets();
         guard = plugin.fakeCitizens().add("Guard");
         plugin.registry().adopt(guard, NpcOwner.server());
+        // Adopting gave it a sheet; these tests start from one whose SkysongStats character
+        // was deleted by hand.
+        stats.delete(guard);
+        stats.itemCalls.clear();
     }
 
     @AfterEach
@@ -43,7 +47,7 @@ class NpcSheetServiceTest {
 
     @Test
     void createsTheSheetFromTheTemplateStatline() {
-        sheets.create(guard, template(true, Map.of("strength", 4)));
+        sheets.create(guard, template(Map.of("strength", 4)));
 
         assertTrue(sheets.hasSheet(guard));
         assertEquals(4, stats.value(guard, "strength"));
@@ -62,7 +66,6 @@ class NpcSheetServiceTest {
         UUID plain = plugin.fakeCitizens().add("Plain");
         assertThrows(IllegalArgumentException.class, () -> sheets.create(plain, Map.of()));
         assertThrows(IllegalArgumentException.class, () -> sheets.create(guard, Map.of("luck", 1)));
-        assertThrows(IllegalArgumentException.class, () -> sheets.create(guard, template(false, Map.of())));
 
         sheets.create(guard, Map.of());
         assertThrows(IllegalStateException.class, () -> sheets.create(guard, Map.of()));
@@ -102,7 +105,7 @@ class NpcSheetServiceTest {
         assertTrue(stats.itemCalls.isEmpty());
     }
 
-    private static NpcTemplate template(boolean sheet, Map<String, Integer> stats) {
-        return new NpcTemplate("guard", EntityType.PLAYER, "Guard", null, sheet, stats);
+    private static NpcTemplate template(Map<String, Integer> stats) {
+        return new NpcTemplate("guard", EntityType.PLAYER, "Guard", null, stats);
     }
 }

@@ -34,7 +34,6 @@ import org.skysongdev.skysongnpcs.commands.SheetCommand;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -86,7 +85,6 @@ class AbilitiesCommandTest {
         guard = plugin.fakeCitizens().add("Guard");
         plugin.fakeCitizens().target(guard);
         plugin.registry().adopt(guard, NpcOwner.character(alice.getUniqueId(), "Default"));
-        plugin.sheets().create(guard, Map.of());
     }
 
     @AfterEach
@@ -212,7 +210,7 @@ class AbilitiesCommandTest {
         assertTrue(api.revoke(guard, "keen"));
         assertFalse(api.has(guard, "keen"));
         assertTrue(api.open(alice, guard));
-        assertEquals("0.16.0", SkysongNpcsApi.get().apiVersion());
+        assertEquals("0.17.0", SkysongNpcsApi.get().apiVersion());
     }
 
     @Test

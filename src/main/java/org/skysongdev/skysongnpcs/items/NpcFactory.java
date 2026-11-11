@@ -17,7 +17,7 @@ import java.util.UUID;
 
 /**
  * Makes a managed NPC from a template: spawns the Citizens NPC, gives it a record in state
- * SETUP, and its stat sheet when the template has one. Placing a blueprint and the API's
+ * SETUP, and its stat sheet. Placing a blueprint and the API's
  * {@code npcs().create} both come here. If any step fails, the steps before it are undone, so
  * a half-made NPC never stays in the world.
  */
@@ -66,9 +66,8 @@ public final class NpcFactory {
         UUID npc = spawned.get();
         try {
             NpcRecord record = registry.create(npc, owner, template.id());
-            if (template.sheet()) {
-                sheets.create(npc, template);
-            }
+            // Every Skysong NPC has a stat sheet.
+            sheets.create(npc, template);
             for (Created hook : created) {
                 hook.created(record, template, blueprint);
             }

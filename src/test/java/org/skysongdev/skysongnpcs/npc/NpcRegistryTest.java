@@ -44,6 +44,24 @@ class NpcRegistryTest {
     }
 
     @Test
+    void theAdoptHookSeesTheRecordAndAFailureUndoesTheAdoption() {
+        UUID npc = UUID.randomUUID();
+        List<UUID> seen = new ArrayList<>();
+        registry.onAdopt(record -> {
+            seen.add(record.id());
+            assertTrue(registry.isManaged(record.id()));
+            throw new IllegalStateException("no sheet");
+        });
+
+        assertThrows(IllegalStateException.class, () -> registry.adopt(npc, NpcOwner.server()));
+
+        assertEquals(List.of(npc), seen);
+        assertFalse(registry.isManaged(npc));
+        assertTrue(store.loadAll().isEmpty());
+        assertTrue(changes.seen.isEmpty());
+    }
+
+    @Test
     void adoptingTwiceIsRefused() {
         UUID npc = UUID.randomUUID();
         registry.adopt(npc, NpcOwner.server());

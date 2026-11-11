@@ -13,11 +13,8 @@ name: "Guard"
 # Citizens' default.
 skin: ""
 
-# Whether the NPC gets a SkysongStats stat sheet. Default true.
-sheet: true
-
-# The sheet's starting base values, by SkysongStats stat id or alias (see SkysongStats'
-# stats.yml). Stats left out start at their stats.yml start value. This example names
+# Every Skysong NPC has a SkysongStats stat sheet. These are its starting base values, by
+# SkysongStats stat id or alias (see SkysongStats' stats.yml). Stats left out start at their stats.yml start value. This example names
 # none, so it works with any stats.yml; add lines such as:
 #   strength: 3
 stats: {}

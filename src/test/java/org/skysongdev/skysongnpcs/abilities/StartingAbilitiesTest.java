@@ -18,7 +18,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -103,7 +102,6 @@ class StartingAbilitiesTest {
     void abilitiesGiveRealStatPointsAndPicks() {
         UUID npc = plugin.fakeCitizens().add("Guard");
         plugin.registry().adopt(npc, NpcOwner.server());
-        plugin.sheets().create(npc, Map.of());
         AbilityService service = new AbilityService(plugin.registry(), plugin.abilities().definitions(),
                 new org.skysongdev.skysongnpcs.storage.InMemoryAbilityStore(), plugin.fakeSheets(),
                 new PluginAbilityChoices(plugin::statPoints, plugin::picks), event -> { });

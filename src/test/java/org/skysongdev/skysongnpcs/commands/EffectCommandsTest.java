@@ -13,7 +13,6 @@ import org.skysongdev.skysongnpcs.OfflineSkysongNPCs;
 import org.skysongdev.skysongnpcs.api.npc.NpcOwner;
 import org.skysongdev.skysongstats.api.CharacterAncestry;
 
-import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -53,7 +52,6 @@ class EffectCommandsTest {
         guard = plugin.fakeCitizens().add("Guard");
         plugin.fakeCitizens().target(guard);
         plugin.registry().adopt(guard, NpcOwner.character(alice.getUniqueId(), "Default"));
-        plugin.sheets().create(guard, Map.of());
     }
 
     @AfterEach
@@ -147,6 +145,8 @@ class EffectCommandsTest {
         UUID dog = plugin.fakeCitizens().add("Dog");
         plugin.fakeCitizens().target(dog);
         plugin.registry().adopt(dog, NpcOwner.server());
+        // Its SkysongStats character was deleted by hand.
+        plugin.fakeSheets().delete(dog);
 
         commands.run(dm, "snpc injury award bruise");
         assertEquals("[NPCs] Dog has no stat sheet.", plain(dm));

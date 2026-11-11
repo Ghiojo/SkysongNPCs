@@ -11,7 +11,6 @@ import org.skysongdev.skysongnpcs.api.sheet.NpcEffects;
 import org.skysongdev.skysongstats.api.AncestryPicks;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -32,7 +31,6 @@ class NpcEffectsApiTest {
         effects = SkysongNpcsApi.get().effects();
         guard = plugin.fakeCitizens().add("Guard");
         plugin.registry().adopt(guard, NpcOwner.server());
-        plugin.sheets().create(guard, Map.of());
     }
 
     @AfterEach
@@ -82,6 +80,8 @@ class NpcEffectsApiTest {
         UUID dog = plugin.fakeCitizens().add("Dog");
         assertThrows(IllegalArgumentException.class, () -> effects.injuries(dog));
         plugin.registry().adopt(dog, NpcOwner.server());
+        // Its SkysongStats character was deleted by hand.
+        plugin.fakeSheets().delete(dog);
         assertThrows(IllegalArgumentException.class, () -> effects.awardInjury(dog, "bruise"));
         assertThrows(IllegalArgumentException.class, () -> effects.ancestry(dog));
     }
