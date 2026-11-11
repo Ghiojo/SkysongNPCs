@@ -9,6 +9,7 @@ import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.configuration.ConfigurationSection;
 
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -43,11 +44,28 @@ public final class Messages {
 
     /** The text at {@code key} with its {@code <name>} placeholders filled in as plain, unstyled text. */
     public Component get(String key, Map<String, String> placeholders) {
+        return miniMessage.deserialize(raw(key), resolvers(placeholders));
+    }
+
+    /**
+     * The text at {@code key} as separate lines, for item lore: a YAML list gives one line per
+     * entry, and a single text gives one line.
+     */
+    public List<Component> lines(String key, Map<String, String> placeholders) {
+        ConfigurationSection source = file.contains(key) ? file : bundled;
+        if (!source.isList(key)) {
+            return List.of(get(key, placeholders));
+        }
+        TagResolver resolver = resolvers(placeholders);
+        return source.getStringList(key).stream().map(line -> miniMessage.deserialize(line, resolver)).toList();
+    }
+
+    private TagResolver resolvers(Map<String, String> placeholders) {
         // The prefix is looked up only when a text uses it, so a file without one stays quiet.
         TagResolver.Builder resolvers = TagResolver.builder()
                 .tag(PREFIX_KEY, (arguments, context) -> Tag.selfClosingInserting(miniMessage.deserialize(raw(PREFIX_KEY))));
         placeholders.forEach((name, value) -> resolvers.resolver(Placeholder.unparsed(name, value)));
-        return miniMessage.deserialize(raw(key), resolvers.build());
+        return resolvers.build();
     }
 
     /** The text at {@code key} without its styles, for use inside another text's placeholder. */

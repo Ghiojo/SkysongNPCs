@@ -1,0 +1,25 @@
+# The menu a Skysong NPC opens when right-clicked, or with /snpc menu.
+#
+# A player sees only the buttons they may use (their access to the NPC), and a
+# player who would see none gets no menu: the click goes on to Citizens and
+# other plugins as usual. Button names and lore are in messages.yml (menu:).
+#
+# Keys missing from this file are added from the plugin's defaults on start and
+# on /snpc reload. A file with a YAML mistake is not applied.
+
+npc-menu:
+  # Rows of the menu, 1 to 6.
+  rows: 3
+  # false: right-clicking does nothing, and only /snpc menu opens it.
+  open-on-right-click: true
+
+  # Buttons by id. Other plugins' buttons have ids too, such as
+  # "skysongeconomy:payroll", and can be added here the same way. Each may set:
+  #   slot: where it goes, counted from 0 at the top left (row 2, column 5 is 13).
+  #         A slot outside the menu or already taken moves it to the first free slot.
+  #   material: draw it with this item instead (a Bukkit material name).
+  #   hidden: true to leave it out for everyone.
+  buttons:
+    "skysongnpcs:info":
+      slot: 13
+      material: NAME_TAG

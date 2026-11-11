@@ -17,7 +17,7 @@ import java.util.Objects;
 import java.util.logging.Level;
 
 /**
- * Owns config.yml and messages.yml: writes the defaults on first start, adds the keys a file
+ * Owns config.yml, messages.yml and menus.yml: writes the defaults on first start, adds the keys a file
  * lacks from the copy in the jar, and swaps in the new copies on {@link #reload()}. Other parts
  * ask it for the current values, so they see a reload without having to be rebuilt.
  *
@@ -28,17 +28,19 @@ import java.util.logging.Level;
 public final class PluginConfiguration {
     static final String CONFIG_FILE = "config.yml";
     static final String MESSAGES_FILE = "messages.yml";
+    static final String MENUS_FILE = "menus.yml";
 
     private final Plugin plugin;
     private YamlConfiguration config;
     private Messages messages;
+    private YamlConfiguration menus;
 
     public PluginConfiguration(Plugin plugin) {
         this.plugin = plugin;
     }
 
     /**
-     * Writes any missing default file, then reads both.
+     * Writes any missing default file, then reads them all.
      *
      * @return the files that could not be read and kept their previous values; empty when all were applied
      */
@@ -66,6 +68,18 @@ public final class PluginConfiguration {
                 messages = new Messages(bundledMessages, bundledMessages, plugin.getLogger());
             }
         }
+
+        // menus.yml: the NPC menu's layout.
+        YamlConfiguration bundledMenus = bundled(MENUS_FILE);
+        YamlConfiguration newMenus = read(MENUS_FILE, bundledMenus);
+        if (newMenus != null) {
+            menus = newMenus;
+        } else {
+            broken.add(MENUS_FILE);
+            if (menus == null) {
+                menus = bundledMenus;
+            }
+        }
         return List.copyOf(broken);
     }
 
@@ -76,6 +90,11 @@ public final class PluginConfiguration {
 
     public Messages messages() {
         return Objects.requireNonNull(messages, "reload() has not run yet");
+    }
+
+    /** menus.yml as last read without mistakes: where the NPC menu's buttons go. */
+    public FileConfiguration menus() {
+        return Objects.requireNonNull(menus, "reload() has not run yet");
     }
 
     /** The MySQL connection from config.yml's {@code database:} section. The plugin reads it once, on enable. */

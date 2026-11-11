@@ -14,9 +14,11 @@ import org.skysongdev.skysongnpcs.apiimpl.SkysongNpcsApiImpl;
 import org.skysongdev.skysongnpcs.characters.CharacterLookup;
 import org.skysongdev.skysongnpcs.characters.StatsCharacterLookup;
 import org.skysongdev.skysongnpcs.citizens.CitizensListener;
+import org.skysongdev.skysongnpcs.citizens.CitizensMenuListener;
 import org.skysongdev.skysongnpcs.citizens.CitizensNpcLookup;
 import org.skysongdev.skysongnpcs.commands.AccessCommand;
 import org.skysongdev.skysongnpcs.commands.AdoptCommand;
+import org.skysongdev.skysongnpcs.commands.MenuCommand;
 import org.skysongdev.skysongnpcs.commands.NpcCommands;
 import org.skysongdev.skysongnpcs.commands.NpcTargeting;
 import org.skysongdev.skysongnpcs.commands.OwnerCommand;
@@ -24,6 +26,9 @@ import org.skysongdev.skysongnpcs.commands.ReleaseCommand;
 import org.skysongdev.skysongnpcs.commands.ReloadCommand;
 import org.skysongdev.skysongnpcs.commands.SubCommand;
 import org.skysongdev.skysongnpcs.config.PluginConfiguration;
+import org.skysongdev.skysongnpcs.menu.InfoButton;
+import org.skysongdev.skysongnpcs.menu.MenuListener;
+import org.skysongdev.skysongnpcs.menu.NpcMenuService;
 import org.skysongdev.skysongnpcs.npc.NpcLookup;
 import org.skysongdev.skysongnpcs.npc.NpcRegistry;
 import org.skysongdev.skysongnpcs.storage.Database;
@@ -50,6 +55,7 @@ public class SkysongNPCs extends JavaPlugin {
     private CharacterLookup characters;
     private GrantStore grantStore;
     private AccessService access;
+    private NpcMenuService menu;
 
     @Override
     public void onEnable() {
@@ -80,18 +86,26 @@ public class SkysongNPCs extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new AccessListener(access), this);
 
         NpcTargeting targeting = new NpcTargeting(registry, citizens, characters, configuration);
+
+        // The NPC menu: right-click or /snpc menu.
+        menu = new NpcMenuService(this, registry, citizens, configuration);
+        new InfoButton(configuration, citizens, npc -> targeting.ownerName(npc.owner())).register(this, menu, access);
+        getServer().getPluginManager().registerEvents(new MenuListener(menu), this);
+        hookMenuClicks(menu);
+
         List<SubCommand> subCommands = List.of(
                 new ReloadCommand(configuration),
                 new AdoptCommand(targeting),
                 new ReleaseCommand(targeting),
                 new OwnerCommand(targeting),
-                new AccessCommand(targeting, access, configuration));
+                new AccessCommand(targeting, access, configuration),
+                new MenuCommand(targeting, menu));
         NpcCommands commands = new NpcCommands(subCommands, configuration, getPluginMeta().getVersion());
         getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS,
                 event -> commands.register(event.registrar()));
 
         // Last, so other plugins only see the API once everything behind it is ready.
-        getServer().getServicesManager().register(SkysongNpcsApi.class, new SkysongNpcsApiImpl(registry, citizens, access),
+        getServer().getServicesManager().register(SkysongNpcsApi.class, new SkysongNpcsApiImpl(registry, citizens, access, menu),
                 this, ServicePriority.Normal);
     }
 
@@ -118,6 +132,11 @@ public class SkysongNPCs extends JavaPlugin {
     protected NpcLookup hookCitizens(NpcRegistry registry) {
         getServer().getPluginManager().registerEvents(new CitizensListener(registry), this);
         return new CitizensNpcLookup();
+    }
+
+    /** Right-clicking a managed NPC opens its menu. Tests have no Citizens, so they skip it. */
+    protected void hookMenuClicks(NpcMenuService menu) {
+        getServer().getPluginManager().registerEvents(new CitizensMenuListener(menu), this);
     }
 
     /** How the plugin reads players' characters, from SkysongStats. */
@@ -148,5 +167,10 @@ public class SkysongNPCs extends JavaPlugin {
     /** Who may do what with the NPCs; null while the plugin is disabled. */
     public AccessService access() {
         return access;
+    }
+
+    /** The NPC menu; null while the plugin is disabled. */
+    public NpcMenuService menu() {
+        return menu;
     }
 }
