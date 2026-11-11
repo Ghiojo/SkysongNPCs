@@ -65,8 +65,9 @@ access:
   no-actions: "<prefix><red>Name the actions after the group, or a preset: <presets>."
   # <word>: what was typed. <actions>, <presets>: every action and preset.
   unknown-action: "<prefix><red><word> is not an action or a preset.<newline><gray>Actions: <actions><newline>Presets: <presets>"
-  # <types>: the group types other plugins added, or no-types below.
-  bad-group: "<prefix><red><group> is not a group. Use player:NAME, \"player:NAME/PROFILE\", perm:NODE, or a type from another plugin: <types>."
+  # <types>: the other group types: group (player groups), lp (with LuckPerms) and those
+  # other plugins added; no-types below when there are none.
+  bad-group: "<prefix><red><group> is not a group. Use player:NAME, \"player:NAME/PROFILE\", perm:NODE, or TYPE:NAME with one of these types: <types>."
   no-types: "none"
   bad-source: "<prefix><red><source> is not a plugin name."
 
@@ -256,3 +257,32 @@ movement:
     look: "<gray>Shift-click: <white>look at players <dark_gray>(<state>)"
     "on": "on"
     "off": "off"
+
+# --- M4: player groups (/snpc group). A grant names one as group:NAME. ---
+# <group>: the group's name. <owner>: who made it. <member>: a member, as written below.
+group:
+  list-header: "<prefix><gray>Groups you can change:"
+  # <count>: how many members it has.
+  list-entry: "<gray> - <white><group></white> <dark_gray>(<owner>)</dark_gray>: <count> member(s)"
+  list-empty: "<prefix><gray>You have no groups. Make one with /snpc group create NAME."
+  created: "<prefix><green>Made group <group>. Let it use an NPC with /snpc access grant group:<group> ACTIONS."
+  # <grants>: how many grants named it, now gone.
+  deleted: "<prefix><green>Deleted group <group>, and the <grants> grant(s) that named it."
+  added: "<prefix><green><member> is now in <group>."
+  removed: "<prefix><green><member> is no longer in <group>."
+  already-member: "<prefix><yellow><member> is already in <group>."
+  not-member: "<prefix><yellow><member> is not in <group>."
+  info-header: "<prefix><gray>Group <white><group></white>, made by <owner>:"
+  info-entry: "<gray> - <white><member>"
+  info-empty: "<prefix><gray>Group <group>, made by <owner>, has no members."
+  unknown: "<prefix><red>There is no group called <group>."
+  taken: "<prefix><red>The name <group> is taken."
+  bad-name: "<prefix><red><group> can't be a group name: use up to 32 lower-case letters, digits, - and _."
+  not-yours: "<prefix><red>Only <owner> and staff can change group <group>."
+  no-character: "<prefix><red>Play a character first: the group will belong to them."
+  # <limit>: the limit in config.yml.
+  group-limit: "<prefix><red>This character already has <limit> group(s)."
+  member-limit: "<prefix><red><group> already has <limit> members."
+  # How <member> is written. <player>: the player's name. <profile>: their character's profile.
+  member-every: "<player> (every character)"
+  member-character: "<player> (<profile>)"

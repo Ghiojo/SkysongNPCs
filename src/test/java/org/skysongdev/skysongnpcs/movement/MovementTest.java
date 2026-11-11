@@ -320,7 +320,7 @@ class MovementTest {
         assertTrue(movement.look(guard, true, 30));
         assertTrue(movement.isLooking(guard));
         assertFalse(movement.isLooking(plain));
-        assertEquals("0.9.0", SkysongNpcsApi.get().apiVersion());
+        assertEquals("0.10.0", SkysongNpcsApi.get().apiVersion());
     }
 
     private void grant(PlayerMock player, NpcAction... actions) {
