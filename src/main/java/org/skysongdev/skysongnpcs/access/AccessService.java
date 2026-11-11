@@ -11,11 +11,14 @@ import org.skysongdev.skysongnpcs.characters.CharacterLookup;
 import org.skysongdev.skysongnpcs.commands.Permissions;
 import org.skysongdev.skysongnpcs.npc.NpcRecord;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Level;
@@ -36,6 +39,8 @@ public final class AccessService {
     private final ActionPresets presets;
     private final Logger logger;
     private final Map<String, Registration> providers = new LinkedHashMap<>();
+    // M5: access policies
+    private PolicyGrants policies = PolicyGrants.NONE;
 
     public AccessService(AccessRegistry grants, CharacterLookup characters, ActionPresets presets, Logger logger) {
         this.grants = grants;
@@ -61,7 +66,7 @@ public final class AccessService {
         if (isOwner(player, profile, npc)) {
             return true;
         }
-        for (AccessGrant grant : grants.grants(npc.id())) {
+        for (AccessGrant grant : effectiveGrants(npc)) {
             if (grant.allows(action) && contains(grant.group(), player, profile)) {
                 return true;
             }
@@ -79,7 +84,7 @@ public final class AccessService {
             return Collections.unmodifiableSet(EnumSet.allOf(NpcAction.class));
         }
         Set<NpcAction> allowed = EnumSet.noneOf(NpcAction.class);
-        for (AccessGrant grant : grants.grants(npc.id())) {
+        for (AccessGrant grant : effectiveGrants(npc)) {
             if (contains(grant.group(), player, profile)) {
                 for (NpcAction action : NpcAction.values()) {
                     if (grant.allows(action)) {
@@ -89,6 +94,24 @@ public final class AccessService {
             }
         }
         return Collections.unmodifiableSet(allowed);
+    }
+
+    // M5: access policies
+
+    /** Lets NPCs also allow what the policy they follow grants. */
+    public void usePolicies(PolicyGrants policies) {
+        this.policies = Objects.requireNonNull(policies, "policies");
+    }
+
+    /** The NPC's own grants, then its policy's. */
+    private List<AccessGrant> effectiveGrants(NpcRecord npc) {
+        List<AccessGrant> policyGrants = policies.grants(npc.id());
+        if (policyGrants.isEmpty()) {
+            return grants.grants(npc.id());
+        }
+        List<AccessGrant> all = new ArrayList<>(grants.grants(npc.id()));
+        all.addAll(policyGrants);
+        return all;
     }
 
     /** Whether the player is in a group, playing {@code profile} (null for none). */

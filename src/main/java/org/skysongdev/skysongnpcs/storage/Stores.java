@@ -8,11 +8,13 @@ import java.util.Objects;
  *
  * @param npcs   the NPC records
  * @param grants the access grants
+ * @param policies the access policies (M5)
  */
-public record Stores(NpcStore npcs, GrantStore grants) {
+public record Stores(NpcStore npcs, GrantStore grants, PolicyStore policies) {
 
     public Stores {
         Objects.requireNonNull(npcs, "npcs");
         Objects.requireNonNull(grants, "grants");
+        Objects.requireNonNull(policies, "policies");
     }
 }

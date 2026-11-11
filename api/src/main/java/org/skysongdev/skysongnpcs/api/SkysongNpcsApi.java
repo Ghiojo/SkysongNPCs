@@ -9,6 +9,8 @@ import org.skysongdev.skysongnpcs.api.menu.NpcMenu;
 import org.skysongdev.skysongnpcs.api.items.NpcItems;
 import org.skysongdev.skysongnpcs.api.npc.Npcs;
 import org.skysongdev.skysongnpcs.api.sheet.NpcSheets;
+// M5: access policies
+import org.skysongdev.skysongnpcs.api.policy.Policies;
 
 /**
  * Entry point of the SkysongNPCs API, the supported way for other plugins (SkysongEconomy
@@ -97,4 +99,14 @@ public interface SkysongNpcsApi {
      * @since 0.6.0
      */
     @NotNull NpcItems items();
+
+    // M5: access policies
+
+    /**
+     * Access policies: named sets of grants many NPCs follow at once.
+     *
+     * @return the policies part of the API
+     * @since 0.7.0
+     */
+    @NotNull Policies policies();
 }
