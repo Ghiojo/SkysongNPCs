@@ -16,6 +16,11 @@ import org.skysongdev.skysongnpcs.characters.StatsCharacterLookup;
 import org.skysongdev.skysongnpcs.citizens.CitizensListener;
 import org.skysongdev.skysongnpcs.citizens.CitizensMenuListener;
 import org.skysongdev.skysongnpcs.citizens.CitizensNpcLookup;
+import org.skysongdev.skysongnpcs.cloning.CitizensRemoveListener;
+import org.skysongdev.skysongnpcs.cloning.CloneListener;
+import org.skysongdev.skysongnpcs.cloning.NpcCloning;
+import org.skysongdev.skysongnpcs.cloning.RebuildingSheetCopier;
+import org.skysongdev.skysongnpcs.cloning.SheetCopier;
 import org.skysongdev.skysongnpcs.commands.AccessCommand;
 import org.skysongdev.skysongnpcs.citizens.CitizensNpcSpawner;
 import org.skysongdev.skysongnpcs.commands.AdoptCommand;
@@ -175,6 +180,11 @@ public class SkysongNPCs extends JavaPlugin {
         long recountTicks = Math.max(1, configuration.config().getInt("sheets.item-recount-seconds", 5)) * 20L;
         getServer().getScheduler().runTaskTimer(this, () -> sheets.recountAll(false), recountTicks, recountTicks);
 
+        // M13: cloning. A copy gets its own copy of the original's sheet; a removed NPC's sheet is deleted.
+        NpcCloning cloning = new NpcCloning(hookSheetCopier(), sheets, getLogger());
+        getServer().getPluginManager().registerEvents(new CloneListener(cloning), this);
+        listenForNpcRemovals(cloning);
+
         NpcTargeting targeting = new NpcTargeting(registry, citizens, characters, configuration);
 
         // The NPC menu: right-click or /snpc menu.
@@ -288,6 +298,18 @@ public class SkysongNPCs extends JavaPlugin {
     /** Counts every NPC's items again after a SkysongStats reload. */
     protected void listenForStatsReloads(NpcSheetService sheets) {
         getServer().getPluginManager().registerEvents(new StatsReloadListener(sheets), this);
+    }
+
+    // M13: cloning
+
+    /** How the plugin copies and deletes sheets in SkysongStats. */
+    protected SheetCopier hookSheetCopier() {
+        return new RebuildingSheetCopier(this);
+    }
+
+    /** Deletes a sheet when Citizens removes its NPC. Tests have no Citizens, so they skip it. */
+    protected void listenForNpcRemovals(NpcCloning cloning) {
+        getServer().getPluginManager().registerEvents(new CitizensRemoveListener(cloning), this);
     }
 
     /** The NPC templates; null while the plugin is disabled. */

@@ -5,6 +5,8 @@ import org.bukkit.plugin.PluginDescriptionFile;
 import org.mockbukkit.mockbukkit.MockBukkit;
 import org.skysongdev.skysongnpcs.characters.CharacterLookup;
 import org.skysongdev.skysongnpcs.inventory.NpcContainers;
+import org.skysongdev.skysongnpcs.cloning.NpcCloning;
+import org.skysongdev.skysongnpcs.cloning.SheetCopier;
 import org.skysongdev.skysongnpcs.menu.NpcMenuService;
 import org.skysongdev.skysongnpcs.items.ItemTagGateway;
 import org.skysongdev.skysongnpcs.items.NpcSpawner;
@@ -157,5 +159,28 @@ public class OfflineSkysongNPCs extends SkysongNPCs {
 
     public FakeWardrobe fakeWardrobe() {
         return fakeWardrobe;
+    }
+
+    // M13: cloning
+    private final FakeSheetCopier fakeCopier = new FakeSheetCopier(fakeSheets);
+    private NpcCloning cloning;
+
+    @Override
+    protected SheetCopier hookSheetCopier() {
+        return fakeCopier;
+    }
+
+    @Override
+    protected void listenForNpcRemovals(NpcCloning cloning) {
+        // Citizens' remove event is not on the test classpath; tests call cloning().removed.
+        this.cloning = cloning;
+    }
+
+    public FakeSheetCopier fakeCopier() {
+        return fakeCopier;
+    }
+
+    public NpcCloning cloning() {
+        return cloning;
     }
 }
