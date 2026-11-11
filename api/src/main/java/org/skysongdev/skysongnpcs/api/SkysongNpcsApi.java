@@ -4,6 +4,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.skysongdev.skysongnpcs.api.npc.Npcs;
 
 /**
  * Entry point of the SkysongNPCs API, the supported way for other plugins (SkysongEconomy
@@ -53,4 +54,11 @@ public interface SkysongNpcsApi {
      * @return the API version, for example {@code "0.1.0"}
      */
     @NotNull String apiVersion();
+
+    /**
+     * The managed NPCs: find, list, adopt, release, and change owners.
+     *
+     * @return the NPCs part of the API
+     */
+    @NotNull Npcs npcs();
 }

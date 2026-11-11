@@ -12,7 +12,11 @@ depend: [Citizens, SkysongStats, Skysong_Items]
 # WorldGuard for the npc-place region flag.
 softdepend: [SkysongWardrobe, LuckPerms, WorldGuard]
 
+# Downloaded by Paper on first start. The MySQL driver ships with Paper.
+libraries:
+  - com.zaxxer:HikariCP:6.2.1
+
 permissions:
   skysongnpcs.admin:
-    description: Staff. Do everything with every NPC, and reload the plugin's files.
+    description: Staff. Do everything with every NPC (including /snpc adopt, release and owner server), and reload the plugin's files.
     default: op

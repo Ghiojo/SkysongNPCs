@@ -5,5 +5,15 @@
 # YAML mistake is not applied: the plugin keeps the values it read before and
 # says so in the console.
 #
-# Each feature adds its own section here as it is released (database, access
-# presets, choice rules, placing limits, follow distance).
+# Each feature adds its own section here as it is released (access presets,
+# choice rules, placing limits, follow distance).
+
+# The MySQL database the NPC records are kept in, the same keys SkysongStats uses.
+# The plugin creates its own tables (all named snpc_...) and does not start without
+# the database. Read on start only: /snpc reload does not reconnect.
+database:
+  host: "localhost"
+  port: "3306"
+  user: "root"
+  password: ""
+  database_name: "skysong"
