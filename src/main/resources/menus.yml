@@ -30,3 +30,7 @@ npc-menu:
     "skysongnpcs:equipment":
       slot: 16
       material: IRON_CHESTPLATE
+    # M10: wardrobe. Dresses the NPC (wardrobe-edit) or shows what it wears (wardrobe-view).
+    "skysongnpcs:wardrobe":
+      slot: 14
+      material: LEATHER_CHESTPLATE
