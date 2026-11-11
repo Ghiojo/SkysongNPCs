@@ -4,6 +4,7 @@ import org.bukkit.plugin.InvalidDescriptionException;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.mockbukkit.mockbukkit.MockBukkit;
 import org.skysongdev.skysongnpcs.characters.CharacterLookup;
+import org.skysongdev.skysongnpcs.inventory.NpcContainers;
 import org.skysongdev.skysongnpcs.menu.NpcMenuService;
 import org.skysongdev.skysongnpcs.items.ItemTagGateway;
 import org.skysongdev.skysongnpcs.items.NpcSpawner;
@@ -39,6 +40,8 @@ public class OfflineSkysongNPCs extends SkysongNPCs {
     // M17
     private final FakeItemTags fakeItemTags = new FakeItemTags();
     private final FakeNpcSpawner fakeSpawner = new FakeNpcSpawner();
+    // M9: inventory and equipment
+    private final FakeNpcContainers fakeContainers = new FakeNpcContainers();
 
     /** Loads it with the commands and permissions of the real plugin.yml. */
     public static OfflineSkysongNPCs load() {
@@ -127,5 +130,16 @@ public class OfflineSkysongNPCs extends SkysongNPCs {
 
     public FakeNpcSpawner fakeSpawner() {
         return fakeSpawner;
+    }
+
+    // M9: inventory and equipment
+
+    @Override
+    protected NpcContainers hookContainers() {
+        return fakeContainers;
+    }
+
+    public FakeNpcContainers fakeContainers() {
+        return fakeContainers;
     }
 }

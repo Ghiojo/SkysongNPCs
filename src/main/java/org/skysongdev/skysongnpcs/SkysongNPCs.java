@@ -68,6 +68,14 @@ import org.skysongdev.skysongnpcs.policy.EventFiringPolicyChanges;
 import org.skysongdev.skysongnpcs.policy.PolicyListener;
 import org.skysongdev.skysongnpcs.policy.PolicyRegistry;
 import org.skysongdev.skysongnpcs.storage.PolicyStore;
+// M9: inventory and equipment
+import org.skysongdev.skysongnpcs.citizens.CitizensNpcContainers;
+import org.skysongdev.skysongnpcs.commands.ContainerCommand;
+import org.skysongdev.skysongnpcs.inventory.Container;
+import org.skysongdev.skysongnpcs.inventory.ContainerButtons;
+import org.skysongdev.skysongnpcs.inventory.ContainerService;
+import org.skysongdev.skysongnpcs.inventory.NpcContainers;
+import org.skysongdev.skysongnpcs.inventory.ReadOnlyViewListener;
 
 import java.io.File;
 import java.util.List;
@@ -99,6 +107,8 @@ public class SkysongNPCs extends JavaPlugin {
     // M5: access policies
     private PolicyStore policyStore;
     private PolicyRegistry policies;
+    // M9: inventory and equipment
+    private ContainerService containers;
 
     /** M17: WorldGuard is optional; its flags must be registered before it enables, so here. */
     @Override
@@ -165,6 +175,11 @@ public class SkysongNPCs extends JavaPlugin {
         hookMenuClicks(menu);
 
         AccessCommand accessCommand = new AccessCommand(targeting, access, configuration);
+        // M9: inventory and equipment, from the menu and /snpc inventory and /snpc equip.
+        containers = new ContainerService(registry, citizens, hookContainers(), access, configuration);
+        new ContainerButtons(containers, configuration, citizens).register(this, menu);
+        getServer().getPluginManager().registerEvents(new ReadOnlyViewListener(), this);
+
         List<SubCommand> subCommands = List.of(
                 new ReloadCommand(configuration, List.of(templates)),
                 new AdoptCommand(targeting),
@@ -178,7 +193,10 @@ public class SkysongNPCs extends JavaPlugin {
                 new ModifierCommand(targeting, sheets),
                 new ProficiencyCommand(targeting, sheets),
                 // M5: access policies
-                new PolicyCommand(targeting, access, accessCommand, policies, configuration));
+                new PolicyCommand(targeting, access, accessCommand, policies, configuration),
+                // M9: inventory and equipment
+                new ContainerCommand(targeting, containers, Container.INVENTORY),
+                new ContainerCommand(targeting, containers, Container.EQUIPMENT));
         NpcCommands commands = new NpcCommands(subCommands, configuration, getPluginMeta().getVersion());
         getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS,
                 event -> commands.register(event.registrar()));
@@ -194,7 +212,8 @@ public class SkysongNPCs extends JavaPlugin {
 
         // Last, so other plugins only see the API once everything behind it is ready.
         getServer().getServicesManager().register(SkysongNpcsApi.class, new SkysongNpcsApiImpl(registry, citizens, access, menu,
-                        sheets, templates, factory, blueprints, policies),
+                        sheets, templates, factory, blueprints, policies,
+                        containers),
                 this, ServicePriority.Normal);
     }
 
@@ -322,5 +341,17 @@ public class SkysongNPCs extends JavaPlugin {
     /** The access policies; null while the plugin is disabled. */
     public PolicyRegistry policies() {
         return policies;
+    }
+
+    // M9: inventory and equipment
+
+    /** How the plugin reads and edits NPCs' inventories and equipment, in Citizens. */
+    protected NpcContainers hookContainers() {
+        return new CitizensNpcContainers();
+    }
+
+    /** NPC inventories and equipment; null while the plugin is disabled. */
+    public ContainerService containers() {
+        return containers;
     }
 }
