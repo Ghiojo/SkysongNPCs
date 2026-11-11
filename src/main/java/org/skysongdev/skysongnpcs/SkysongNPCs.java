@@ -76,6 +76,13 @@ import org.skysongdev.skysongnpcs.inventory.ContainerButtons;
 import org.skysongdev.skysongnpcs.inventory.ContainerService;
 import org.skysongdev.skysongnpcs.inventory.NpcContainers;
 import org.skysongdev.skysongnpcs.inventory.ReadOnlyViewListener;
+// M10: wardrobe
+import org.skysongdev.skysongnpcs.commands.WardrobeCommand;
+import org.skysongdev.skysongnpcs.wardrobe.NpcWardrobes;
+import org.skysongdev.skysongnpcs.wardrobe.SkysongWardrobeGateway;
+import org.skysongdev.skysongnpcs.wardrobe.WardrobeButton;
+import org.skysongdev.skysongnpcs.wardrobe.WardrobeGateway;
+import org.skysongdev.skysongnpcs.wardrobe.WardrobeViewListener;
 
 import java.io.File;
 import java.util.List;
@@ -109,6 +116,8 @@ public class SkysongNPCs extends JavaPlugin {
     private PolicyRegistry policies;
     // M9: inventory and equipment
     private ContainerService containers;
+    // M10: wardrobe
+    private NpcWardrobes wardrobes;
 
     /** M17: WorldGuard is optional; its flags must be registered before it enables, so here. */
     @Override
@@ -179,6 +188,12 @@ public class SkysongNPCs extends JavaPlugin {
         containers = new ContainerService(registry, citizens, hookContainers(), access, configuration);
         new ContainerButtons(containers, configuration, citizens).register(this, menu);
         getServer().getPluginManager().registerEvents(new ReadOnlyViewListener(), this);
+        // M10: wardrobe, through SkysongWardrobe when it is installed.
+        WardrobeGateway wardrobeGateway = hookWardrobe();
+        wardrobes = new NpcWardrobes(this, registry, citizens, access, menu, configuration, wardrobeGateway);
+        wardrobeGateway.guard(this, wardrobes);
+        new WardrobeButton(wardrobes, access, citizens, configuration).register(this, menu);
+        getServer().getPluginManager().registerEvents(new WardrobeViewListener(wardrobes), this);
 
         List<SubCommand> subCommands = List.of(
                 new ReloadCommand(configuration, List.of(templates)),
@@ -196,7 +211,9 @@ public class SkysongNPCs extends JavaPlugin {
                 new PolicyCommand(targeting, access, accessCommand, policies, configuration),
                 // M9: inventory and equipment
                 new ContainerCommand(targeting, containers, Container.INVENTORY),
-                new ContainerCommand(targeting, containers, Container.EQUIPMENT));
+                new ContainerCommand(targeting, containers, Container.EQUIPMENT),
+                // M10: wardrobe
+                new WardrobeCommand(targeting, wardrobes));
         NpcCommands commands = new NpcCommands(subCommands, configuration, getPluginMeta().getVersion());
         getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS,
                 event -> commands.register(event.registrar()));
@@ -353,5 +370,21 @@ public class SkysongNPCs extends JavaPlugin {
     /** NPC inventories and equipment; null while the plugin is disabled. */
     public ContainerService containers() {
         return containers;
+    }
+
+    // M10: wardrobe
+
+    /** SkysongWardrobe's NPC wardrobes, or none when it is not installed. */
+    protected WardrobeGateway hookWardrobe() {
+        if (!getServer().getPluginManager().isPluginEnabled("SkysongWardrobe")) {
+            return WardrobeGateway.NONE;
+        }
+        // Only reached when SkysongWardrobe is enabled, so its classes are never loaded without it.
+        return SkysongWardrobeGateway.hook(this);
+    }
+
+    /** NPC wardrobes; null while the plugin is disabled. */
+    public NpcWardrobes wardrobes() {
+        return wardrobes;
     }
 }

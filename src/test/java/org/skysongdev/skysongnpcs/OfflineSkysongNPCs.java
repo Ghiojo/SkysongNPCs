@@ -26,6 +26,9 @@ import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
+// M10: wardrobe
+import org.skysongdev.skysongnpcs.wardrobe.WardrobeGateway;
+
 /**
  * The plugin with its records in memory, and Citizens and SkysongStats replaced by fakes the
  * test controls, since neither plugin is on the test classpath. The same approach as
@@ -42,6 +45,8 @@ public class OfflineSkysongNPCs extends SkysongNPCs {
     private final FakeNpcSpawner fakeSpawner = new FakeNpcSpawner();
     // M9: inventory and equipment
     private final FakeNpcContainers fakeContainers = new FakeNpcContainers();
+    // M10: wardrobe
+    private final FakeWardrobe fakeWardrobe = new FakeWardrobe();
 
     /** Loads it with the commands and permissions of the real plugin.yml. */
     public static OfflineSkysongNPCs load() {
@@ -141,5 +146,16 @@ public class OfflineSkysongNPCs extends SkysongNPCs {
 
     public FakeNpcContainers fakeContainers() {
         return fakeContainers;
+    }
+
+    // M10: wardrobe
+
+    @Override
+    protected WardrobeGateway hookWardrobe() {
+        return fakeWardrobe;
+    }
+
+    public FakeWardrobe fakeWardrobe() {
+        return fakeWardrobe;
     }
 }
