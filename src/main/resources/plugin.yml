@@ -1,0 +1,4 @@
+name: SkysongNPCs
+version: '1.0'
+main: org.skysongdev.skysongNPCs.SkysongNPCs
+api-version: '1.21'
