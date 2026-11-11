@@ -24,3 +24,7 @@ permissions:
   skysongnpcs.place:
     description: Place NPCs from blueprint items.
     default: true
+  # M4
+  skysongnpcs.groups:
+    description: Make player groups with /snpc group.
+    default: true
