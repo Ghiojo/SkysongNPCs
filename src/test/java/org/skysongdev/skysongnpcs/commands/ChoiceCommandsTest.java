@@ -55,6 +55,7 @@ class ChoiceCommandsTest {
         guard = plugin.fakeCitizens().add("Guard");
         plugin.fakeCitizens().target(guard);
         plugin.registry().adopt(guard, NpcOwner.character(alice.getUniqueId(), "Default"));
+        plugin.fakeSheets().delete(guard);
         plugin.fakeSheets().create(guard, Map.of("strength", 1));
     }
 

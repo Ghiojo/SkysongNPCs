@@ -59,7 +59,6 @@ class AbilityServiceTest {
         choices = plugin.fakeChoices();
         guard = plugin.fakeCitizens().add("Guard");
         plugin.registry().adopt(guard, NpcOwner.server());
-        plugin.sheets().create(guard, Map.of());
         writeAbilities(TOUGH);
     }
 
@@ -268,6 +267,8 @@ class AbilityServiceTest {
     void anNpcWithoutASheetGetsModifiersOnceItHasOne() {
         UUID dog = plugin.fakeCitizens().add("Dog");
         plugin.registry().adopt(dog, NpcOwner.server());
+        // Its SkysongStats character was deleted by hand.
+        plugin.fakeSheets().delete(dog);
         abilities.grant(dog, "tough");
         assertEquals(3, choices.unspentPoints(dog, "ability:tough"));
 
@@ -285,7 +286,6 @@ class AbilityServiceTest {
         sheets.addModifier(guard, "strength", 2);
         UUID copy = plugin.fakeCitizens().add("Copy");
         plugin.registry().adopt(copy, NpcOwner.server());
-        plugin.sheets().create(copy, Map.of());
         // What M13 does: every modifier again, same order, new ids.
         sheets.modifiers(guard).forEach(line -> sheets.addModifier(copy, line.target(), line.amount()));
 

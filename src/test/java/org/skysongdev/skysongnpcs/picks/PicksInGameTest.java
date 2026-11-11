@@ -43,7 +43,6 @@ import java.util.UUID;
 import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -83,7 +82,6 @@ class PicksInGameTest {
         guard = plugin.fakeCitizens().add("Guard");
         plugin.fakeCitizens().target(guard);
         plugin.registry().adopt(guard, NpcOwner.character(alice.getUniqueId(), "Default"));
-        plugin.fakeSheets().create(guard, Map.of());
     }
 
     @AfterEach
@@ -256,9 +254,9 @@ class PicksInGameTest {
         StartingPicks starting = new StartingPicks(picks, templatePicks);
         NpcRecord npc = plugin.registry().get(guard).orElseThrow();
 
-        starting.created(npc, new NpcTemplate("ghost", EntityType.PLAYER, "Ghost", null, false, Map.of()), null);
+        starting.created(npc, new NpcTemplate("ghost", EntityType.PLAYER, "Ghost", null, Map.of()), null);
         assertEquals(0, picks.pending(guard));
-        starting.created(npc, new NpcTemplate("guard", EntityType.PLAYER, "Guard", null, true, Map.of()), null);
+        starting.created(npc, new NpcTemplate("guard", EntityType.PLAYER, "Guard", null, Map.of()), null);
         assertEquals(1, picks.unspent(guard, TemplatePicks.SOURCE));
     }
 

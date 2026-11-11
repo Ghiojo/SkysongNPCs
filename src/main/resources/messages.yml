@@ -34,8 +34,11 @@ npc:
 
 # /snpc adopt [player] [profile] (staff): makes a plain Citizens NPC a Skysong NPC.
 adopt:
-  done: "<prefix><green><npc> is now a Skysong NPC owned by <owner>."
+  done: "<prefix><green><npc> is now a Skysong NPC owned by <owner>, with a stat sheet."
   already: "<prefix><red><npc> is already a Skysong NPC, owned by <owner>."
+  # Every Skysong NPC has a stat sheet; when SkysongStats will not make one, the NPC is not
+  # adopted. <reason>: what went wrong, in English.
+  failed: "<prefix><red>Could not adopt <npc>: its stat sheet could not be made (<reason>)."
 
 # /snpc release (staff): makes a Skysong NPC a plain Citizens NPC again.
 release:
@@ -103,7 +106,6 @@ sheet:
   # <template>: the template's id.
   created-from: "<prefix><green><npc> now has a stat sheet from template <template>."
   unknown-template: "<prefix><red>There is no NPC template called <template>."
-  template-without-sheet: "<prefix><red>Template <template> gives no stat sheet."
   # <reason>: what went wrong, in English, such as a stat that left stats.yml.
   failed: "<prefix><red>Could not give <npc> a stat sheet: <reason>"
 

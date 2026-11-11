@@ -105,7 +105,13 @@ public final class TemplateRegistry implements Reloadable {
         } catch (IOException | InvalidConfigurationException e) {
             throw new TemplateException(e.getMessage());
         }
-        return parse(id, yaml, statIds);
+        NpcTemplate template = parse(id, yaml, statIds);
+        if (yaml.contains("sheet") && !(yaml.isBoolean("sheet") && yaml.getBoolean("sheet"))) {
+            // Every Skysong NPC has a stat sheet; templates used to be able to turn it off.
+            logger.warning("templates/" + id + ".yml: sheet: " + yaml.get("sheet") + " is ignored. Every Skysong NPC"
+                    + " has a stat sheet, so the sheet key can be deleted.");
+        }
+        return template;
     }
 
     /** Reads one template's contents. */
@@ -129,10 +135,6 @@ public final class TemplateRegistry implements Reloadable {
         if (skin != null && skin.isBlank()) {
             skin = null;
         }
-        if (yaml.contains("sheet") && !yaml.isBoolean("sheet")) {
-            throw new TemplateException("sheet must be true or false");
-        }
-        boolean sheet = yaml.getBoolean("sheet", true);
 
         Map<String, Integer> stats = new LinkedHashMap<>();
         if (yaml.contains("stats")) {
@@ -152,7 +154,7 @@ public final class TemplateRegistry implements Reloadable {
                 stats.put(stat, section.getInt(key));
             }
         }
-        return new NpcTemplate(id, type, name, skin, sheet, stats);
+        return new NpcTemplate(id, type, name, skin, stats);
     }
 
     /** A mistake in a template file. */

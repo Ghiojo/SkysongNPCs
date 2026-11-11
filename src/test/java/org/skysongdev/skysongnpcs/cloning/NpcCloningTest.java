@@ -51,6 +51,7 @@ class NpcCloningTest {
 
     @Test
     void aCopyGetsItsOwnSheet() {
+        plugin.fakeSheets().delete(guard);
         plugin.sheets().create(guard, Map.of("strength", 4));
 
         plugin.registry().copied(guard, copy);
@@ -61,6 +62,7 @@ class NpcCloningTest {
 
     @Test
     void changingTheCopyLeavesTheOriginalAlone() {
+        plugin.fakeSheets().delete(guard);
         plugin.sheets().create(guard, Map.of("strength", 4));
         plugin.registry().copied(guard, copy);
 
@@ -72,7 +74,6 @@ class NpcCloningTest {
 
     @Test
     void theCopysItemsAreCountedOnItsNewSheet() {
-        plugin.sheets().create(guard, Map.of());
         ItemStack sword = new ItemStack(Material.IRON_SWORD);
         plugin.fakeItems().give(copy, sword);
 
@@ -83,6 +84,7 @@ class NpcCloningTest {
 
     @Test
     void theSheetIsCompleteForOtherListenersOfTheCloneEvent() {
+        plugin.fakeSheets().delete(guard);
         plugin.sheets().create(guard, Map.of("strength", 2));
         List<Boolean> seen = new ArrayList<>();
         plugin.getServer().getPluginManager().registerEvents(new Listener() {
@@ -98,11 +100,15 @@ class NpcCloningTest {
     }
 
     @Test
-    void anNpcWithoutASheetIsCopiedWithoutOne() {
+    void aCopyOfAnNpcWithoutASheetGetsANewOne() {
+        // The original's SkysongStats character was deleted by hand.
+        stats.delete(guard);
+
         plugin.registry().copied(guard, copy);
 
         assertTrue(plugin.registry().isManaged(copy));
-        assertFalse(stats.exists(copy));
+        assertTrue(stats.exists(copy));
+        assertEquals(0, stats.value(copy, "strength"));
     }
 
     @Test
@@ -117,6 +123,7 @@ class NpcCloningTest {
 
     @Test
     void aCopyThatAlreadyHasASheetKeepsIt() {
+        plugin.fakeSheets().delete(guard);
         plugin.sheets().create(guard, Map.of("strength", 4));
         stats.create(copy, Map.of("strength", 1));
 
@@ -127,15 +134,17 @@ class NpcCloningTest {
 
     @Test
     void aFailedCopyStillLeavesTheCopyManaged() {
-        plugin.sheets().create(guard, Map.of());
         copier.failure = new IllegalStateException("SkysongStats is down");
 
         assertDoesNotThrow(() -> plugin.registry().copied(guard, copy));
         assertTrue(plugin.registry().isManaged(copy));
+        // Every managed NPC has a sheet: a new one, since the original's could not be copied.
+        assertTrue(stats.exists(copy));
     }
 
     @Test
     void gapsDoNotStopTheCopy() {
+        plugin.fakeSheets().delete(guard);
         plugin.sheets().create(guard, Map.of("strength", 3));
         copier.gaps = List.of("its injuries date from now");
 

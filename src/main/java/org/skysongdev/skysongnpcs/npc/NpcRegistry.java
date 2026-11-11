@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 /**
  * Every managed NPC's record, kept in memory and written through to the {@link NpcStore}.
@@ -58,15 +59,37 @@ public final class NpcRegistry {
     }
 
     /**
-     * Starts managing an NPC. The caller checks that Citizens has it.
+     * Starts managing an NPC, then runs the {@link #onAdopt adopt hook}, which gives it its stat
+     * sheet. The caller checks that Citizens has it.
      *
      * @throws IllegalStateException when it is managed already
+     * @throws RuntimeException      what the adopt hook threw; the NPC is not managed then
      */
     public NpcRecord adopt(UUID npc, NpcOwner owner) {
         if (records.containsKey(npc)) {
             throw new IllegalStateException("NPC " + npc + " is managed already");
         }
-        return put(NpcRecord.adopted(npc, owner));
+        NpcRecord record = put(NpcRecord.adopted(npc, owner));
+        try {
+            adopted.accept(record);
+        } catch (RuntimeException failed) {
+            // Nothing was announced yet, so the record goes without an event.
+            records.remove(npc);
+            store.delete(npc);
+            throw failed;
+        }
+        return record;
+    }
+
+    private Consumer<NpcRecord> adopted = record -> {
+    };
+
+    /**
+     * Sets what every adopted NPC goes through right after its record exists: the plugin gives
+     * it its stat sheet here. If it throws, the adoption is undone.
+     */
+    public void onAdopt(Consumer<NpcRecord> hook) {
+        this.adopted = Objects.requireNonNull(hook, "hook");
     }
 
     /** Deletes an NPC's record because staff or a plugin let it go. */

@@ -61,10 +61,12 @@ class SheetCommandsTest {
         guard = plugin.fakeCitizens().add("Guard");
         plugin.fakeCitizens().target(guard);
         plugin.registry().adopt(guard, NpcOwner.character(alice.getUniqueId(), "Default"));
+        // Adopting gives the NPC a sheet; these tests start from one whose SkysongStats
+        // character was deleted by hand, which /snpc sheet create repairs.
+        stats.delete(guard);
 
         Path folder = plugin.getDataFolder().toPath().resolve("templates");
         Files.writeString(folder.resolve("brute.yml"), "stats:\n  str: 5\n");
-        Files.writeString(folder.resolve("ghost.yml"), "sheet: false\n");
         plugin.templates().reload();
     }
 
@@ -98,8 +100,6 @@ class SheetCommandsTest {
     void createRefusesWhatItCannotDo() throws CommandSyntaxException {
         commands.run(staff, "snpc sheet create nope");
         assertEquals("[NPCs] There is no NPC template called nope.", plain(staff));
-        commands.run(staff, "snpc sheet create ghost");
-        assertEquals("[NPCs] Template ghost gives no stat sheet.", plain(staff));
         assertFalse(stats.exists(guard));
 
         commands.run(staff, "snpc sheet create");

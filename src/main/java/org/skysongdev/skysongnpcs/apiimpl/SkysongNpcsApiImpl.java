@@ -37,7 +37,7 @@ import org.skysongdev.skysongnpcs.picks.ProficiencyPicks;
 /** The plugin's implementation of {@link SkysongNpcsApi}; each milestone adds its part here. */
 public final class SkysongNpcsApiImpl implements SkysongNpcsApi {
     /** Raised with every change to the api module, as {@link SkysongNpcsApi#apiVersion()} describes. */
-    public static final String API_VERSION = "0.16.0";
+    public static final String API_VERSION = "0.17.0";
 
     private final Npcs npcs;
     private final Access access;

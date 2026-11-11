@@ -54,7 +54,7 @@ class SetupFlowTest {
         Path folder = plugin.getDataFolder().toPath().resolve("templates");
         Files.writeString(folder.resolve("guard.yml"), "stats:\n  str: 2\npoints: 3\nancestries: [elf, human]\n");
         Files.writeString(folder.resolve("dog.yml"), "points: 1\nancestries: [human]\nallow-other: true\n");
-        Files.writeString(folder.resolve("ghost.yml"), "sheet: false\npoints: 4\n");
+        Files.writeString(folder.resolve("ghost.yml"), "name: Ghost\n");
         plugin.templates().reload();
         plugin.templateChoices().reload();
     }
@@ -76,13 +76,10 @@ class SetupFlowTest {
         ItemStack item = new ItemStack(Material.PAPER);
         plugin.fakeItemTags().setDetached(item, BlueprintTags.POINTS, "5");
         UUID fromItem = make("guard", item);
-        UUID ghost = make("ghost", null);
 
         assertEquals(List.of("template"), plugin.statPoints().grants(fromTemplate).stream().map(PointGrant::source).toList());
         assertEquals(3, plugin.statPoints().unspent(fromTemplate));
         assertEquals(5, plugin.statPoints().unspent(fromItem, "blueprint"));
-        // No sheet, no points.
-        assertEquals(0, plugin.statPoints().unspent(ghost));
     }
 
     @Test
@@ -151,7 +148,6 @@ class SetupFlowTest {
     void afterSetupTheMenuListsThePointsPage() {
         UUID npc = make("ghost", null);
         plugin.choiceMenu().open(alice, npc);
-        plugin.fakeSheets().create(npc, java.util.Map.of());
         plugin.statPoints().grant(npc, "staff", 2, List.of());
 
         plugin.choiceMenu().open(alice, npc);

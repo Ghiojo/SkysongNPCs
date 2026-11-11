@@ -65,13 +65,17 @@ public interface Npcs {
 
     /**
      * Starts managing an existing Citizens NPC, in state {@link NpcState#PLACED} with no
-     * template. This is what {@code /snpc adopt} does.
+     * template. This is what {@code /snpc adopt} does. The NPC gets its stat sheet in the same
+     * step (every managed NPC has one), starting from config.yml's {@code sheets.adopt-template}
+     * or with every stat at its stats.yml start value (since 0.17.0; before, adopted NPCs had
+     * no sheet).
      *
      * @param npc   the Citizens UUID of an NPC in Citizens' main registry
      * @param owner its owner
      * @return the new record
      * @throws IllegalArgumentException when Citizens has no such NPC
-     * @throws IllegalStateException    when the NPC is managed already
+     * @throws IllegalStateException    when the NPC is managed already, or SkysongStats would not
+     *                                  make its stat sheet; then it is not managed
      */
     @NotNull ManagedNpc adopt(@NotNull UUID npc, @NotNull NpcOwner owner);
 

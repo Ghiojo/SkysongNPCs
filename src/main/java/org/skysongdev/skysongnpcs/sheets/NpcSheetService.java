@@ -45,12 +45,9 @@ public final class NpcSheetService {
     /**
      * Gives a managed NPC a sheet with the template's starting stats.
      *
-     * @throws IllegalArgumentException when the template gives no sheet, or see {@link #create(UUID, Map)}
+     * @throws IllegalArgumentException see {@link #create(UUID, Map)}
      */
     public void create(UUID npc, NpcTemplate template) {
-        if (!template.sheet()) {
-            throw new IllegalArgumentException("Template " + template.id() + " gives no stat sheet");
-        }
         create(npc, template.stats());
     }
 

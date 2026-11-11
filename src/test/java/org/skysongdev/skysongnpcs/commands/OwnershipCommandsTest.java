@@ -18,6 +18,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** {@code /snpc adopt}, {@code /snpc release} and {@code /snpc owner}. */
 class OwnershipCommandsTest {
@@ -58,7 +59,7 @@ class OwnershipCommandsTest {
     void adoptWithoutPlayerGivesTheNpcToTheServer() throws CommandSyntaxException {
         commands.run(staff, "snpc adopt");
 
-        assertEquals("[NPCs] Guard is now a Skysong NPC owned by the server.", plain(staff));
+        assertEquals("[NPCs] Guard is now a Skysong NPC owned by the server, with a stat sheet.", plain(staff));
         assertEquals(NpcOwner.server(), owner());
     }
 
@@ -66,8 +67,38 @@ class OwnershipCommandsTest {
     void adoptWithPlayerUsesTheCharacterTheyPlay() throws CommandSyntaxException {
         commands.run(staff, "snpc adopt Alice");
 
-        assertEquals("[NPCs] Guard is now a Skysong NPC owned by Alice (Default).", plain(staff));
+        assertEquals("[NPCs] Guard is now a Skysong NPC owned by Alice (Default), with a stat sheet.", plain(staff));
         assertEquals(NpcOwner.character(alice.getUniqueId(), "Default"), owner());
+    }
+
+    @Test
+    void anAdoptedNpcHasAStatSheetAtOnce() throws CommandSyntaxException {
+        commands.run(staff, "snpc adopt");
+
+        assertTrue(plugin.fakeSheets().exists(guard));
+        assertEquals(0, plugin.fakeSheets().value(guard, "strength"));
+    }
+
+    @Test
+    void anNpcWhoseSheetCannotBeMadeIsNotAdopted() throws CommandSyntaxException {
+        plugin.fakeSheets().refuseCreate = true;
+
+        commands.run(staff, "snpc adopt");
+
+        assertTrue(plain(staff).startsWith("[NPCs] Could not adopt Guard: its stat sheet could not be made"));
+        assertFalse(plugin.registry().isManaged(guard));
+    }
+
+    @Test
+    void theApiAdoptsWithASheetOrNotAtAll() {
+        UUID dog = plugin.fakeCitizens().add("Dog");
+        org.skysongdev.skysongnpcs.api.SkysongNpcsApi.get().npcs().adopt(dog, NpcOwner.server());
+        assertTrue(org.skysongdev.skysongnpcs.api.SkysongNpcsApi.get().sheets().hasSheet(dog));
+
+        plugin.fakeSheets().refuseCreate = true;
+        UUID cat = plugin.fakeCitizens().add("Cat");
+        assertThrows(IllegalStateException.class, () -> org.skysongdev.skysongnpcs.api.SkysongNpcsApi.get().npcs().adopt(cat, NpcOwner.server()));
+        assertFalse(org.skysongdev.skysongnpcs.api.SkysongNpcsApi.get().npcs().isManaged(cat));
     }
 
     @Test

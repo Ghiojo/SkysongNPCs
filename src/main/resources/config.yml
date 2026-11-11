@@ -41,6 +41,11 @@ sheets:
   # item-tag stats (Arcrot...). Only NPCs whose items changed are sent to SkysongStats.
   # Read on start only.
   item-recount-seconds: 5
+  # Every Skysong NPC has a stat sheet. An adopted NPC (/snpc adopt or the API) gets one at
+  # once, starting from this template's stats (an id from templates/); empty: every stat at
+  # its stats.yml start value. NPCs found without a sheet on start or after a SkysongStats
+  # reload get one the same way, or from their own template when they came from one.
+  adopt-template: ""
 
 # --- M17: placing NPCs from blueprint items ---
 # A blueprint is any SkysongItems item with the npc_blueprint tag set to a template id

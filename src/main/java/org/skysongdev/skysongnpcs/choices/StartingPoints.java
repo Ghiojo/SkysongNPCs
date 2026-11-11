@@ -33,9 +33,6 @@ public final class StartingPoints implements NpcFactory.Created {
 
     @Override
     public void created(NpcRecord npc, NpcTemplate template, @Nullable ItemStack blueprint) {
-        if (!template.sheet()) {
-            return;
-        }
         OptionalInt fromItem = blueprint == null ? OptionalInt.empty() : blueprints.points(blueprint);
         int amount = fromItem.orElse(templates.get(template.id()).points());
         if (amount > 0) {
