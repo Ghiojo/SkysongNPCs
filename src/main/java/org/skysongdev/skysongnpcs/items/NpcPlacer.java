@@ -94,7 +94,7 @@ public final class NpcPlacer {
         NpcOwner owner = NpcOwner.character(player.getUniqueId(), profile.get());
 
         Block feet = ground.getRelative(BlockFace.UP);
-        if (!feet.isPassable() || !feet.getRelative(BlockFace.UP).isPassable()) {
+        if (feet.getType().isCollidable() || feet.getRelative(BlockFace.UP).getType().isCollidable()) {
             return Outcome.of(Result.NO_SPACE);
         }
         Location location = feet.getLocation().add(0.5, 0, 0.5);

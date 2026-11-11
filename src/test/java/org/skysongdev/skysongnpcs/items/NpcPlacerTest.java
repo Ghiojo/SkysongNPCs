@@ -51,8 +51,8 @@ class NpcPlacerTest {
         server = MockBukkit.mock();
         plugin = OfflineSkysongNPCs.load();
         spawner = plugin.fakeSpawner();
-        // Stone up to y 63, air from y 64.
-        world = new WorldMock(Material.STONE, 64);
+        // WorldMock fills up to its height, inclusive: stone up to y 63, air from y 64.
+        world = new WorldMock(Material.STONE, 63);
         server.addWorld(world);
 
         Path folder = plugin.getDataFolder().toPath().resolve("templates");
