@@ -78,6 +78,17 @@ public final class Messages {
         return get(key, Map.of());
     }
 
+    /**
+     * The list of raw lines at {@code key}, unparsed, for texts another plugin fills in (such
+     * as the stat sheet's lines, which SkysongStats renders). Falls back to the jar's copy.
+     */
+    public List<String> lines(String key) {
+        if (file.isList(key)) {
+            return file.getStringList(key);
+        }
+        return bundled.getStringList(key);
+    }
+
     private String raw(String key) {
         String text = file.getString(key);
         if (text == null) {

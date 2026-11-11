@@ -7,6 +7,9 @@ import org.skysongdev.skysongnpcs.characters.CharacterLookup;
 import org.skysongdev.skysongnpcs.menu.NpcMenuService;
 import org.skysongdev.skysongnpcs.npc.NpcLookup;
 import org.skysongdev.skysongnpcs.npc.NpcRegistry;
+import org.skysongdev.skysongnpcs.sheets.CarriedItems;
+import org.skysongdev.skysongnpcs.sheets.NpcSheetService;
+import org.skysongdev.skysongnpcs.sheets.StatSheets;
 import org.skysongdev.skysongnpcs.storage.DatabaseSettings;
 import org.skysongdev.skysongnpcs.storage.InMemoryGrantStore;
 import org.skysongdev.skysongnpcs.storage.InMemoryNpcStore;
@@ -27,6 +30,9 @@ import java.util.Objects;
 public class OfflineSkysongNPCs extends SkysongNPCs {
     private final FakeNpcLookup fakeCitizens = new FakeNpcLookup();
     private final FakeCharacterLookup fakeCharacters = new FakeCharacterLookup();
+    // M11: stat sheets
+    private final FakeStatSheets fakeSheets = new FakeStatSheets();
+    private final FakeCarriedItems fakeItems = new FakeCarriedItems();
 
     /** Loads it with the commands and permissions of the real plugin.yml. */
     public static OfflineSkysongNPCs load() {
@@ -74,5 +80,30 @@ public class OfflineSkysongNPCs extends SkysongNPCs {
 
     public FakeCharacterLookup fakeCharacters() {
         return fakeCharacters;
+    }
+
+    // M11: stat sheets
+
+    @Override
+    protected StatSheets hookSheets() {
+        return fakeSheets;
+    }
+
+    @Override
+    protected CarriedItems hookCarriedItems() {
+        return fakeItems;
+    }
+
+    @Override
+    protected void listenForStatsReloads(NpcSheetService sheets) {
+        // SkysongStats' reload event is not on the test classpath.
+    }
+
+    public FakeStatSheets fakeSheets() {
+        return fakeSheets;
+    }
+
+    public FakeCarriedItems fakeItems() {
+        return fakeItems;
     }
 }
