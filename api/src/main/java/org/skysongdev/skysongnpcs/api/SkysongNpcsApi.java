@@ -12,6 +12,8 @@ import org.skysongdev.skysongnpcs.api.movement.NpcMovement;
 import org.skysongdev.skysongnpcs.api.items.NpcItems;
 import org.skysongdev.skysongnpcs.api.npc.Npcs;
 import org.skysongdev.skysongnpcs.api.sheet.NpcSheets;
+// M12
+import org.skysongdev.skysongnpcs.api.sheet.NpcEffects;
 // M5: access policies
 import org.skysongdev.skysongnpcs.api.policy.Policies;
 
@@ -142,4 +144,14 @@ public interface SkysongNpcsApi {
      * @since 0.10.0
      */
     @NotNull PlayerGroups groups();
+
+    // M12
+
+    /**
+     * Injuries, conditions and ancestry on NPCs' stat sheets.
+     *
+     * @return the effects part of the API
+     * @since 0.11.0
+     */
+    @NotNull NpcEffects effects();
 }

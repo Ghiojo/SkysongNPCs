@@ -13,6 +13,10 @@ public final class Permissions {
     /** Making player groups with /snpc group. */
     public static final String GROUPS = "skysongnpcs.groups";
 
+    // M12
+    /** DMs: award and remove injuries and conditions on NPC sheets. */
+    public static final String INJURIES = "skysongnpcs.injuries";
+
     private Permissions() {
     }
 }

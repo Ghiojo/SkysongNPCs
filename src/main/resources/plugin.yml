@@ -28,3 +28,7 @@ permissions:
   skysongnpcs.groups:
     description: Make player groups with /snpc group.
     default: true
+  # M12
+  skysongnpcs.injuries:
+    description: DMs. Award, remove and discover injuries and award or remove conditions on NPC stat sheets (/snpc injury, /snpc condition).
+    default: op

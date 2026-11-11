@@ -286,3 +286,60 @@ group:
   # How <member> is written. <player>: the player's name. <profile>: their character's profile.
   member-every: "<player> (every character)"
   member-character: "<player> (<profile>)"
+
+# --- M12: injuries, conditions and ancestry on NPC stat sheets ---
+# /snpc injury [list | award | remove | discover | forget <injury>] (staff, skysongnpcs.injuries).
+# <npc>: the NPC's name. <injury>: the injury's name (or what was typed, when unknown).
+injury:
+  header: "<prefix><gray><npc>'s injuries:"
+  # <severity>: its severity in injuries.yml.
+  entry: "<gray> - <white><injury></white> (<severity>)"
+  none: "<prefix><gray><npc> has no injuries."
+  # <injuries>: every injury the NPC knows, comma separated.
+  known: "<prefix><gray><npc> knows: <white><injuries>"
+  unknown: "<prefix><red>There is no injury called <injury>."
+  awarded: "<prefix><green><npc> now has <injury>."
+  removed: "<prefix><green><npc> no longer has <injury>."
+  not-had: "<prefix><red><npc> does not have <injury>."
+  discovered: "<prefix><green><npc> now knows <injury>."
+  already-known: "<prefix><red><npc> already knows <injury>."
+  forgotten: "<prefix><green><npc> no longer knows <injury>."
+  not-forgotten: "<prefix><red><npc> does not know <injury>, or has it now."
+
+# /snpc condition [list | award <condition> [level] | remove <condition>] (staff, skysongnpcs.injuries).
+# <condition>: the condition's name. <level>: its level now.
+condition:
+  header: "<prefix><gray><npc>'s conditions:"
+  # <sources>: why the NPC has it: given directly, and the injuries and conditions that give it.
+  entry: "<gray> - <white><condition> <level></white> <dark_gray>(<sources>)"
+  source-direct: "given directly"
+  none: "<prefix><gray><npc> has no conditions."
+  unknown: "<prefix><red>There is no condition called <condition>."
+  awarded: "<prefix><green><npc> now has <condition> at level <level>."
+  removed: "<prefix><green>Took back <condition> from <npc>."
+  not-direct: "<prefix><red><npc> was not given <condition> directly. If an injury gives it, remove the injury."
+
+# /snpc ancestry [info <ancestry> | set <ancestry> [picks] | choose <picks> | rechoose | remove] (staff).
+# <ancestry>: the ancestry's name. <id>: its id. <adjustments>: what it gives, like "dex +2, con +2".
+ancestry:
+  show: "<prefix><gray><npc>'s ancestry is <white><ancestry></white>, which gave: <white><adjustments>"
+  pending: "<prefix><yellow>Its choices are still to be made: /snpc ancestry info <ancestry>, then /snpc ancestry choose."
+  none: "<prefix><gray><npc> has no ancestry."
+  unknown: "<prefix><red>There is no ancestry called <ancestry>."
+  set: "<prefix><green><npc> is now <ancestry>."
+  set-pending: "<prefix><green><npc> is now <ancestry>. Make its choices with /snpc ancestry choose (see /snpc ancestry info <id>)."
+  chosen: "<prefix><green>Made <npc>'s <ancestry> choices."
+  nothing-pending: "<prefix><red><npc> has no ancestry choices to make."
+  rechosen: "<prefix><green><npc>'s ancestry choices are taken off; make them again with /snpc ancestry choose."
+  no-choices: "<prefix><red><npc> has no ancestry with choices."
+  removed: "<prefix><green><npc> no longer has an ancestry."
+  # <reason>: what is wrong, in English. Picks are typed "1=dex,con 2=1": choice=stats or choice=package number.
+  bad-picks: "<prefix><red>Those picks don't fit: <reason>. See /snpc ancestry info <id>."
+  info:
+    header: "<prefix><gray><ancestry> gives <white><adjustments></white>."
+    no-choices: "<gray> It has no choices."
+    # <number>: the choice's number to type. <amount>: what each pick gets. <picks>: how many stats.
+    stats: "<gray> <white><number>=</white> <name>: <amount> to <picks> stat(s) from <from>"
+    any-stat: "any setup stat"
+    # <options>: the packages, numbered.
+    packages: "<gray> <white><number>=</white> <name>: one of <options>"

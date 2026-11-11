@@ -1,5 +1,7 @@
 package org.skysongdev.skysongnpcs.apiimpl;
 
+import org.skysongdev.skysongnpcs.api.sheet.NpcEffects;
+import org.skysongdev.skysongnpcs.sheets.SheetEffects;
 import org.jetbrains.annotations.NotNull;
 import org.skysongdev.skysongnpcs.access.AccessService;
 import org.skysongdev.skysongnpcs.api.SkysongNpcsApi;
@@ -25,7 +27,7 @@ import org.skysongdev.skysongnpcs.policy.PolicyRegistry;
 /** The plugin's implementation of {@link SkysongNpcsApi}; each milestone adds its part here. */
 public final class SkysongNpcsApiImpl implements SkysongNpcsApi {
     /** Raised with every change to the api module, as {@link SkysongNpcsApi#apiVersion()} describes. */
-    public static final String API_VERSION = "0.10.0";
+    public static final String API_VERSION = "0.11.0";
 
     private final Npcs npcs;
     private final Access access;
@@ -40,13 +42,15 @@ public final class SkysongNpcsApiImpl implements SkysongNpcsApi {
     private final NpcMovement movement;
     // M4
     private final PlayerGroups groups;
+    // M12
+    private final NpcEffects effects;
 
     public SkysongNpcsApiImpl(NpcRegistry registry, NpcLookup citizens, AccessService access, NpcMenu menu,
                               NpcSheetService sheets, TemplateRegistry templates,
                               NpcFactory factory, Blueprints blueprints,
                               PolicyRegistry policies,
                               NpcInventories inventories, NpcMovement movement,
-                              PlayerGroupRegistry groups) {
+                              PlayerGroupRegistry groups, SheetEffects effects) {
         this.npcs = new NpcsImpl(registry, citizens, factory);
         this.access = new AccessImpl(registry, access);
         this.menu = menu;
@@ -56,6 +60,7 @@ public final class SkysongNpcsApiImpl implements SkysongNpcsApi {
         this.inventories = inventories;
         this.movement = movement;
         this.groups = new PlayerGroupsImpl(groups, access);
+        this.effects = new NpcEffectsImpl(registry, sheets, effects);
     }
 
     @Override
@@ -116,5 +121,12 @@ public final class SkysongNpcsApiImpl implements SkysongNpcsApi {
     @Override
     public @NotNull PlayerGroups groups() {
         return groups;
+    }
+
+    // M12
+
+    @Override
+    public @NotNull NpcEffects effects() {
+        return effects;
     }
 }

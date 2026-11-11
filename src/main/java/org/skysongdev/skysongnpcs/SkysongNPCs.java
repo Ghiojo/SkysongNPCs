@@ -111,6 +111,13 @@ import java.util.Optional;
 import java.util.logging.Level;
 import java.util.stream.Stream;
 
+// M12: injuries, conditions and ancestry
+import org.skysongdev.skysongnpcs.commands.AncestryCommand;
+import org.skysongdev.skysongnpcs.commands.ConditionCommand;
+import org.skysongdev.skysongnpcs.commands.InjuryCommand;
+import org.skysongdev.skysongnpcs.sheets.SheetEffects;
+import org.skysongdev.skysongnpcs.sheets.SkysongStatsEffects;
+
 /**
  * Entry point of SkysongNPCs. It only builds and wires the plugin's parts;
  * each feature lives in its own package and is registered here as it is added.
@@ -130,6 +137,8 @@ public class SkysongNPCs extends JavaPlugin {
     // M11: stat sheets and templates
     private TemplateRegistry templates;
     private NpcSheetService sheets;
+    // M12: injuries, conditions and ancestry
+    private SheetEffects effects;
     // M17
     private boolean worldGuard;
     private Blueprints blueprints;
@@ -266,6 +275,13 @@ public class SkysongNPCs extends JavaPlugin {
         subCommands = Stream.concat(subCommands.stream(),
                 Stream.of(new GroupCommand(targeting, groups, configuration))).toList();
 
+        // M12: injuries, conditions and ancestry on NPC sheets.
+        effects = hookEffects();
+        subCommands = Stream.concat(subCommands.stream(), Stream.of(
+                new InjuryCommand(targeting, sheets, effects),
+                new ConditionCommand(targeting, sheets, effects, configuration),
+                new AncestryCommand(targeting, sheets, effects, configuration))).toList();
+
         NpcCommands commands = new NpcCommands(subCommands, configuration, getPluginMeta().getVersion());
         getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS,
                 event -> commands.register(event.registrar()));
@@ -282,7 +298,7 @@ public class SkysongNPCs extends JavaPlugin {
         // Last, so other plugins only see the API once everything behind it is ready.
         getServer().getServicesManager().register(SkysongNpcsApi.class, new SkysongNpcsApiImpl(registry, citizens, access, menu,
                         sheets, templates, factory, blueprints, policies,
-                        containers, movement, groups),
+                        containers, movement, groups, effects),
                 this, ServicePriority.Normal);
     }
 
@@ -478,5 +494,17 @@ public class SkysongNPCs extends JavaPlugin {
     /** The player groups; null while the plugin is disabled. */
     public PlayerGroupRegistry groups() {
         return groups;
+    }
+
+    // M12
+
+    /** How the plugin reads and changes NPC injuries, conditions and ancestry, through SkysongStats. */
+    protected SheetEffects hookEffects() {
+        return new SkysongStatsEffects();
+    }
+
+    /** NPC injuries, conditions and ancestry; null while the plugin is disabled. */
+    public SheetEffects effects() {
+        return effects;
     }
 }
