@@ -202,7 +202,7 @@ public final class NpcMenuService implements NpcMenu {
     private void closeLater(NpcMenuHolder holder) {
         // Closing inside a click handler confuses the client; the next tick is safe.
         Bukkit.getScheduler().runTask(plugin, () -> {
-            if (holder.viewer().getOpenInventory().getTopInventory().getHolder(false) == holder) {
+            if (holder.viewer().getOpenInventory().getTopInventory().getHolder() == holder) {
                 holder.viewer().closeInventory();
             }
         });

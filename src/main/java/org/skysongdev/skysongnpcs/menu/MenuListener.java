@@ -20,7 +20,7 @@ public final class MenuListener implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onClick(InventoryClickEvent event) {
-        if (!(event.getInventory().getHolder(false) instanceof NpcMenuHolder holder)) {
+        if (!(event.getInventory().getHolder() instanceof NpcMenuHolder holder)) {
             return;
         }
         // Every click while a menu is open is cancelled, including shift-clicks from the
@@ -33,7 +33,7 @@ public final class MenuListener implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onDrag(InventoryDragEvent event) {
-        if (event.getInventory().getHolder(false) instanceof NpcMenuHolder) {
+        if (event.getInventory().getHolder() instanceof NpcMenuHolder) {
             event.setCancelled(true);
         }
     }
