@@ -4,6 +4,7 @@ import org.bukkit.plugin.InvalidDescriptionException;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.mockbukkit.mockbukkit.MockBukkit;
 import org.skysongdev.skysongnpcs.characters.CharacterLookup;
+import org.skysongdev.skysongnpcs.menu.NpcMenuService;
 import org.skysongdev.skysongnpcs.npc.NpcLookup;
 import org.skysongdev.skysongnpcs.npc.NpcRegistry;
 import org.skysongdev.skysongnpcs.storage.DatabaseSettings;
@@ -60,6 +61,11 @@ public class OfflineSkysongNPCs extends SkysongNPCs {
     @Override
     protected CharacterLookup hookCharacters() {
         return fakeCharacters;
+    }
+
+    @Override
+    protected void hookMenuClicks(NpcMenuService menu) {
+        // Citizens' right-click event is not on the test classpath; tests open menus directly.
     }
 
     public FakeNpcLookup fakeCitizens() {

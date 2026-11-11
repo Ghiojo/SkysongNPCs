@@ -111,7 +111,7 @@ public final class NpcTargeting {
     }
 
     /** The owner as messages.yml's {@code owner-name} texts write it. */
-    String ownerName(NpcOwner owner) {
+    public String ownerName(NpcOwner owner) {
         if (owner instanceof NpcOwner.CharacterOwner character) {
             String player = Bukkit.getOfflinePlayer(character.player()).getName();
             return configuration.messages().plain("owner-name.character", Map.of(

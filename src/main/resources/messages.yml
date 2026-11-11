@@ -69,3 +69,22 @@ access:
   bad-group: "<prefix><red><group> is not a group. Use player:NAME, \"player:NAME/PROFILE\", perm:NODE, or a type from another plugin: <types>."
   no-types: "none"
   bad-source: "<prefix><red><source> is not a plugin name."
+
+# The NPC menu (right-click, or /snpc menu). Positions and items are in menus.yml.
+menu:
+  # The menu's title. <npc>: the NPC's name.
+  title: "<dark_gray><npc>"
+  # /snpc menu when the player may use none of its buttons.
+  nothing: "<prefix><red>You can't do anything with <npc>."
+  # The Information button. <npc>, <owner>, <template>, <state>.
+  info:
+    name: "<white><npc>"
+    lore:
+      - "<gray>Owner: <white><owner>"
+      - "<gray>Template: <white><template>"
+      - "<gray>State: <white><state>"
+    no-template: "none"
+    states:
+      setup: "waiting for setup"
+      placed: "placed"
+      stored: "picked up"

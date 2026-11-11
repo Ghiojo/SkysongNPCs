@@ -5,6 +5,7 @@ import org.bukkit.plugin.RegisteredServiceProvider;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.skysongdev.skysongnpcs.api.access.Access;
+import org.skysongdev.skysongnpcs.api.menu.NpcMenu;
 import org.skysongdev.skysongnpcs.api.npc.Npcs;
 
 /**
@@ -69,4 +70,11 @@ public interface SkysongNpcsApi {
      * @return the access part of the API
      */
     @NotNull Access access();
+
+    /**
+     * The menu managed NPCs open on right-click: add your own buttons to it, or open it for a player.
+     *
+     * @return the menu part of the API
+     */
+    @NotNull NpcMenu menu();
 }
