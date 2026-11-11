@@ -84,3 +84,12 @@ movement:
     default-range: 5
     # The largest range players may ask for.
     max-range: 16
+
+# --- M4: player groups (/snpc group) ---
+# Named lists of characters a player makes, which a grant names as group:NAME.
+# LuckPerms groups need no setup: a grant names them as lp:GROUP.
+groups:
+  # How many groups one character may make. 0 for no limit. Staff are not limited.
+  per-character: 10
+  # How many members one group may have. 0 for no limit. Staff are not limited.
+  max-members: 50

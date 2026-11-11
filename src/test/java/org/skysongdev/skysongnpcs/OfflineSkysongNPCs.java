@@ -17,6 +17,7 @@ import org.skysongdev.skysongnpcs.sheets.NpcSheetService;
 import org.skysongdev.skysongnpcs.sheets.StatSheets;
 import org.skysongdev.skysongnpcs.storage.DatabaseSettings;
 import org.skysongdev.skysongnpcs.storage.InMemoryGrantStore;
+import org.skysongdev.skysongnpcs.storage.InMemoryGroupStore;
 import org.skysongdev.skysongnpcs.storage.InMemoryNpcStore;
 import org.skysongdev.skysongnpcs.storage.InMemoryPolicyStore;
 import org.skysongdev.skysongnpcs.storage.Stores;
@@ -72,7 +73,8 @@ public class OfflineSkysongNPCs extends SkysongNPCs {
 
     @Override
     protected Stores openStores(DatabaseSettings settings) {
-        return new Stores(new InMemoryNpcStore(), new InMemoryGrantStore(), new InMemoryPolicyStore());
+        return new Stores(new InMemoryNpcStore(), new InMemoryGrantStore(), new InMemoryPolicyStore(),
+                new InMemoryGroupStore());
     }
 
     @Override

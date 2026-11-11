@@ -9,6 +9,10 @@ public final class Permissions {
     /** Placing NPCs from blueprint items. */
     public static final String PLACE = "skysongnpcs.place";
 
+    // M4
+    /** Making player groups with /snpc group. */
+    public static final String GROUPS = "skysongnpcs.groups";
+
     private Permissions() {
     }
 }

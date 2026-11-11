@@ -107,6 +107,20 @@ public final class AccessRegistry {
         source.forEach(grant -> store.save(copy, grant));
     }
 
+    // M4
+
+    /** Every NPC with grants naming a group, from any source, with those grants. */
+    public Map<UUID, List<AccessGrant>> naming(AccessGroup group) {
+        Map<UUID, List<AccessGrant>> naming = new HashMap<>();
+        grants.forEach((npc, list) -> {
+            List<AccessGrant> matching = list.stream().filter(grant -> grant.group().equals(group)).toList();
+            if (!matching.isEmpty()) {
+                naming.put(npc, matching);
+            }
+        });
+        return naming;
+    }
+
     /** Hears about every grant made, changed or deleted, after the change; the plugin fires its event here. */
     @FunctionalInterface
     public interface Changes {

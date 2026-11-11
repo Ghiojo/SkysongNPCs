@@ -154,7 +154,7 @@ class AccessCommandTest {
     void explainsBadGroupsAndActions() throws CommandSyntaxException {
         commands.run(alice, "snpc access grant economy:smithy info");
         assertEquals("[NPCs] economy:smithy is not a group. Use player:NAME, \"player:NAME/PROFILE\", perm:NODE,"
-                + " or a type from another plugin: none.", plain(alice));
+                + " or TYPE:NAME with one of these types: group.", plain(alice));
 
         commands.run(alice, "snpc access grant player:Nobody info");
         assertEquals("[NPCs] No player called Nobody has played here.", plain(alice));

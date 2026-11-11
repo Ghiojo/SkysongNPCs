@@ -9,12 +9,14 @@ import java.util.Objects;
  * @param npcs   the NPC records
  * @param grants the access grants
  * @param policies the access policies (M5)
+ * @param groups the player groups (M4)
  */
-public record Stores(NpcStore npcs, GrantStore grants, PolicyStore policies) {
+public record Stores(NpcStore npcs, GrantStore grants, PolicyStore policies, GroupStore groups) {
 
     public Stores {
         Objects.requireNonNull(npcs, "npcs");
         Objects.requireNonNull(grants, "grants");
         Objects.requireNonNull(policies, "policies");
+        Objects.requireNonNull(groups, "groups");
     }
 }
