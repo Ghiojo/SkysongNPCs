@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.skysongdev.skysongnpcs.api.access.Access;
 import org.skysongdev.skysongnpcs.api.inventory.NpcInventories;
 import org.skysongdev.skysongnpcs.api.groups.PlayerGroups;
+import org.skysongdev.skysongnpcs.api.appearance.NpcAppearance;
 import org.skysongdev.skysongnpcs.api.menu.NpcMenu;
 import org.skysongdev.skysongnpcs.api.movement.NpcMovement;
 import org.skysongdev.skysongnpcs.api.items.NpcItems;
@@ -154,4 +155,14 @@ public interface SkysongNpcsApi {
      * @since 0.11.0
      */
     @NotNull NpcEffects effects();
+
+    // M8: appearance
+
+    /**
+     * How NPCs look: name, skin, nameplate, pose, sitting and glowing.
+     *
+     * @return the appearance part of the API
+     * @since 0.12.0
+     */
+    @NotNull NpcAppearance appearance();
 }

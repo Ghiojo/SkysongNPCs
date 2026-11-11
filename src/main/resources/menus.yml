@@ -39,3 +39,35 @@ npc-menu:
     "skysongnpcs:movement":
       slot: 11
       material: LEAD
+    # M8: appearance. Opens the Appearance menu (rename, skin or appearance).
+    "skysongnpcs:appearance":
+      slot: 12
+      material: ARMOR_STAND
+
+# --- M8: appearance ---
+# The one-row menu the Appearance button opens. Its buttons are back, name, skin, nameplate, pose, sitting
+# and glow; each may set slot (0 to 8) and material. Texts are in messages.yml
+# (appearance.menu).
+appearance-menu:
+  buttons:
+    back:
+      slot: 0
+      material: ARROW
+    name:
+      slot: 2
+      material: NAME_TAG
+    skin:
+      slot: 3
+      material: PLAYER_HEAD
+    nameplate:
+      slot: 4
+      material: OAK_SIGN
+    pose:
+      slot: 5
+      material: ARMOR_STAND
+    sitting:
+      slot: 6
+      material: OAK_STAIRS
+    glow:
+      slot: 7
+      material: GLOWSTONE_DUST

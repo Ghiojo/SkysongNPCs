@@ -32,3 +32,7 @@ permissions:
   skysongnpcs.injuries:
     description: DMs. Award, remove and discover injuries and award or remove conditions on NPC stat sheets (/snpc injury, /snpc condition).
     default: op
+  # M8
+  skysongnpcs.name.format:
+    description: Use colours and styles (MiniMessage) in NPC names with /snpc name.
+    default: op

@@ -96,6 +96,14 @@ import org.skysongdev.skysongnpcs.wardrobe.SkysongWardrobeGateway;
 import org.skysongdev.skysongnpcs.wardrobe.WardrobeButton;
 import org.skysongdev.skysongnpcs.wardrobe.WardrobeGateway;
 import org.skysongdev.skysongnpcs.wardrobe.WardrobeViewListener;
+// M8: appearance
+import org.skysongdev.skysongnpcs.appearance.AppearanceButton;
+import org.skysongdev.skysongnpcs.appearance.AppearanceDriver;
+import org.skysongdev.skysongnpcs.appearance.AppearanceMenu;
+import org.skysongdev.skysongnpcs.appearance.AppearanceService;
+import org.skysongdev.skysongnpcs.appearance.CitizensCommandGuard;
+import org.skysongdev.skysongnpcs.citizens.CitizensAppearance;
+import org.skysongdev.skysongnpcs.commands.AppearanceCommands;
 
 // M7: movement
 import org.skysongdev.skysongnpcs.citizens.CitizensMover;
@@ -153,6 +161,8 @@ public class SkysongNPCs extends JavaPlugin {
     // M4
     private GroupStore groupStore;
     private PlayerGroupRegistry groups;
+    // M8: appearance
+    private AppearanceService appearance;
 
     // M7: movement
     private MovementService movement;
@@ -282,6 +292,18 @@ public class SkysongNPCs extends JavaPlugin {
                 new ConditionCommand(targeting, sheets, effects, configuration),
                 new AncestryCommand(targeting, sheets, effects, configuration))).toList();
 
+        // M8: appearance (/snpc appearance, name, skin, nameplate, pose, sit, glow, the Appearance
+        // button and menu), and Citizens' own commands kept to staff on Skysong NPCs.
+        AppearanceDriver appearanceDriver = hookAppearance();
+        appearance = new AppearanceService(registry, appearanceDriver, () -> configuration.config());
+        AppearanceMenu appearanceMenu = new AppearanceMenu(this, registry, citizens, access, appearance, configuration, menu);
+        new AppearanceButton(configuration, citizens, appearanceMenu).register(this, menu);
+        getServer().getPluginManager().registerEvents(appearanceMenu, this);
+        getServer().getPluginManager().registerEvents(new CitizensCommandGuard(registry, appearanceDriver, citizens,
+                () -> configuration.config(), () -> configuration.messages()), this);
+        subCommands = Stream.concat(subCommands.stream(),
+                new AppearanceCommands(targeting, access, appearance, appearanceMenu, configuration).subCommands().stream()).toList();
+
         NpcCommands commands = new NpcCommands(subCommands, configuration, getPluginMeta().getVersion());
         getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS,
                 event -> commands.register(event.registrar()));
@@ -298,7 +320,7 @@ public class SkysongNPCs extends JavaPlugin {
         // Last, so other plugins only see the API once everything behind it is ready.
         getServer().getServicesManager().register(SkysongNpcsApi.class, new SkysongNpcsApiImpl(registry, citizens, access, menu,
                         sheets, templates, factory, blueprints, policies,
-                        containers, movement, groups, effects),
+                        containers, movement, groups, effects, appearance),
                 this, ServicePriority.Normal);
     }
 
@@ -506,5 +528,17 @@ public class SkysongNPCs extends JavaPlugin {
     /** NPC injuries, conditions and ancestry; null while the plugin is disabled. */
     public SheetEffects effects() {
         return effects;
+    }
+
+    // M8: appearance
+
+    /** How the plugin changes NPCs' looks, through Citizens. */
+    protected AppearanceDriver hookAppearance() {
+        return new CitizensAppearance(this);
+    }
+
+    /** NPCs' looks; null while the plugin is disabled. */
+    public AppearanceService appearance() {
+        return appearance;
     }
 }

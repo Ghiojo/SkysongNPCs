@@ -93,3 +93,18 @@ groups:
   per-character: 10
   # How many members one group may have. 0 for no limit. Staff are not limited.
   max-members: 50
+# --- M8: appearance (/snpc name, skin, nameplate, pose, sit, glow) ---
+appearance:
+  name:
+    # The longest name players may give an NPC, counting what shows (not colour tags).
+    # Colours and styles in names need skysongnpcs.name.format.
+    max-length: 32
+
+# Citizens' own commands stay staff-only (skysongnpcs.admin) on Skysong NPCs, so players
+# change them only through /snpc, where access applies. A command acts on the NPC its
+# --id names, or else the one the player selected.
+citizens-commands:
+  # The commands guarded, without the slash (citizens:npc counts as npc).
+  guarded: [npc, trait, waypoints, wp, template, tpl]
+  # Their subcommands anyone may still use, because they do not change the selected NPC.
+  open: [help, list, select, sel, create]
