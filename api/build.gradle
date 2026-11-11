@@ -1,0 +1,53 @@
+// The public API of SkysongNPCs: the only classes other plugins should compile against.
+// JitPack publishes this module from a git tag as com.github.Ghiojo:SkysongNPCs:<tag>
+// (see jitpack.yml).
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+}
+
+// Not org.skysongdev: SkysongItems publishes its own API as org.skysongdev:api, and the
+// two must never be mistaken for each other in a local Maven repository.
+// JitPack sets JITPACK and VERSION; local builds keep the org.skysongdev group.
+// Without a version JitPack sees the module as "api:unspecified", cannot match it to the
+// git tag, and publishes nothing but an empty root pom.
+group = System.getenv('JITPACK') ? 'com.github.Ghiojo.SkysongNPCs' : 'org.skysongdev.skysongnpcs'
+version = System.getenv('VERSION') ?: '0.1.0'
+
+repositories {
+    mavenCentral()
+    maven {
+        name = 'papermc-repo'
+        url = 'https://repo.papermc.io/repository/maven-public/'
+    }
+}
+
+dependencies {
+    compileOnly 'io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT'
+    compileOnly 'org.jetbrains:annotations:26.0.2'
+}
+
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release.set(21)
+}
+
+tasks.withType(Javadoc).configureEach {
+    options.encoding = 'UTF-8'
+    // JitPack builds the javadoc jar, so a missing @param or similar must not fail a release.
+    options.addBooleanOption('Xdoclint:none', true)
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            artifactId = 'api'
+            from components.java
+        }
+    }
+}

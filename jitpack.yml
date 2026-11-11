@@ -1,0 +1,10 @@
+# JitPack builds the api module from a git tag so other plugins can compile against it:
+#   repositories { maven { url 'https://jitpack.io' } }
+#   dependencies { compileOnly 'com.github.Ghiojo:SkysongNPCs:<tag>' }
+# JitPack serves a repository's one published module under the repository's own name,
+# so the coordinate has no ":api" (the same as SkysongItems and SkysongWardrobe).
+# Only the api module is published; the plugin itself is not.
+jdk:
+  - openjdk21
+install:
+  - ./gradlew :api:publishToMavenLocal --no-daemon

@@ -1,30 +1,79 @@
 plugins {
     id 'java'
-    id("xyz.jpenilla.run-paper") version "2.3.1"
+    id 'xyz.jpenilla.run-paper' version '2.3.1'
 }
+
+// The api module is configured first so its classes can be added to the plugin jar below.
+evaluationDependsOn(':api')
 
 group = 'org.skysongdev'
-version = '1.0'
+version = '0.1.0'
 
 repositories {
+    // JitPack only serves the Skysong plugin APIs, so Gradle never asks it for anything else
+    // and never asks the other repositories for them.
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = 'jitpack'
+                url = 'https://jitpack.io'
+            }
+        }
+        filter {
+            includeModule 'com.github.Ghiojo', 'Skysong-Special-Items'
+            includeModule 'com.github.Ghiojo', 'SkysongWardrobe'
+            includeModule 'com.github.Ghiojo.SkysongStats', 'api'
+        }
+    }
+    // The Citizens repository only serves Citizens.
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = 'citizens'
+                url = 'https://maven.citizensnpcs.co/repo'
+            }
+        }
+        filter {
+            includeGroup 'net.citizensnpcs'
+        }
+    }
     mavenCentral()
     maven {
-        name = "papermc-repo"
-        url = "https://repo.papermc.io/repository/maven-public/"
+        name = 'papermc-repo'
+        url = 'https://repo.papermc.io/repository/maven-public/'
     }
 }
+
+// The other Skysong plugins' APIs, at their release tags. Each ships inside its own plugin
+// jar on the server, so they are compileOnly and never shaded.
+def skysongStatsApi = 'com.github.Ghiojo.SkysongStats:api:1.4.0'
+def skysongItemsApi = 'com.github.Ghiojo:Skysong-Special-Items:1.0.1'
+def skysongWardrobeApi = 'com.github.Ghiojo:SkysongWardrobe:1.0.0'
+// 2.0.43 is the last Citizens built for 1.21.11. citizens-main carries the API too, and its
+// own dependencies all ship inside the Citizens jar, so none are pulled in.
+def citizens = 'net.citizensnpcs:citizens-main:2.0.43-SNAPSHOT'
 
 dependencies {
-    compileOnly("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
-}
-
-tasks {
-    runServer {
-        // Configure the Minecraft version for our task.
-        // This is the only required configuration besides applying the plugin.
-        // Your plugin's jar (or shadowJar if present) will be used automatically.
-        minecraftVersion("1.21")
+    // The public API (api/). Its classes are added to the plugin jar below.
+    implementation project(':api')
+    compileOnly 'io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT'
+    compileOnly 'org.jetbrains:annotations:26.0.2'
+    compileOnly(citizens) {
+        transitive = false
     }
+    compileOnly skysongStatsApi
+    compileOnly skysongItemsApi
+    // Optional at runtime (plugin.yml softdepend:): only the wardrobe hooks touch it.
+    compileOnly skysongWardrobeApi
+
+    // Tests run on JUnit 6 and MockBukkit 4.116.3, the same versions the other Skysong
+    // plugins use. That MockBukkit release mocks Paper 1.21.11, the API this plugin compiles against.
+    testImplementation platform('org.junit:junit-bom:6.0.3')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testImplementation 'org.mockbukkit.mockbukkit:mockbukkit-v1.21:4.116.3'
+    testImplementation 'io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT'
+    testImplementation 'org.mockito:mockito-core:5.14.2'
 }
 
 def targetJavaVersion = 21
@@ -39,10 +88,28 @@ java {
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
+    options.release.set(targetJavaVersion)
+}
 
-    if (targetJavaVersion >= 10 || JavaVersion.current().isJava10Compatible()) {
-        options.release.set(targetJavaVersion)
+test {
+    useJUnitPlatform()
+    testLogging {
+        events 'failed', 'skipped'
+        exceptionFormat 'full'
     }
+}
+
+tasks {
+    runServer {
+        // Starts a local Paper server with the plugin for manual testing: ./gradlew runServer
+        minecraftVersion('1.21.11')
+    }
+}
+
+// The api classes ship inside the plugin jar, so the server has exactly one copy of them.
+// Plugins that use the API compile against it with compileOnly and never shade it.
+tasks.named('jar') {
+    from(project(':api').sourceSets.main.output)
 }
 
 processResources {
