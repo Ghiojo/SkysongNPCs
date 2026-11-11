@@ -175,3 +175,29 @@ policy:
   assigned: "<prefix><green><npc> now follows policy <policy>."
   already: "<prefix><yellow><npc> already follows policy <policy>."
   unassigned: "<prefix><green><npc> no longer follows policy <policy>."
+
+# --- M9: inventory and equipment ---
+# /snpc inventory [view], /snpc equip [view], and the menu's Inventory and Equipment
+# buttons. Whoever may change them gets Citizens' own editor; whoever may only look gets a
+# read-only copy. <npc>: the NPC's name.
+containers:
+  # Citizens' editors need the NPC in the world; a read-only copy does not.
+  not-placed: "<prefix><red><npc> is not placed in the world, so its items can't be changed now. /snpc inventory view still shows them."
+  inventory:
+    view-title: "<dark_gray><npc>'s inventory (view only)"
+    not-allowed: "<prefix><red>You may not see <npc>'s inventory."
+    button:
+      name: "<white>Inventory"
+      lore-edit:
+        - "<gray>Click to change what <npc> carries."
+      lore-view:
+        - "<gray>Click to see what <npc> carries."
+  equipment:
+    view-title: "<dark_gray><npc>'s equipment (view only)"
+    not-allowed: "<prefix><red>You may not see <npc>'s equipment."
+    button:
+      name: "<white>Equipment"
+      lore-edit:
+        - "<gray>Click to change what <npc> wears and holds."
+      lore-view:
+        - "<gray>Click to see what <npc> wears and holds."

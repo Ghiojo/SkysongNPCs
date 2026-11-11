@@ -5,6 +5,7 @@ import org.bukkit.plugin.RegisteredServiceProvider;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.skysongdev.skysongnpcs.api.access.Access;
+import org.skysongdev.skysongnpcs.api.inventory.NpcInventories;
 import org.skysongdev.skysongnpcs.api.menu.NpcMenu;
 import org.skysongdev.skysongnpcs.api.items.NpcItems;
 import org.skysongdev.skysongnpcs.api.npc.Npcs;
@@ -109,4 +110,14 @@ public interface SkysongNpcsApi {
      * @since 0.7.0
      */
     @NotNull Policies policies();
+
+    // M9
+
+    /**
+     * NPC inventories and equipment: open them for a player by their access, or read them.
+     *
+     * @return the inventories part of the API
+     * @since 0.8.0
+     */
+    @NotNull NpcInventories inventories();
 }
