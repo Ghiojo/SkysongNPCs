@@ -113,3 +113,17 @@ citizens-commands:
 # placed from a blueprint (adopted, or made by a plugin) come back as this item instead.
 pickup:
   item: ARMOR_STAND
+
+# --- M14: choices ---
+# Stat points: 1 point = +1 base on an eligible stat. A template may override both lists
+# (stat-points: in its file), and a grant from staff, an ability or a plugin may name its
+# own eligible stats. Names are SkysongStats stat ids or aliases; unknown ones are skipped
+# with a warning.
+choices:
+  stat-points:
+    # The stats points may go on when a grant names none.
+    eligible: [str, dex, con, foc, spd]
+    # The highest base points may push a stat to. A stat not listed has no cap; a default
+    # one you delete comes back on the next start, so to lift it set it high instead.
+    # Staff commands are not capped.
+    max: {str: 6, dex: 6, con: 6, foc: 6, spd: 9}

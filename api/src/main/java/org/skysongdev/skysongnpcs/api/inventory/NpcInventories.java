@@ -22,7 +22,7 @@ import java.util.UUID;
  *
  * <p>SkysongNPCs implements this interface; other plugins must not.
  *
- * @since 0.8.0
+ * @since 0.12.0
  */
 @ApiStatus.NonExtendable
 public interface NpcInventories {

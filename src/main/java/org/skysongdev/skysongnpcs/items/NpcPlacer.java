@@ -120,7 +120,7 @@ public final class NpcPlacer {
         String name = blueprints.name(item).orElse(template.get().name());
         Optional<NpcRecord> placed;
         try {
-            placed = factory.create(template.get(), name, owner, location);
+            placed = factory.create(template.get(), name, owner, location, item);
         } catch (RuntimeException failed) {
             logger.log(Level.SEVERE, "Could not make an NPC from the template " + template.get().id()
                     + " for " + player.getName() + ", so it was not placed and the item was kept.", failed);

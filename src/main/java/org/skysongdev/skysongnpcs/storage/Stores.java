@@ -11,9 +11,10 @@ import java.util.Objects;
  * @param policies the access policies (M5)
  * @param groups the player groups (M4)
  * @param items    the NPCs' blueprint items and tickets (M18)
+ * @param choices  the NPCs' stat points and setup progress (M14)
  */
 public record Stores(NpcStore npcs, GrantStore grants, PolicyStore policies, GroupStore groups,
-                     NpcItemStore items) {
+                     NpcItemStore items, ChoiceStore choices) {
 
     public Stores {
         Objects.requireNonNull(npcs, "npcs");
@@ -21,5 +22,6 @@ public record Stores(NpcStore npcs, GrantStore grants, PolicyStore policies, Gro
         Objects.requireNonNull(policies, "policies");
         Objects.requireNonNull(groups, "groups");
         Objects.requireNonNull(items, "items");
+        Objects.requireNonNull(choices, "choices");
     }
 }

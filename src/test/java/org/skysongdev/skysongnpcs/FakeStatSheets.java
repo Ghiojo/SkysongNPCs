@@ -31,6 +31,13 @@ public final class FakeStatSheets implements StatSheets {
         return sheets.get(npc).get(stat);
     }
 
+    /** M14: a stat's base value, empty when the NPC has no sheet or the stat does not exist. */
+    public java.util.OptionalInt base(UUID npc, String stat) {
+        Map<String, Integer> values = sheets.get(npc);
+        Optional<String> id = statId(stat);
+        return values == null || id.isEmpty() ? java.util.OptionalInt.empty() : java.util.OptionalInt.of(values.get(id.get()));
+    }
+
     /** A proficiency's tier on an NPC's sheet, null when never set. */
     public String tier(UUID npc, String proficiency) {
         return tiers.getOrDefault(npc, Map.of()).get(proficiency);

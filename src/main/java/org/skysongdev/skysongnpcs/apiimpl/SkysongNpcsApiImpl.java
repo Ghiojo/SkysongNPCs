@@ -26,11 +26,14 @@ import org.skysongdev.skysongnpcs.templates.TemplateRegistry;
 // M5: access policies
 import org.skysongdev.skysongnpcs.api.policy.Policies;
 import org.skysongdev.skysongnpcs.policy.PolicyRegistry;
+import org.skysongdev.skysongnpcs.api.choices.NpcChoices;
+import org.skysongdev.skysongnpcs.choices.ChoiceMenu;
+import org.skysongdev.skysongnpcs.choices.StatPoints;
 
 /** The plugin's implementation of {@link SkysongNpcsApi}; each milestone adds its part here. */
 public final class SkysongNpcsApiImpl implements SkysongNpcsApi {
     /** Raised with every change to the api module, as {@link SkysongNpcsApi#apiVersion()} describes. */
-    public static final String API_VERSION = "0.13.0";
+    public static final String API_VERSION = "0.14.0";
 
     private final Npcs npcs;
     private final Access access;
@@ -49,6 +52,7 @@ public final class SkysongNpcsApiImpl implements SkysongNpcsApi {
     private final NpcEffects effects;
     // M8: appearance
     private final NpcAppearance appearance;
+    private final NpcChoices choices;
 
     public SkysongNpcsApiImpl(NpcRegistry registry, NpcLookup citizens, AccessService access, NpcMenu menu,
                               NpcSheetService sheets, TemplateRegistry templates,
@@ -57,7 +61,7 @@ public final class SkysongNpcsApiImpl implements SkysongNpcsApi {
                               NpcInventories inventories, NpcMovement movement,
                               PlayerGroupRegistry groups, SheetEffects effects,
                               AppearanceService appearance,
-                              NpcPickup pickup) {
+                              NpcPickup pickup, StatPoints points, ChoiceMenu choiceMenu) {
         this.npcs = new NpcsImpl(registry, citizens, factory);
         this.access = new AccessImpl(registry, access);
         this.menu = menu;
@@ -69,6 +73,7 @@ public final class SkysongNpcsApiImpl implements SkysongNpcsApi {
         this.groups = new PlayerGroupsImpl(groups, access);
         this.effects = new NpcEffectsImpl(registry, sheets, effects);
         this.appearance = new NpcAppearanceImpl(appearance);
+        this.choices = new NpcChoicesImpl(registry, points, choiceMenu);
     }
 
     @Override
@@ -143,5 +148,12 @@ public final class SkysongNpcsApiImpl implements SkysongNpcsApi {
     @Override
     public @NotNull NpcAppearance appearance() {
         return appearance;
+    }
+
+    // M14
+
+    @Override
+    public @NotNull NpcChoices choices() {
+        return choices;
     }
 }

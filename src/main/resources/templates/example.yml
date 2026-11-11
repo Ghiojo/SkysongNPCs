@@ -21,3 +21,21 @@ sheet: true
 # none, so it works with any stats.yml; add lines such as:
 #   strength: 3
 stats: {}
+
+# --- Choices and first setup ---
+# The stat points a new NPC starts with, spent in its setup (1 point = +1 base). A blueprint
+# item's npc_points tag replaces this. Default 0.
+points: 0
+
+# Optional: which stats this template's points may go on, and their caps, instead of
+# config.yml's choices.stat-points. Either key may be left out.
+#   stat-points:
+#     eligible: [str, con]
+#     max: {str: 8, con: 8}
+
+# The SkysongStats ancestries (ids from its ancestries.yml) the setup offers. Empty: no
+# ancestry step. An ancestry with choices asks for them right after.
+ancestries: []
+
+# Whether the ancestry step also offers Other: no ancestry, for animals and creatures.
+allow-other: true

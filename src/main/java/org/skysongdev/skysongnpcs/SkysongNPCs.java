@@ -120,6 +120,31 @@ import org.skysongdev.skysongnpcs.items.NpcPickup;
 import org.skysongdev.skysongnpcs.items.NpcTickets;
 import org.skysongdev.skysongnpcs.items.PickupButton;
 import org.skysongdev.skysongnpcs.storage.NpcItemStore;
+// M14: choices and first setup
+import org.skysongdev.skysongnpcs.api.event.NpcChoiceResolvedEvent;
+import org.skysongdev.skysongnpcs.api.event.NpcSetupCompleteEvent;
+import org.skysongdev.skysongnpcs.choices.AncestryStep;
+import org.skysongdev.skysongnpcs.choices.AssignPointsButton;
+import org.skysongdev.skysongnpcs.choices.ChoiceLifecycleListener;
+import org.skysongdev.skysongnpcs.choices.ChoiceMenu;
+import org.skysongdev.skysongnpcs.choices.ChoiceSettings;
+import org.skysongdev.skysongnpcs.choices.PointsPage;
+import org.skysongdev.skysongnpcs.choices.SetupFlow;
+import org.skysongdev.skysongnpcs.choices.SkysongStatsBases;
+import org.skysongdev.skysongnpcs.choices.StartingPoints;
+import org.skysongdev.skysongnpcs.choices.StatBases;
+import org.skysongdev.skysongnpcs.choices.StatPoints;
+import org.skysongdev.skysongnpcs.choices.TemplateChoiceRegistry;
+import org.skysongdev.skysongnpcs.choices.TemplateChoices;
+import org.skysongdev.skysongnpcs.choices.menu.ChoiceGuiListener;
+import org.skysongdev.skysongnpcs.choices.menu.Guis;
+import org.skysongdev.skysongnpcs.commands.ChooseCommand;
+import org.skysongdev.skysongnpcs.commands.PointsCommand;
+import org.skysongdev.skysongnpcs.commands.RespecCommand;
+import org.skysongdev.skysongnpcs.npc.NpcRecord;
+import org.skysongdev.skysongnpcs.storage.ChoiceStore;
+import java.util.Map;
+import java.util.function.Function;
 
 import java.io.File;
 import java.util.List;
@@ -177,6 +202,11 @@ public class SkysongNPCs extends JavaPlugin {
     // M18: pickup and anti-clone
     private NpcItemStore itemStore;
     private NpcPickup pickup;
+    // M14: choices and first setup
+    private ChoiceStore choiceStore;
+    private StatPoints statPoints;
+    private ChoiceMenu choiceMenu;
+    private TemplateChoiceRegistry templateChoices;
 
     /** M17: WorldGuard is optional; its flags must be registered before it enables, so here. */
     @Override
@@ -199,6 +229,7 @@ public class SkysongNPCs extends JavaPlugin {
             policyStore = stores.policies();
             groupStore = stores.groups();
             itemStore = stores.items();
+            choiceStore = stores.choices();
         } catch (RuntimeException failed) {
             getLogger().log(Level.SEVERE, "Could not reach the database in config.yml (" + configuration.database()
                     + "). SkysongNPCs is disabled.", failed);
@@ -229,6 +260,12 @@ public class SkysongNPCs extends JavaPlugin {
         templates = new TemplateRegistry(new File(getDataFolder(), "templates"),
                 () -> saveResource("templates/example.yml", false), statSheets::statId, getLogger());
         templates.reload();
+        // M14: the choice keys of config.yml and of the template files.
+        ChoiceSettings choiceSettings = new ChoiceSettings(configuration::config, statSheets::statId, getLogger());
+        choiceSettings.reload();
+        templateChoices = new TemplateChoiceRegistry(
+                new File(getDataFolder(), "templates"), statSheets::statId, getLogger());
+        templateChoices.reload();
         sheets = new NpcSheetService(registry, statSheets, hookCarriedItems());
         // SkysongStats does not save item counts, so they are sent again on every start.
         sheets.recountAll(true);
@@ -268,7 +305,7 @@ public class SkysongNPCs extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new WardrobeViewListener(wardrobes), this);
 
         List<SubCommand> subCommands = List.of(
-                new ReloadCommand(configuration, List.of(templates)),
+                new ReloadCommand(configuration, List.of(templates, choiceSettings, templateChoices)),
                 new AdoptCommand(targeting),
                 new ReleaseCommand(targeting),
                 new OwnerCommand(targeting),
@@ -320,6 +357,35 @@ public class SkysongNPCs extends JavaPlugin {
         subCommands = Stream.concat(subCommands.stream(), Stream.of(
                 new PickupCommand(targeting, () -> pickup),
                 new ReissueCommand(targeting, () -> pickup, getLogger()))).toList();
+        // M14: choices and first setup.
+        Function<NpcRecord, TemplateChoices> templateOf = npc -> npc.template()
+                .map(templateChoices::get).orElseGet(() -> TemplateChoices.none(""));
+        statPoints = new StatPoints(choiceStore, registry, statSheets, hookStatBases(),
+                npc -> choiceSettings.defaults().with(templateOf.apply(npc).eligible(), templateOf.apply(npc).max()),
+                (npc, player, stat, amount) -> getServer().getPluginManager().callEvent(
+                        new NpcChoiceResolvedEvent(npc, player, NpcChoiceResolvedEvent.STAT_POINTS, stat, amount)),
+                System::currentTimeMillis);
+        statPoints.load();
+        SetupFlow setup = new SetupFlow(choiceStore, registry, (npc, player) -> {
+            getServer().getPluginManager().callEvent(new NpcSetupCompleteEvent(npc, player));
+            if (player != null) {
+                configuration.messages().send(player, "choices.setup-complete", Map.of("npc", citizens.name(npc.id())));
+            }
+        });
+        setup.load();
+        Guis guis = new Guis(this, configuration);
+        choiceMenu = new ChoiceMenu(guis, setup, registry, citizens);
+        PointsPage pointsPage = new PointsPage(guis, statPoints, statSheets, citizens);
+        setup.addStep(new AncestryStep(guis, effects, statSheets, citizens, templateOf));
+        setup.addStep(pointsPage);
+        choiceMenu.addPage(pointsPage);
+        new AssignPointsButton(guis, choiceMenu).register(this, menu, access);
+        getServer().getPluginManager().registerEvents(new ChoiceGuiListener(getLogger()), this);
+        getServer().getPluginManager().registerEvents(new ChoiceLifecycleListener(statPoints, setup), this);
+        subCommands = Stream.concat(subCommands.stream(), Stream.of(
+                new ChooseCommand(targeting, access, choiceMenu),
+                new PointsCommand(targeting, statPoints),
+                new RespecCommand(targeting, choiceMenu))).toList();
         NpcCommands commands = new NpcCommands(subCommands, configuration, getPluginMeta().getVersion());
         getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS,
                 event -> commands.register(event.registrar()));
@@ -332,6 +398,8 @@ public class SkysongNPCs extends JavaPlugin {
                 worldGuard ? new WorldGuardPlaceRegions() : PlaceRegions.ANYWHERE,
                 () -> PlacingSettings.read(configuration.config()), getServer().getPluginManager(), getLogger());
         getServer().getPluginManager().registerEvents(new NpcPlaceListener(placer, configuration), this);
+        // M14: a new NPC gets its starting points.
+        factory.addCreatedHook(new StartingPoints(statPoints, templateChoices, blueprints));
 
         // M18: picking NPCs up into items, and placing them again only from the current item.
         NpcTickets tickets = new NpcTickets(itemStore, getLogger());
@@ -346,7 +414,7 @@ public class SkysongNPCs extends JavaPlugin {
         getServer().getServicesManager().register(SkysongNpcsApi.class, new SkysongNpcsApiImpl(registry, citizens, access, menu,
                         sheets, templates, factory, blueprints, policies,
                         containers, movement, groups, effects, appearance,
-                        pickup),
+                        pickup, statPoints, choiceMenu),
                 this, ServicePriority.Normal);
     }
 
@@ -364,6 +432,10 @@ public class SkysongNPCs extends JavaPlugin {
         if (groupStore != null) {
             groupStore.close();
             groupStore = null;
+        }
+        if (choiceStore != null) {
+            choiceStore.close();
+            choiceStore = null;
         }
         if (grantStore != null) {
             grantStore.close();
@@ -577,5 +649,27 @@ public class SkysongNPCs extends JavaPlugin {
     /** Picking NPCs up into items; null while the plugin is disabled. */
     public NpcPickup pickup() {
         return pickup;
+    }
+
+    // M14: choices and first setup
+
+    /** How the plugin reads stat base values for caps, through SkysongStats. */
+    protected StatBases hookStatBases() {
+        return new SkysongStatsBases();
+    }
+
+    /** NPCs' stat points; null while the plugin is disabled. */
+    public StatPoints statPoints() {
+        return statPoints;
+    }
+
+    /** The choice keys of the template files; null while the plugin is disabled. */
+    public TemplateChoiceRegistry templateChoices() {
+        return templateChoices;
+    }
+
+    /** The choice menu and setup; null while the plugin is disabled. */
+    public ChoiceMenu choiceMenu() {
+        return choiceMenu;
     }
 }
