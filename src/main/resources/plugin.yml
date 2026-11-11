@@ -24,3 +24,7 @@ permissions:
   skysongnpcs.place:
     description: Place NPCs from blueprint items.
     default: true
+  # M12
+  skysongnpcs.injuries:
+    description: DMs. Award, remove and discover injuries and award or remove conditions on NPC stat sheets (/snpc injury, /snpc condition).
+    default: op

@@ -9,6 +9,10 @@ public final class Permissions {
     /** Placing NPCs from blueprint items. */
     public static final String PLACE = "skysongnpcs.place";
 
+    // M12
+    /** DMs: award and remove injuries and conditions on NPC sheets. */
+    public static final String INJURIES = "skysongnpcs.injuries";
+
     private Permissions() {
     }
 }

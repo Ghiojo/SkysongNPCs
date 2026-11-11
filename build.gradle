@@ -95,6 +95,8 @@ dependencies {
     // The NPC table is tested on H2 in MySQL mode: its SQL is plain MySQL.
     testImplementation 'com.h2database:h2:2.3.232'
     testImplementation 'com.zaxxer:HikariCP:6.2.1'
+    // M12: SkysongStats' records (Injury, Ancestry...) are plain data the fakes build.
+    testImplementation skysongStatsApi
 }
 
 def targetJavaVersion = 21

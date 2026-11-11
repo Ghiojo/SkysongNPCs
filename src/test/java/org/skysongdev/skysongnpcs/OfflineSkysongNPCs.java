@@ -35,6 +35,8 @@ public class OfflineSkysongNPCs extends SkysongNPCs {
     // M11: stat sheets
     private final FakeStatSheets fakeSheets = new FakeStatSheets();
     private final FakeCarriedItems fakeItems = new FakeCarriedItems();
+    // M12
+    private final FakeSheetEffects fakeEffects = new FakeSheetEffects();
     // M17
     private final FakeItemTags fakeItemTags = new FakeItemTags();
     private final FakeNpcSpawner fakeSpawner = new FakeNpcSpawner();
@@ -126,5 +128,16 @@ public class OfflineSkysongNPCs extends SkysongNPCs {
 
     public FakeNpcSpawner fakeSpawner() {
         return fakeSpawner;
+    }
+
+    // M12: injuries, conditions and ancestry
+
+    @Override
+    protected org.skysongdev.skysongnpcs.sheets.SheetEffects hookEffects() {
+        return fakeEffects;
+    }
+
+    public FakeSheetEffects fakeEffects() {
+        return fakeEffects;
     }
 }

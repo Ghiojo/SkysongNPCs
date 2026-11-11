@@ -9,6 +9,7 @@ import org.skysongdev.skysongnpcs.api.menu.NpcMenu;
 import org.skysongdev.skysongnpcs.api.items.NpcItems;
 import org.skysongdev.skysongnpcs.api.npc.Npcs;
 import org.skysongdev.skysongnpcs.api.sheet.NpcSheets;
+import org.skysongdev.skysongnpcs.api.sheet.NpcEffects;
 
 /**
  * Entry point of the SkysongNPCs API, the supported way for other plugins (SkysongEconomy
@@ -97,4 +98,14 @@ public interface SkysongNpcsApi {
      * @since 0.6.0
      */
     @NotNull NpcItems items();
+
+    // M12
+
+    /**
+     * Injuries, conditions and ancestry on NPCs' stat sheets.
+     *
+     * @return the effects part of the API
+     * @since 0.7.0
+     */
+    @NotNull NpcEffects effects();
 }
