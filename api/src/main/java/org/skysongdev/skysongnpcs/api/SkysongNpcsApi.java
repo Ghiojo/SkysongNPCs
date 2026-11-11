@@ -4,6 +4,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.skysongdev.skysongnpcs.api.access.Access;
 import org.skysongdev.skysongnpcs.api.npc.Npcs;
 
 /**
@@ -61,4 +62,11 @@ public interface SkysongNpcsApi {
      * @return the NPCs part of the API
      */
     @NotNull Npcs npcs();
+
+    /**
+     * Who may do what with the NPCs: grants, group providers, and the check itself.
+     *
+     * @return the access part of the API
+     */
+    @NotNull Access access();
 }

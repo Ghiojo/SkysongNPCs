@@ -17,3 +17,20 @@ database:
   user: "root"
   password: ""
   database_name: "skysong"
+
+# Who may do what with NPCs besides their owner and staff (/snpc access).
+access:
+  # Shorthand for action lists: a preset's name can be typed wherever actions are,
+  # as in /snpc access grant player:Alice customer. A grant keeps the actions it was
+  # made with; changing a preset here does not change grants made from it before.
+  # "all" always means every action.
+  #
+  # Actions: info, stats-view, abilities-view, wardrobe-view, inventory-view,
+  # equipment-view, teleport, follow, look, wardrobe-edit, inventory-edit,
+  # equipment-edit, rename, skin, appearance, choose, pickup, manage.
+  # An -edit action includes its -view. Unknown actions in a preset are skipped.
+  # A default preset you delete comes back on the next start; set it to [] instead.
+  presets:
+    customer: [info, stats-view, teleport, follow, look]
+    viewer: [info, stats-view, abilities-view, wardrobe-view, inventory-view, equipment-view]
+    caretaker: [info, stats-view, abilities-view, teleport, follow, look, wardrobe-edit, inventory-edit, equipment-edit]
