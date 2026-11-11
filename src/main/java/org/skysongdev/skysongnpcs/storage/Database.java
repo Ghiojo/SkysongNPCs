@@ -30,6 +30,7 @@ public final class Database {
             SqlNpcItemStore itemTable = new SqlNpcItemStore(pool, log);
             // M14
             SqlChoiceStore choiceTables = new SqlChoiceStore(pool, log);
+            SqlPickStore pickTables = new SqlPickStore(pool, log);
             NpcStore npcs = new QueuedNpcStore(npcTable,
                     failed -> log.accept("Could not save an NPC change: " + failed.getMessage()));
             GrantStore grants = new QueuedGrantStore(grantTable,
@@ -44,7 +45,9 @@ public final class Database {
             // M14
             ChoiceStore choices = new QueuedChoiceStore(choiceTables,
                     failed -> log.accept("Could not save a choice change: " + failed.getMessage()));
-            return new Stores(npcs, grants, policies, groups, items, choices);
+            PickStore picks = new QueuedPickStore(pickTables,
+                    failed -> log.accept("Could not save a proficiency pick change: " + failed.getMessage()));
+            return new Stores(npcs, grants, policies, groups, items, choices, picks);
         } catch (RuntimeException failed) {
             pool.close();
             throw failed;

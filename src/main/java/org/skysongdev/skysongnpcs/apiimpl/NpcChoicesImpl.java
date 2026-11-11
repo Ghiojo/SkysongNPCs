@@ -9,6 +9,9 @@ import org.skysongdev.skysongnpcs.api.choices.SpendResult;
 import org.skysongdev.skysongnpcs.api.npc.NpcState;
 import org.skysongdev.skysongnpcs.choices.ChoiceMenu;
 import org.skysongdev.skysongnpcs.choices.StatPoints;
+import org.skysongdev.skysongnpcs.picks.ProficiencyPicks;
+import org.skysongdev.skysongnpcs.api.choices.PickResult;
+import org.skysongdev.skysongnpcs.api.choices.ProficiencyPickGrant;
 import org.skysongdev.skysongnpcs.npc.NpcRegistry;
 
 import java.util.Collection;
@@ -16,16 +19,18 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
-/** {@link NpcChoices} over the plugin's {@link StatPoints} and {@link ChoiceMenu}. */
+/** {@link NpcChoices} over the plugin's {@link StatPoints}, {@link ProficiencyPicks} and {@link ChoiceMenu}. */
 final class NpcChoicesImpl implements NpcChoices {
     private final NpcRegistry registry;
     private final StatPoints points;
     private final ChoiceMenu menu;
+    private final ProficiencyPicks picks;
 
-    NpcChoicesImpl(NpcRegistry registry, StatPoints points, ChoiceMenu menu) {
+    NpcChoicesImpl(NpcRegistry registry, StatPoints points, ChoiceMenu menu, ProficiencyPicks picks) {
         this.registry = registry;
         this.points = points;
         this.menu = menu;
+        this.picks = picks;
     }
 
     @Override
@@ -81,6 +86,46 @@ final class NpcChoicesImpl implements NpcChoices {
     public boolean open(@NotNull Player player, @NotNull UUID npc) {
         mainThread();
         return menu.open(Objects.requireNonNull(player, "player"), Objects.requireNonNull(npc, "npc"));
+    }
+
+    // M15: proficiency picks
+
+    @Override
+    public @NotNull ProficiencyPickGrant grantPicks(@NotNull UUID npc, @NotNull String source, @NotNull String skill,
+                                                   @NotNull String tier, int count) {
+        mainThread();
+        return picks.toApi(picks.grant(Objects.requireNonNull(npc, "npc"), Objects.requireNonNull(source, "source"),
+                Objects.requireNonNull(skill, "skill"), Objects.requireNonNull(tier, "tier"), count));
+    }
+
+    @Override
+    public int takeUnspentPicks(@NotNull UUID npc, @NotNull String source, int max) {
+        mainThread();
+        return picks.removeUnspent(Objects.requireNonNull(npc, "npc"), Objects.requireNonNull(source, "source"), max);
+    }
+
+    @Override
+    public @NotNull List<ProficiencyPickGrant> pickGrants(@NotNull UUID npc) {
+        mainThread();
+        return picks.grants(Objects.requireNonNull(npc, "npc")).stream().map(picks::toApi).toList();
+    }
+
+    @Override
+    public int unspentPicks(@NotNull UUID npc) {
+        mainThread();
+        return picks.pending(Objects.requireNonNull(npc, "npc"));
+    }
+
+    @Override
+    public int unspentPicks(@NotNull UUID npc, @NotNull String source) {
+        mainThread();
+        return picks.unspent(Objects.requireNonNull(npc, "npc"), Objects.requireNonNull(source, "source"));
+    }
+
+    @Override
+    public @NotNull PickResult spendPick(@NotNull UUID npc, @NotNull String proficiency) {
+        mainThread();
+        return picks.pickAny(null, Objects.requireNonNull(npc, "npc"), Objects.requireNonNull(proficiency, "proficiency"));
     }
 
     private static void mainThread() {

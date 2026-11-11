@@ -18,6 +18,7 @@ import org.skysongdev.skysongnpcs.sheets.NpcSheetService;
 import org.skysongdev.skysongnpcs.sheets.StatSheets;
 import org.skysongdev.skysongnpcs.storage.DatabaseSettings;
 import org.skysongdev.skysongnpcs.storage.InMemoryChoiceStore;
+import org.skysongdev.skysongnpcs.storage.InMemoryPickStore;
 import org.skysongdev.skysongnpcs.storage.InMemoryGrantStore;
 import org.skysongdev.skysongnpcs.storage.InMemoryGroupStore;
 import org.skysongdev.skysongnpcs.storage.InMemoryNpcItemStore;
@@ -82,7 +83,7 @@ public class OfflineSkysongNPCs extends SkysongNPCs {
     protected Stores openStores(DatabaseSettings settings) {
         return new Stores(new InMemoryNpcStore(), new InMemoryGrantStore(), new InMemoryPolicyStore(),
                 new InMemoryGroupStore(),
-                new InMemoryNpcItemStore(), new InMemoryChoiceStore());
+                new InMemoryNpcItemStore(), new InMemoryChoiceStore(), new InMemoryPickStore());
     }
 
     @Override
@@ -237,5 +238,17 @@ public class OfflineSkysongNPCs extends SkysongNPCs {
     @Override
     protected org.skysongdev.skysongnpcs.choices.StatBases hookStatBases() {
         return fakeSheets::base;
+    }
+
+    // M15: proficiencies come from a fake catalog; an NPC has tiers once it has a fake sheet.
+    private final FakeProficiencyCatalog fakeProficiencies = new FakeProficiencyCatalog(fakeSheets::exists);
+
+    @Override
+    protected org.skysongdev.skysongnpcs.picks.ProficiencyCatalog hookProficiencies() {
+        return fakeProficiencies;
+    }
+
+    public FakeProficiencyCatalog fakeProficiencies() {
+        return fakeProficiencies;
     }
 }
