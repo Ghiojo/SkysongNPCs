@@ -6,6 +6,7 @@ import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.Tag;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.configuration.ConfigurationSection;
 
 import java.util.Map;
@@ -47,6 +48,11 @@ public final class Messages {
                 .tag(PREFIX_KEY, (arguments, context) -> Tag.selfClosingInserting(miniMessage.deserialize(raw(PREFIX_KEY))));
         placeholders.forEach((name, value) -> resolvers.resolver(Placeholder.unparsed(name, value)));
         return miniMessage.deserialize(raw(key), resolvers.build());
+    }
+
+    /** The text at {@code key} without its styles, for use inside another text's placeholder. */
+    public String plain(String key, Map<String, String> placeholders) {
+        return PlainTextComponentSerializer.plainText().serialize(get(key, placeholders));
     }
 
     /** The text at {@code key}, with no placeholders. */

@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.mockbukkit.mockbukkit.MockBukkit;
 import org.mockbukkit.mockbukkit.ServerMock;
 import org.mockbukkit.mockbukkit.entity.PlayerMock;
-import org.skysongdev.skysongnpcs.SkysongNPCs;
+import org.skysongdev.skysongnpcs.OfflineSkysongNPCs;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -19,13 +19,13 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class NpcCommandsTest {
     private ServerMock server;
-    private SkysongNPCs plugin;
+    private OfflineSkysongNPCs plugin;
     private CommandRunner commands;
 
     @BeforeEach
     void setUp() {
         server = MockBukkit.mock();
-        plugin = MockBukkit.load(SkysongNPCs.class);
+        plugin = OfflineSkysongNPCs.load();
         commands = new CommandRunner(plugin.configuration(), "1.2.3", new ReloadCommand(plugin.configuration()));
     }
 

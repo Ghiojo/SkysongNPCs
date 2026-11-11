@@ -14,3 +14,35 @@ reload:
   done: "<prefix><green>Reloaded config.yml and messages.yml."
   # <files>: the files with mistakes, which keep their previous values.
   failed: "<prefix><red>Not applied, because of a mistake in <files>. The previous values stay; the console says what is wrong."
+
+# How an owner is written inside other texts (<owner>).
+owner-name:
+  # <player>: the player's name. <profile>: their character's profile.
+  character: "<player> (<profile>)"
+  server: "the server"
+
+# Texts shared by the commands that act on one NPC. <npc>: the NPC's name.
+npc:
+  no-target: "<prefix><red>Look at the NPC you mean (staff can also /npc select it)."
+  not-managed: "<prefix><red><npc> is not a Skysong NPC."
+  not-owner: "<prefix><red>Only <npc>'s owner can do that, while playing that character."
+  # <player>: the name typed.
+  unknown-player: "<prefix><red>No player called <player> has played here."
+  # <player>, <profile>: the names typed.
+  unknown-profile: "<prefix><red><player> has no character called <profile>."
+  no-active-profile: "<prefix><red><player> is not playing a character right now. Add the profile name after theirs."
+
+# /snpc adopt [player] [profile] (staff): makes a plain Citizens NPC a Skysong NPC.
+adopt:
+  done: "<prefix><green><npc> is now a Skysong NPC owned by <owner>."
+  already: "<prefix><red><npc> is already a Skysong NPC, owned by <owner>."
+
+# /snpc release (staff): makes a Skysong NPC a plain Citizens NPC again.
+release:
+  done: "<prefix><green><npc> is a plain Citizens NPC again. Its Skysong data is deleted."
+
+# /snpc owner [player [profile] | server]
+owner:
+  show: "<prefix><gray><npc> belongs to <white><owner></white>."
+  done: "<prefix><green><npc> now belongs to <owner>."
+  same: "<prefix><yellow><npc> already belongs to <owner>."

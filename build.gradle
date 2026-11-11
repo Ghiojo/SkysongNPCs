@@ -65,6 +65,9 @@ dependencies {
     compileOnly skysongItemsApi
     // Optional at runtime (plugin.yml softdepend:): only the wardrobe hooks touch it.
     compileOnly skysongWardrobeApi
+    // The MySQL connection pool, the same version SkysongStats uses. Paper downloads it from
+    // plugin.yml's libraries: list, so it is not shaded.
+    compileOnly 'com.zaxxer:HikariCP:6.2.1'
 
     // Tests run on JUnit 6 and MockBukkit 4.116.3, the same versions the other Skysong
     // plugins use. That MockBukkit release mocks Paper 1.21.11, the API this plugin compiles against.
@@ -74,6 +77,9 @@ dependencies {
     testImplementation 'org.mockbukkit.mockbukkit:mockbukkit-v1.21:4.116.3'
     testImplementation 'io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT'
     testImplementation 'org.mockito:mockito-core:5.14.2'
+    // The NPC table is tested on H2 in MySQL mode: its SQL is plain MySQL.
+    testImplementation 'com.h2database:h2:2.3.232'
+    testImplementation 'com.zaxxer:HikariCP:6.2.1'
 }
 
 def targetJavaVersion = 21

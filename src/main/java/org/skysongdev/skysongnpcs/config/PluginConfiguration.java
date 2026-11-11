@@ -4,6 +4,7 @@ import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.Plugin;
+import org.skysongdev.skysongnpcs.storage.DatabaseSettings;
 
 import java.io.File;
 import java.io.IOException;
@@ -75,6 +76,18 @@ public final class PluginConfiguration {
 
     public Messages messages() {
         return Objects.requireNonNull(messages, "reload() has not run yet");
+    }
+
+    /** The MySQL connection from config.yml's {@code database:} section. The plugin reads it once, on enable. */
+    public DatabaseSettings database() {
+        FileConfiguration current = config();
+        return new DatabaseSettings(
+                current.getString("database.host", "localhost"),
+                current.getString("database.port", "3306"),
+                current.getString("database.database_name", "skysong"),
+                current.getString("database.user", "root"),
+                // No password key means the user has no password (null for the driver).
+                current.getString("database.password"));
     }
 
     /**
