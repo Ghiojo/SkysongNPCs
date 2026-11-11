@@ -88,7 +88,7 @@ class BlueprintApiTest {
                 Objects.requireNonNull(plugin.getResource("messages.yml")), StandardCharsets.UTF_8));
         for (NpcPlacer.Result result : NpcPlacer.Result.values()) {
             if (result != NpcPlacer.Result.NOT_A_BLUEPRINT && result != NpcPlacer.Result.CANCELLED) {
-                assertTrue(bundled.isString("place." + NpcPlaceListener.key(result)), result.name());
+                assertTrue(bundled.isString(NpcPlaceListener.messageKey(result)), result.name());
             }
         }
     }

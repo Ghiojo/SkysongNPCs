@@ -20,6 +20,8 @@ public final class FakeNpcSpawner implements NpcSpawner {
 
     private final Map<UUID, Spawned> spawned = new LinkedHashMap<>();
     private boolean refuse;
+    // M18: despawned NPCs, still in Citizens.
+    private final Map<UUID, Spawned> despawned = new LinkedHashMap<>();
 
     /** Every spawn from now on is refused, as when another plugin cancels it. */
     public void refuseSpawns(boolean refuse) {
@@ -43,6 +45,7 @@ public final class FakeNpcSpawner implements NpcSpawner {
     @Override
     public void destroy(UUID npc) {
         spawned.remove(npc);
+        despawned.remove(npc);
     }
 
     @Override
@@ -55,5 +58,37 @@ public final class FakeNpcSpawner implements NpcSpawner {
                 })
                 .map(Map.Entry::getKey)
                 .toList();
+    }
+
+    // M18: pickup
+
+    /** NPCs picked up: kept, but not in the world. */
+    public Map<UUID, Spawned> despawned() {
+        return despawned;
+    }
+
+    @Override
+    public boolean despawn(UUID npc) {
+        Spawned found = spawned.remove(npc);
+        if (found != null) {
+            despawned.put(npc, found);
+        }
+        return found != null || despawned.containsKey(npc);
+    }
+
+    @Override
+    public boolean respawn(UUID npc, Location location) {
+        Spawned found = despawned.containsKey(npc) ? despawned.get(npc) : spawned.get(npc);
+        if (found == null || refuse) {
+            return false;
+        }
+        despawned.remove(npc);
+        spawned.put(npc, new Spawned(found.type(), found.name(), found.skin(), location.clone()));
+        return true;
+    }
+
+    @Override
+    public Optional<Location> location(UUID npc) {
+        return Optional.ofNullable(spawned.get(npc)).map(found -> found.location().clone());
     }
 }

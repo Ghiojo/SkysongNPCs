@@ -6,6 +6,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 
 /** Reads and makes blueprint items through their {@link BlueprintTags}. */
 public final class Blueprints {
@@ -37,5 +38,31 @@ public final class Blueprints {
             tags.setDetached(blueprint, BlueprintTags.NAME, name.trim());
         }
         return blueprint;
+    }
+
+    // M18: NPC items: a blueprint that also holds a picked-up NPC and its ticket.
+
+    /** The NPC an NPC item holds; empty when the item is not one (or its tag is not a UUID). */
+    public Optional<UUID> npc(@Nullable ItemStack item) {
+        return uuid(item, BlueprintTags.NPC_ID);
+    }
+
+    /** The ticket an NPC item carries; empty when it carries none. */
+    public Optional<UUID> ticket(@Nullable ItemStack item) {
+        return uuid(item, BlueprintTags.TICKET);
+    }
+
+    /** Writes the NPC and its ticket on {@code item}, an item nobody holds yet. */
+    public void makeNpcItem(ItemStack item, UUID npc, UUID ticket) {
+        tags.setDetached(item, BlueprintTags.NPC_ID, npc.toString());
+        tags.setDetached(item, BlueprintTags.TICKET, ticket.toString());
+    }
+
+    private Optional<UUID> uuid(@Nullable ItemStack item, String tag) {
+        try {
+            return tags.string(item, tag).map(UUID::fromString);
+        } catch (IllegalArgumentException notAUuid) {
+            return Optional.empty();
+        }
     }
 }

@@ -155,4 +155,23 @@ public final class NpcRegistry {
         }
         return put(new NpcRecord(npc, owner, org.skysongdev.skysongnpcs.api.npc.NpcState.SETUP, template));
     }
+
+    // M18: pickup. Picking an NPC up stores it, placing it again brings back the state it had.
+
+    /**
+     * Moves an NPC to another state. Nothing is saved when it is in that state already.
+     *
+     * @throws IllegalArgumentException when the NPC is not managed
+     */
+    public NpcRecord setState(UUID npc, org.skysongdev.skysongnpcs.api.npc.NpcState state) {
+        Objects.requireNonNull(state, "state");
+        NpcRecord current = records.get(npc);
+        if (current == null) {
+            throw new IllegalArgumentException("NPC " + npc + " is not managed");
+        }
+        if (current.state() == state) {
+            return current;
+        }
+        return put(current.withState(state));
+    }
 }
