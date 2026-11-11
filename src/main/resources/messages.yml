@@ -578,3 +578,60 @@ choices:
     failed: "<prefix><red>SkysongStats did not take <ancestry>. Try again or tell staff."
     saved: "<prefix><green><npc> is now <ancestry>."
 
+# M15: proficiency picks. <npc>: the NPC's name. <skill>, <proficiency>, <tier>: names
+# from SkysongStats' skills.yml and proficiencies.yml. <left>: picks left.
+picks:
+  not-allowed: "<prefix><red>You may not make <npc>'s choices."
+  # <proficiency> and <tier>: what was picked and the tier it went up to.
+  picked: "<prefix><green><npc>'s <proficiency> is now <tier>."
+  nothing: "<prefix><gray><npc> has nothing to pick right now."
+  # The picks page of the choice menu, and the picks step of the setup. Each icon has a
+  # name and lore.
+  icon:
+    name: "<gold>Proficiency picks"
+    lore:
+      - "<gray>Picks left: <white><left>"
+  title: "<dark_gray>Pick <left> <skill> proficienc(ies)"
+  # A proficiency that can be picked. <current>: its tier now.
+  option:
+    name: "<white><proficiency>"
+    lore:
+      - "<gray>Now: <white><current>"
+      - "<gray>Picked: <white><tier>"
+      - "<yellow>Click to select."
+  selected:
+    name: "<green><proficiency>"
+    lore:
+      - "<gray>Now: <white><current>"
+      - "<gray>Picked: <white><tier>"
+      - "<yellow>Click to unselect."
+  left:
+    name: "<gold><skill>"
+    lore:
+      - "<gray>Picks left: <white><left>"
+      - "<gray>Each one goes up to <white><tier></white>."
+  # <count>: how many are selected.
+  confirm:
+    name: "<green>Confirm <count> pick(s)"
+    lore:
+      - "<gray>Only staff can undo picks."
+  # Why a pick was not saved.
+  result:
+    no-such-grant: "<prefix><red>Those picks are no longer there."
+    nothing-picked: "<prefix><red>Pick a proficiency first."
+    too-many: "<prefix><red>That is more picks than are left."
+    unknown-proficiency: "<prefix><red>There is no proficiency called <proficiency>."
+    wrong-skill: "<prefix><red>That proficiency is not of the right skill."
+    not-an-option: "<prefix><red><proficiency> is already at <tier> or above, or picked already."
+    no-sheet: "<prefix><red><npc> has no stat sheet."
+  # /snpc picks
+  list:
+    none: "<prefix><gray><npc> has no proficiency picks."
+    header: "<prefix><gray><npc>'s proficiency picks, <white><left></white> left:"
+    # <count>: picks the grant gave; <source>: who gave them (template, staff, ability:<id>, a plugin).
+    line: "<gray>- <white><skill></white> up to <white><tier></white>: <white><left></white> of <count> left (<source>)"
+  none-for-skill: "<prefix><red><npc> has no <skill> picks left."
+  unknown-skill: "<prefix><red>There is no skill called <skill>."
+  # /snpc picks grant and take (staff). <count>: how many.
+  granted: "<prefix><green><npc> got <count> <skill> pick(s) up to <tier>."
+  taken: "<prefix><green>Took <count> unspent pick(s) from <source> away from <npc>."

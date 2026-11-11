@@ -86,4 +86,64 @@ public interface NpcChoices {
      * @return false when the NPC is not managed
      */
     boolean open(@NotNull Player player, @NotNull UUID npc);
+
+    // M15: proficiency picks
+
+    /**
+     * Gives an NPC proficiency picks: it may raise {@code count} proficiencies of a skill to a
+     * tier. Picks from the same source, skill and tier are added to the grant it already has.
+     *
+     * @param npc    the NPC's Citizens UUID
+     * @param source who gives them, such as {@code economy:smithy}; at most 64 characters, no spaces
+     * @param skill  a SkysongStats skill id or alias
+     * @param tier   a SkysongStats tier id
+     * @param count  how many, 1 or more
+     * @return the grant, new or grown
+     * @throws IllegalArgumentException when the NPC is not managed, the count is below 1, the
+     *                                  source is not valid, or the skill or tier does not exist
+     * @since 0.15.0
+     */
+    @NotNull ProficiencyPickGrant grantPicks(@NotNull UUID npc, @NotNull String source, @NotNull String skill,
+                                            @NotNull String tier, int count);
+
+    /**
+     * Takes back unspent picks a source gave, newest grant first. Spent picks stay.
+     *
+     * @param max how many at most
+     * @return how many were taken
+     * @since 0.15.0
+     */
+    int takeUnspentPicks(@NotNull UUID npc, @NotNull String source, int max);
+
+    /**
+     * The NPC's proficiency pick grants, oldest first; empty for an unmanaged NPC.
+     *
+     * @since 0.15.0
+     */
+    @NotNull List<ProficiencyPickGrant> pickGrants(@NotNull UUID npc);
+
+    /**
+     * Every unspent proficiency pick the NPC has.
+     *
+     * @since 0.15.0
+     */
+    int unspentPicks(@NotNull UUID npc);
+
+    /**
+     * The unspent proficiency picks one source gave the NPC.
+     *
+     * @since 0.15.0
+     */
+    int unspentPicks(@NotNull UUID npc, @NotNull String source);
+
+    /**
+     * Spends one pick on a proficiency, as if a player chose it, from the NPC's oldest grant of
+     * that proficiency's skill that can take it, and fires
+     * {@link org.skysongdev.skysongnpcs.api.event.NpcChoiceResolvedEvent} with kind
+     * {@link org.skysongdev.skysongnpcs.api.event.NpcChoiceResolvedEvent#PROFICIENCY_PICKS}.
+     *
+     * @param proficiency a SkysongStats proficiency id or alias
+     * @since 0.15.0
+     */
+    @NotNull PickResult spendPick(@NotNull UUID npc, @NotNull String proficiency);
 }

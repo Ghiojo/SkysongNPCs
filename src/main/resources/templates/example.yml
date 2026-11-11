@@ -39,3 +39,13 @@ ancestries: []
 
 # Whether the ancestry step also offers Other: no ancestry, for animals and creatures.
 allow-other: true
+
+# The proficiency picks a new NPC starts with, made in its setup after the points: pick
+# <count> proficiencies of a SkysongStats skill (id or alias from skills.yml), and each one
+# goes up to <tier> (an id from proficiencies.yml's tiers). count defaults to 1. Only NPCs
+# with a stat sheet get picks. Empty: no picks step. For example:
+#   proficiency-picks:
+#     - skill: metalworking
+#       tier: proficient
+#       count: 2
+proficiency-picks: []

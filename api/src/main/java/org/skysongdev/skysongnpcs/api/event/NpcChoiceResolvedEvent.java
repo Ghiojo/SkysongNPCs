@@ -17,6 +17,12 @@ import org.skysongdev.skysongnpcs.api.npc.ManagedNpc;
 public final class NpcChoiceResolvedEvent extends Event {
     /** The kind of stat points: the choice is a stat id, the amount the points spent. */
     public static final String STAT_POINTS = "stat-points";
+    /**
+     * M15: a proficiency pick; the choice is the proficiency id and the amount 1.
+     *
+     * @since 0.15.0
+     */
+    public static final String PROFICIENCY_PICKS = "proficiency-picks";
 
     private static final HandlerList HANDLERS = new HandlerList();
 

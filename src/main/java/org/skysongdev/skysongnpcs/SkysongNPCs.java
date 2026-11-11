@@ -146,6 +146,17 @@ import org.skysongdev.skysongnpcs.storage.ChoiceStore;
 import java.util.Map;
 import java.util.function.Function;
 
+// M15: proficiency picks
+import org.skysongdev.skysongnpcs.commands.PicksCommand;
+import org.skysongdev.skysongnpcs.picks.PicksListener;
+import org.skysongdev.skysongnpcs.picks.PicksPage;
+import org.skysongdev.skysongnpcs.picks.ProficiencyCatalog;
+import org.skysongdev.skysongnpcs.picks.ProficiencyPicks;
+import org.skysongdev.skysongnpcs.picks.SkysongStatsProficiencyCatalog;
+import org.skysongdev.skysongnpcs.picks.StartingPicks;
+import org.skysongdev.skysongnpcs.picks.TemplatePicks;
+import org.skysongdev.skysongnpcs.storage.PickStore;
+
 import java.io.File;
 import java.util.List;
 import java.util.Optional;
@@ -207,6 +218,9 @@ public class SkysongNPCs extends JavaPlugin {
     private StatPoints statPoints;
     private ChoiceMenu choiceMenu;
     private TemplateChoiceRegistry templateChoices;
+    // M15: proficiency picks
+    private PickStore pickStore;
+    private ProficiencyPicks picks;
 
     /** M17: WorldGuard is optional; its flags must be registered before it enables, so here. */
     @Override
@@ -230,6 +244,7 @@ public class SkysongNPCs extends JavaPlugin {
             groupStore = stores.groups();
             itemStore = stores.items();
             choiceStore = stores.choices();
+            pickStore = stores.picks();
         } catch (RuntimeException failed) {
             getLogger().log(Level.SEVERE, "Could not reach the database in config.yml (" + configuration.database()
                     + "). SkysongNPCs is disabled.", failed);
@@ -266,6 +281,10 @@ public class SkysongNPCs extends JavaPlugin {
         templateChoices = new TemplateChoiceRegistry(
                 new File(getDataFolder(), "templates"), statSheets::statId, getLogger());
         templateChoices.reload();
+        // M15: the proficiency-picks key of the template files.
+        ProficiencyCatalog proficiencies = hookProficiencies();
+        TemplatePicks templatePicks = new TemplatePicks(new File(getDataFolder(), "templates"), proficiencies, getLogger());
+        templatePicks.reload();
         sheets = new NpcSheetService(registry, statSheets, hookCarriedItems());
         // SkysongStats does not save item counts, so they are sent again on every start.
         sheets.recountAll(true);
@@ -305,7 +324,7 @@ public class SkysongNPCs extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new WardrobeViewListener(wardrobes), this);
 
         List<SubCommand> subCommands = List.of(
-                new ReloadCommand(configuration, List.of(templates, choiceSettings, templateChoices)),
+                new ReloadCommand(configuration, List.of(templates, choiceSettings, templateChoices, templatePicks)),
                 new AdoptCommand(targeting),
                 new ReleaseCommand(targeting),
                 new OwnerCommand(targeting),
@@ -386,6 +405,18 @@ public class SkysongNPCs extends JavaPlugin {
                 new ChooseCommand(targeting, access, choiceMenu),
                 new PointsCommand(targeting, statPoints),
                 new RespecCommand(targeting, choiceMenu))).toList();
+        // M15: proficiency picks, a setup step after the points and a page of the choice menu.
+        picks = new ProficiencyPicks(registry, proficiencies, pickStore,
+                (npc, player, grant, proficiency) -> getServer().getPluginManager().callEvent(new NpcChoiceResolvedEvent(
+                        npc, player, NpcChoiceResolvedEvent.PROFICIENCY_PICKS, proficiency, 1)),
+                getLogger());
+        picks.load();
+        PicksPage picksPage = new PicksPage(guis, picks, citizens);
+        setup.addStep(picksPage);
+        choiceMenu.addPage(picksPage);
+        getServer().getPluginManager().registerEvents(new PicksListener(picks), this);
+        subCommands = Stream.concat(subCommands.stream(), Stream.of(
+                new PicksCommand(targeting, access, picks))).toList();
         NpcCommands commands = new NpcCommands(subCommands, configuration, getPluginMeta().getVersion());
         getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS,
                 event -> commands.register(event.registrar()));
@@ -400,6 +431,8 @@ public class SkysongNPCs extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new NpcPlaceListener(placer, configuration), this);
         // M14: a new NPC gets its starting points.
         factory.addCreatedHook(new StartingPoints(statPoints, templateChoices, blueprints));
+        // M15: and its template's proficiency picks.
+        factory.addCreatedHook(new StartingPicks(picks, templatePicks));
 
         // M18: picking NPCs up into items, and placing them again only from the current item.
         NpcTickets tickets = new NpcTickets(itemStore, getLogger());
@@ -414,7 +447,7 @@ public class SkysongNPCs extends JavaPlugin {
         getServer().getServicesManager().register(SkysongNpcsApi.class, new SkysongNpcsApiImpl(registry, citizens, access, menu,
                         sheets, templates, factory, blueprints, policies,
                         containers, movement, groups, effects, appearance,
-                        pickup, statPoints, choiceMenu),
+                        pickup, statPoints, choiceMenu, picks),
                 this, ServicePriority.Normal);
     }
 
@@ -432,6 +465,10 @@ public class SkysongNPCs extends JavaPlugin {
         if (groupStore != null) {
             groupStore.close();
             groupStore = null;
+        }
+        if (pickStore != null) {
+            pickStore.close();
+            pickStore = null;
         }
         if (choiceStore != null) {
             choiceStore.close();
@@ -496,6 +533,18 @@ public class SkysongNPCs extends JavaPlugin {
     /** Deletes a sheet when Citizens removes its NPC. Tests have no Citizens, so they skip it. */
     protected void listenForNpcRemovals(NpcCloning cloning) {
         getServer().getPluginManager().registerEvents(new CitizensRemoveListener(cloning), this);
+    }
+
+    // M15: proficiency picks
+
+    /** How the plugin reads skills, proficiencies and NPCs' tiers, through SkysongStats. */
+    protected ProficiencyCatalog hookProficiencies() {
+        return new SkysongStatsProficiencyCatalog();
+    }
+
+    /** The NPCs' proficiency picks; null while the plugin is disabled. */
+    public ProficiencyPicks picks() {
+        return picks;
     }
 
     /** The NPC templates; null while the plugin is disabled. */
