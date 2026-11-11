@@ -22,4 +22,12 @@ public interface NpcLookup {
 
     /** The NPC's name as Citizens shows it, without colours, or its UUID when Citizens has no such NPC. */
     String name(UUID npc);
+
+    // M7: movement
+
+    /**
+     * Makes the NPC the sender's selection, Citizens' own (the one {@code /npc select} sets),
+     * so {@link #target} finds it whenever the sender looks at no other NPC.
+     */
+    void select(CommandSender sender, UUID npc);
 }

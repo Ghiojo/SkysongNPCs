@@ -89,9 +89,18 @@ import org.skysongdev.skysongnpcs.wardrobe.WardrobeButton;
 import org.skysongdev.skysongnpcs.wardrobe.WardrobeGateway;
 import org.skysongdev.skysongnpcs.wardrobe.WardrobeViewListener;
 
+// M7: movement
+import org.skysongdev.skysongnpcs.citizens.CitizensMover;
+import org.skysongdev.skysongnpcs.commands.MovementCommands;
+import org.skysongdev.skysongnpcs.movement.MovementButton;
+import org.skysongdev.skysongnpcs.movement.MovementService;
+import org.skysongdev.skysongnpcs.movement.MovementSettings;
+import org.skysongdev.skysongnpcs.movement.NpcMover;
+
 import java.io.File;
 import java.util.List;
 import java.util.logging.Level;
+import java.util.stream.Stream;
 
 /**
  * Entry point of SkysongNPCs. It only builds and wires the plugin's parts;
@@ -123,6 +132,9 @@ public class SkysongNPCs extends JavaPlugin {
     private ContainerService containers;
     // M10: wardrobe
     private NpcWardrobes wardrobes;
+
+    // M7: movement
+    private MovementService movement;
 
     /** M17: WorldGuard is optional; its flags must be registered before it enables, so here. */
     @Override
@@ -224,6 +236,13 @@ public class SkysongNPCs extends JavaPlugin {
                 new ContainerCommand(targeting, containers, Container.EQUIPMENT),
                 // M10: wardrobe
                 new WardrobeCommand(targeting, wardrobes));
+
+        // M7: movement (/snpc select, tphere, follow, look, and the Movement button)
+        movement = new MovementService(registry, hookMover(), () -> MovementSettings.read(configuration.config()));
+        new MovementButton(movement, access, citizens, configuration).register(this, menu);
+        subCommands = Stream.concat(subCommands.stream(),
+                new MovementCommands(targeting, citizens, access, movement, configuration).subCommands().stream()).toList();
+
         NpcCommands commands = new NpcCommands(subCommands, configuration, getPluginMeta().getVersion());
         getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS,
                 event -> commands.register(event.registrar()));
@@ -240,7 +259,7 @@ public class SkysongNPCs extends JavaPlugin {
         // Last, so other plugins only see the API once everything behind it is ready.
         getServer().getServicesManager().register(SkysongNpcsApi.class, new SkysongNpcsApiImpl(registry, citizens, access, menu,
                         sheets, templates, factory, blueprints, policies,
-                        containers),
+                        containers, movement),
                 this, ServicePriority.Normal);
     }
 
@@ -408,5 +427,17 @@ public class SkysongNPCs extends JavaPlugin {
     /** NPC wardrobes; null while the plugin is disabled. */
     public NpcWardrobes wardrobes() {
         return wardrobes;
+    }
+
+    // M7: movement
+
+    /** How NPCs are moved, through Citizens. */
+    protected NpcMover hookMover() {
+        return new CitizensMover();
+    }
+
+    /** Moves NPCs; null while the plugin is disabled. */
+    public MovementService movement() {
+        return movement;
     }
 }
