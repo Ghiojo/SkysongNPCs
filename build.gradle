@@ -70,6 +70,8 @@ dependencies {
         transitive = false
     }
     compileOnly skysongStatsApi
+    // Cloning's SkysongStats side is tested against the real API types, with mocks behind them.
+    testImplementation skysongStatsApi
     compileOnly skysongItemsApi
     // Optional at runtime (plugin.yml softdepend:): only the wardrobe hooks touch it.
     compileOnly skysongWardrobeApi
