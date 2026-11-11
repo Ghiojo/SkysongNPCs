@@ -37,6 +37,20 @@ import org.skysongdev.skysongnpcs.storage.GrantStore;
 import org.skysongdev.skysongnpcs.storage.NpcStore;
 import org.skysongdev.skysongnpcs.storage.Stores;
 
+// M11: stat sheets and templates
+import org.skysongdev.skysongnpcs.citizens.CitizensCarriedItems;
+import org.skysongdev.skysongnpcs.commands.ModifierCommand;
+import org.skysongdev.skysongnpcs.commands.ProficiencyCommand;
+import org.skysongdev.skysongnpcs.commands.SheetCommand;
+import org.skysongdev.skysongnpcs.commands.StatsCommand;
+import org.skysongdev.skysongnpcs.sheets.CarriedItems;
+import org.skysongdev.skysongnpcs.sheets.NpcSheetService;
+import org.skysongdev.skysongnpcs.sheets.SkysongStatsSheets;
+import org.skysongdev.skysongnpcs.sheets.StatSheets;
+import org.skysongdev.skysongnpcs.sheets.StatsReloadListener;
+import org.skysongdev.skysongnpcs.templates.TemplateRegistry;
+
+import java.io.File;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -56,6 +70,9 @@ public class SkysongNPCs extends JavaPlugin {
     private GrantStore grantStore;
     private AccessService access;
     private NpcMenuService menu;
+    // M11: stat sheets and templates
+    private TemplateRegistry templates;
+    private NpcSheetService sheets;
 
     @Override
     public void onEnable() {
@@ -85,6 +102,18 @@ public class SkysongNPCs extends JavaPlugin {
         access = new AccessService(grants, characters, new ActionPresets(() -> configuration.config()), getLogger());
         getServer().getPluginManager().registerEvents(new AccessListener(access), this);
 
+        // M11: stat sheets and templates
+        StatSheets statSheets = hookSheets();
+        templates = new TemplateRegistry(new File(getDataFolder(), "templates"),
+                () -> saveResource("templates/example.yml", false), statSheets::statId, getLogger());
+        templates.reload();
+        sheets = new NpcSheetService(registry, statSheets, hookCarriedItems());
+        // SkysongStats does not save item counts, so they are sent again on every start.
+        sheets.recountAll(true);
+        listenForStatsReloads(sheets);
+        long recountTicks = Math.max(1, configuration.config().getInt("sheets.item-recount-seconds", 5)) * 20L;
+        getServer().getScheduler().runTaskTimer(this, () -> sheets.recountAll(false), recountTicks, recountTicks);
+
         NpcTargeting targeting = new NpcTargeting(registry, citizens, characters, configuration);
 
         // The NPC menu: right-click or /snpc menu.
@@ -94,18 +123,24 @@ public class SkysongNPCs extends JavaPlugin {
         hookMenuClicks(menu);
 
         List<SubCommand> subCommands = List.of(
-                new ReloadCommand(configuration),
+                new ReloadCommand(configuration, List.of(templates)),
                 new AdoptCommand(targeting),
                 new ReleaseCommand(targeting),
                 new OwnerCommand(targeting),
                 new AccessCommand(targeting, access, configuration),
-                new MenuCommand(targeting, menu));
+                new MenuCommand(targeting, menu),
+                // M11: stat sheets and templates
+                new SheetCommand(targeting, access, sheets, templates, configuration),
+                new StatsCommand(targeting, sheets),
+                new ModifierCommand(targeting, sheets),
+                new ProficiencyCommand(targeting, sheets));
         NpcCommands commands = new NpcCommands(subCommands, configuration, getPluginMeta().getVersion());
         getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS,
                 event -> commands.register(event.registrar()));
 
         // Last, so other plugins only see the API once everything behind it is ready.
-        getServer().getServicesManager().register(SkysongNpcsApi.class, new SkysongNpcsApiImpl(registry, citizens, access, menu),
+        getServer().getServicesManager().register(SkysongNpcsApi.class, new SkysongNpcsApiImpl(registry, citizens, access, menu,
+                        sheets, templates),
                 this, ServicePriority.Normal);
     }
 
@@ -142,6 +177,33 @@ public class SkysongNPCs extends JavaPlugin {
     /** How the plugin reads players' characters, from SkysongStats. */
     protected CharacterLookup hookCharacters() {
         return new StatsCharacterLookup();
+    }
+
+    // M11: stat sheets and templates
+
+    /** How the plugin reads and edits NPC stat sheets, through SkysongStats. */
+    protected StatSheets hookSheets() {
+        return new SkysongStatsSheets(this);
+    }
+
+    /** How the plugin reads the items NPCs carry, from Citizens. */
+    protected CarriedItems hookCarriedItems() {
+        return new CitizensCarriedItems();
+    }
+
+    /** Counts every NPC's items again after a SkysongStats reload. */
+    protected void listenForStatsReloads(NpcSheetService sheets) {
+        getServer().getPluginManager().registerEvents(new StatsReloadListener(sheets), this);
+    }
+
+    /** The NPC templates; null while the plugin is disabled. */
+    public TemplateRegistry templates() {
+        return templates;
+    }
+
+    /** The NPCs' stat sheets; null while the plugin is disabled. */
+    public NpcSheetService sheets() {
+        return sheets;
     }
 
     /** The plugin's files, for tests and for the parts wired up here. */

@@ -1,0 +1,23 @@
+# An NPC template. Each file in this folder is one template, and its file name is the
+# template's id (here: example), used by blueprint items and by /snpc sheet create.
+# Ids are lowercase letters, digits and _. /snpc reload rereads the folder; a file with a
+# mistake keeps its previous version and the console says what is wrong.
+
+# The Citizens entity type, as Minecraft names it (PLAYER, WOLF, VILLAGER...). Default PLAYER.
+entity-type: PLAYER
+
+# The name a new NPC gets. Default: the template's id.
+name: "Guard"
+
+# Player NPCs only: the name of the player whose skin it wears. Leave it out for
+# Citizens' default.
+skin: ""
+
+# Whether the NPC gets a SkysongStats stat sheet. Default true.
+sheet: true
+
+# The sheet's starting base values, by SkysongStats stat id or alias (see SkysongStats'
+# stats.yml). Stats left out start at their stats.yml start value. This example names
+# none, so it works with any stats.yml; add lines such as:
+#   strength: 3
+stats: {}

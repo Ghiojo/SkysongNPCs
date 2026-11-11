@@ -88,3 +88,43 @@ menu:
       setup: "waiting for setup"
       placed: "placed"
       stored: "picked up"
+
+# M11: stat sheets. <npc>: the NPC's name.
+sheet:
+  # The lines /snpc sheet shows, in MiniMessage with SkysongStats' sheet placeholders
+  # ({strength}, {hp}, {max_hp}, {injuries}..., and {player} for the NPC's name). Empty
+  # ([]) shows SkysongStats' own stats sheet, as its messages.yml lays it out.
+  lines: []
+  none: "<prefix><red><npc> has no stat sheet."
+  not-allowed: "<prefix><red>You may not see <npc>'s stat sheet."
+  already: "<prefix><red><npc> already has a stat sheet."
+  created: "<prefix><green><npc> now has a stat sheet, every stat at its start value."
+  # <template>: the template's id.
+  created-from: "<prefix><green><npc> now has a stat sheet from template <template>."
+  unknown-template: "<prefix><red>There is no NPC template called <template>."
+  template-without-sheet: "<prefix><red>Template <template> gives no stat sheet."
+  # <reason>: what went wrong, in English, such as a stat that left stats.yml.
+  failed: "<prefix><red>Could not give <npc> a stat sheet: <reason>"
+
+# /snpc stats <stat> <set|add|reduce> <amount> (staff). <stat>: the name typed.
+stats:
+  # <value>: the stat's total now.
+  done: "<prefix><green><npc>'s <stat> is now <value>."
+  unknown: "<prefix><red>There is no stat called <stat>."
+
+# /snpc modifier [list | add <target> <amount> | del <id>] (staff).
+# <id>: the modifier's id. <target>: its stat. <amount>: what it adds, with its sign.
+modifier:
+  header: "<prefix><gray><npc>'s modifiers:"
+  entry: "<gray> - <white><id></white>: <target> <amount>"
+  empty: "<prefix><gray><npc> has no modifiers."
+  added: "<prefix><green>Added <amount> <target> to <npc> (modifier <id>)."
+  removed: "<prefix><green>Removed modifier <id> from <npc>."
+  not-found: "<prefix><red><npc> has no modifier <id>."
+  unknown-target: "<prefix><red>There is no stat or bar max called <target>."
+
+# /snpc proficiency <proficiency> <tier> (staff). <proficiency>, <tier>: the names typed.
+proficiency:
+  done: "<prefix><green><npc>'s <proficiency> is now <tier>."
+  unknown: "<prefix><red>There is no proficiency called <proficiency>."
+  unknown-tier: "<prefix><red>There is no tier called <tier>."

@@ -34,3 +34,10 @@ access:
     customer: [info, stats-view, teleport, follow, look]
     viewer: [info, stats-view, abilities-view, wardrobe-view, inventory-view, equipment-view]
     caretaker: [info, stats-view, abilities-view, teleport, follow, look, wardrobe-edit, inventory-edit, equipment-edit]
+
+# M11: stat sheets.
+sheets:
+  # How often, in seconds, the items each NPC carries are counted again toward its
+  # item-tag stats (Arcrot...). Only NPCs whose items changed are sent to SkysongStats.
+  # Read on start only.
+  item-recount-seconds: 5

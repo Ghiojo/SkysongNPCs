@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.skysongdev.skysongnpcs.api.access.Access;
 import org.skysongdev.skysongnpcs.api.menu.NpcMenu;
 import org.skysongdev.skysongnpcs.api.npc.Npcs;
+import org.skysongdev.skysongnpcs.api.sheet.NpcSheets;
 
 /**
  * Entry point of the SkysongNPCs API, the supported way for other plugins (SkysongEconomy
@@ -77,4 +78,12 @@ public interface SkysongNpcsApi {
      * @return the menu part of the API
      */
     @NotNull NpcMenu menu();
+
+    /**
+     * Stat sheets: give an NPC one, and get its SkysongStats character id.
+     *
+     * @return the sheets part of the API
+     * @since 0.5.0
+     */
+    @NotNull NpcSheets sheets();
 }
