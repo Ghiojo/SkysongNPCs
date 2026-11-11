@@ -13,9 +13,10 @@ import java.util.Objects;
  * @param items    the NPCs' blueprint items and tickets (M18)
  * @param choices  the NPCs' stat points and setup progress (M14)
  * @param picks    the NPCs' proficiency picks (M15)
+ * @param abilities the NPCs' abilities (M16)
  */
 public record Stores(NpcStore npcs, GrantStore grants, PolicyStore policies, GroupStore groups,
-                     NpcItemStore items, ChoiceStore choices, PickStore picks) {
+                     NpcItemStore items, ChoiceStore choices, PickStore picks, AbilityStore abilities) {
 
     public Stores {
         Objects.requireNonNull(npcs, "npcs");
@@ -25,5 +26,6 @@ public record Stores(NpcStore npcs, GrantStore grants, PolicyStore policies, Gro
         Objects.requireNonNull(items, "items");
         Objects.requireNonNull(choices, "choices");
         Objects.requireNonNull(picks, "picks");
+        Objects.requireNonNull(abilities, "abilities");
     }
 }

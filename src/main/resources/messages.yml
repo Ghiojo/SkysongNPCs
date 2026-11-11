@@ -635,3 +635,32 @@ picks:
   # /snpc picks grant and take (staff). <count>: how many.
   granted: "<prefix><green><npc> got <count> <skill> pick(s) up to <tier>."
   taken: "<prefix><green>Took <count> unspent pick(s) from <source> away from <npc>."
+# M16: abilities. <npc>: the NPC's name. <ability>: an ability's id as typed.
+abilities:
+  not-allowed: "<prefix><red>You may not see <npc>'s abilities."
+  unknown: "<prefix><red>abilities.yml has no ability called <ability>."
+  granted: "<prefix><green><npc> now has the ability <ability>."
+  already: "<prefix><red><npc> already has the ability <ability>."
+  revoked: "<prefix><green><npc> no longer has the ability <ability>."
+  missing: "<prefix><red><npc> does not have the ability <ability>."
+  # /snpc abilities list, and /snpc abilities from the console.
+  list:
+    header: "<prefix><gray><npc>'s abilities:"
+    empty: "<prefix><gray><npc> has no abilities."
+  # The line under the stat sheet: the label, then every ability's name (hover for its
+  # description), separated by the separator. NPCs without abilities get no line.
+  sheet:
+    label: "<gray>Abilities: "
+    separator: "<gray>, "
+  # The abilities menu: one icon per ability, its description as lore.
+  menu:
+    title: "<npc>'s abilities"
+    # Put before every ability's name on its icon.
+    ability-name: "<gold>"
+    none: "<gray><npc> has no abilities."
+  # The NPC menu's Abilities button. <count>: how many abilities the NPC has.
+  button:
+    name: "<gold>Abilities"
+    lore:
+      - "<gray>Abilities: <white><count>"
+      - "<yellow>Click to see them."

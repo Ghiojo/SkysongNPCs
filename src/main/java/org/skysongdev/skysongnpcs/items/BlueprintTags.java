@@ -28,7 +28,11 @@ public final class BlueprintTags implements Listener {
     /** Optional: the stat points the placed NPC starts with, instead of the template's. A whole number, 0 or more. */
     public static final String POINTS = "npc_points";
 
-    static final List<String> ALL = List.of(BLUEPRINT, NAME, NPC_ID, TICKET, POINTS);
+    // M16
+    /** Optional: the placed NPC's abilities, a comma list of abilities.yml ids, instead of the template's. */
+    public static final String ABILITIES = "npc_abilities";
+
+    static final List<String> ALL = List.of(BLUEPRINT, NAME, NPC_ID, TICKET, POINTS, ABILITIES);
 
     private final Plugin plugin;
 

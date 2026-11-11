@@ -22,6 +22,8 @@ import org.skysongdev.skysongnpcs.storage.InMemoryPickStore;
 import org.skysongdev.skysongnpcs.storage.InMemoryGrantStore;
 import org.skysongdev.skysongnpcs.storage.InMemoryGroupStore;
 import org.skysongdev.skysongnpcs.storage.InMemoryNpcItemStore;
+import org.skysongdev.skysongnpcs.storage.InMemoryAbilityStore;
+import org.skysongdev.skysongnpcs.abilities.AbilityChoices;
 import org.skysongdev.skysongnpcs.storage.InMemoryNpcStore;
 import org.skysongdev.skysongnpcs.storage.InMemoryPolicyStore;
 import org.skysongdev.skysongnpcs.storage.Stores;
@@ -83,7 +85,8 @@ public class OfflineSkysongNPCs extends SkysongNPCs {
     protected Stores openStores(DatabaseSettings settings) {
         return new Stores(new InMemoryNpcStore(), new InMemoryGrantStore(), new InMemoryPolicyStore(),
                 new InMemoryGroupStore(),
-                new InMemoryNpcItemStore(), new InMemoryChoiceStore(), new InMemoryPickStore());
+                new InMemoryNpcItemStore(), new InMemoryChoiceStore(), new InMemoryPickStore(),
+                new InMemoryAbilityStore());
     }
 
     @Override
@@ -250,5 +253,17 @@ public class OfflineSkysongNPCs extends SkysongNPCs {
 
     public FakeProficiencyCatalog fakeProficiencies() {
         return fakeProficiencies;
+    }
+
+    // M16: abilities
+    private final FakeAbilityChoices fakeChoices = new FakeAbilityChoices();
+
+    @Override
+    protected AbilityChoices hookAbilityChoices() {
+        return fakeChoices;
+    }
+
+    public FakeAbilityChoices fakeChoices() {
+        return fakeChoices;
     }
 }

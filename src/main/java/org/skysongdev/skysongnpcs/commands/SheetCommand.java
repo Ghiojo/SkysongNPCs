@@ -5,6 +5,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
+import net.kyori.adventure.text.Component;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.skysongdev.skysongnpcs.access.AccessService;
@@ -18,6 +19,8 @@ import org.skysongdev.skysongnpcs.templates.TemplateRegistry;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.function.Function;
 
 /**
  * {@code /snpc sheet}: shows the targeted NPC's stat sheet in chat to whoever has its
@@ -32,13 +35,25 @@ public final class SheetCommand implements SubCommand {
     private final AccessService access;
     private final TemplateRegistry templates;
     private final PluginConfiguration configuration;
+    // M16: abilities
+    private final Function<UUID, Optional<Component>> footer;
 
     public SheetCommand(NpcTargeting targeting, AccessService access, NpcSheetService sheets,
                         TemplateRegistry templates, PluginConfiguration configuration) {
+        this(targeting, access, sheets, templates, configuration, npc -> Optional.empty());
+    }
+
+    /**
+     * @param footer a line shown under an NPC's sheet, such as its abilities (M16); empty for none
+     */
+    public SheetCommand(NpcTargeting targeting, AccessService access, NpcSheetService sheets,
+                        TemplateRegistry templates, PluginConfiguration configuration,
+                        Function<UUID, Optional<Component>> footer) {
         this.targeting = new SheetTargeting(targeting, sheets);
         this.access = access;
         this.templates = templates;
         this.configuration = configuration;
+        this.footer = footer;
     }
 
     @Override
@@ -78,8 +93,11 @@ public final class SheetCommand implements SubCommand {
             return;
         }
         List<String> lines = configuration.messages().lines("sheet.lines");
-        targeting.sheets().stats().render(npc.get().id(), lines, name)
-                .ifPresent(rendered -> rendered.forEach(sender::sendMessage));
+        targeting.sheets().stats().render(npc.get().id(), lines, name).ifPresent(rendered -> {
+            rendered.forEach(sender::sendMessage);
+            // M16: the NPC's abilities, each a word with its description on hover.
+            footer.apply(npc.get().id()).ifPresent(sender::sendMessage);
+        });
     }
 
     private void create(CommandSender sender, String templateId) {

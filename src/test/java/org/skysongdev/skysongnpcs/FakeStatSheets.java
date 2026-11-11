@@ -152,4 +152,16 @@ public final class FakeStatSheets implements StatSheets {
         tiers.computeIfAbsent(npc, ignored -> new HashMap<>()).put(proficiency, tier);
         return ProficiencyResult.DONE;
     }
+
+    // M16: abilities
+
+    /** Every proficiency starts at the lowest tier, as in SkysongStats. */
+    @Override
+    public Optional<String> proficiencyTier(UUID npc, String proficiency) {
+        if (!exists(npc) || !proficiencyIds().contains(proficiency)) {
+            return Optional.empty();
+        }
+        String tier = tier(npc, proficiency);
+        return Optional.of(tier == null ? tierIds().get(0) : tier);
+    }
 }
