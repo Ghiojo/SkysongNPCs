@@ -1,12 +1,16 @@
 package org.skysongdev.skysongnpcs.apiimpl;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.skysongdev.skysongnpcs.api.npc.ManagedNpc;
 import org.skysongdev.skysongnpcs.api.npc.NpcOwner;
 import org.skysongdev.skysongnpcs.api.npc.Npcs;
+import org.skysongdev.skysongnpcs.items.NpcFactory;
 import org.skysongdev.skysongnpcs.npc.NpcLookup;
 import org.skysongdev.skysongnpcs.npc.NpcRegistry;
+import org.skysongdev.skysongnpcs.templates.NpcTemplate;
 
 import java.util.List;
 import java.util.Objects;
@@ -17,10 +21,12 @@ import java.util.UUID;
 final class NpcsImpl implements Npcs {
     private final NpcRegistry registry;
     private final NpcLookup citizens;
+    private final NpcFactory factory;
 
-    NpcsImpl(NpcRegistry registry, NpcLookup citizens) {
+    NpcsImpl(NpcRegistry registry, NpcLookup citizens, NpcFactory factory) {
         this.registry = registry;
         this.citizens = citizens;
+        this.factory = factory;
     }
 
     @Override
@@ -79,6 +85,28 @@ final class NpcsImpl implements Npcs {
     private static void mainThread() {
         if (!Bukkit.isPrimaryThread()) {
             throw new IllegalStateException("The SkysongNPCs API must be called on the main thread");
+        }
+    }
+
+    // M17
+
+    @Override
+    public @NotNull ManagedNpc create(@NotNull String template, @Nullable String name, @NotNull NpcOwner owner,
+                                      @NotNull Location location) {
+        mainThread();
+        Objects.requireNonNull(template, "template");
+        Objects.requireNonNull(owner, "owner");
+        Objects.requireNonNull(location, "location");
+        NpcTemplate found = factory.template(template)
+                .orElseThrow(() -> new IllegalArgumentException("There is no NPC template " + template));
+        try {
+            return factory.create(found, name, owner, location)
+                    .orElseThrow(() -> new IllegalStateException("Citizens could not spawn the NPC at " + location
+                            + ": another plugin refused the spawn"));
+        } catch (IllegalStateException refused) {
+            throw refused;
+        } catch (RuntimeException failed) {
+            throw new IllegalStateException("Could not make an NPC from the template " + template, failed);
         }
     }
 }

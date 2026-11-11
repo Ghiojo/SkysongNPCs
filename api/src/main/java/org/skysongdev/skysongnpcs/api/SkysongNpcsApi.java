@@ -6,6 +6,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.skysongdev.skysongnpcs.api.access.Access;
 import org.skysongdev.skysongnpcs.api.menu.NpcMenu;
+import org.skysongdev.skysongnpcs.api.items.NpcItems;
 import org.skysongdev.skysongnpcs.api.npc.Npcs;
 import org.skysongdev.skysongnpcs.api.sheet.NpcSheets;
 
@@ -86,4 +87,14 @@ public interface SkysongNpcsApi {
      * @since 0.5.0
      */
     @NotNull NpcSheets sheets();
+
+    // M17
+
+    /**
+     * Blueprint items, which place new NPCs: make them and read them.
+     *
+     * @return the items part of the API
+     * @since 0.6.0
+     */
+    @NotNull NpcItems items();
 }

@@ -20,3 +20,7 @@ permissions:
   skysongnpcs.admin:
     description: Staff. Do everything with every NPC (including /snpc adopt, release and owner server), and reload the plugin's files.
     default: op
+  # M17
+  skysongnpcs.place:
+    description: Place NPCs from blueprint items.
+    default: true

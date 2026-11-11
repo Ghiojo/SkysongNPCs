@@ -5,6 +5,8 @@ import org.bukkit.plugin.PluginDescriptionFile;
 import org.mockbukkit.mockbukkit.MockBukkit;
 import org.skysongdev.skysongnpcs.characters.CharacterLookup;
 import org.skysongdev.skysongnpcs.menu.NpcMenuService;
+import org.skysongdev.skysongnpcs.items.ItemTagGateway;
+import org.skysongdev.skysongnpcs.items.NpcSpawner;
 import org.skysongdev.skysongnpcs.npc.NpcLookup;
 import org.skysongdev.skysongnpcs.npc.NpcRegistry;
 import org.skysongdev.skysongnpcs.sheets.CarriedItems;
@@ -33,6 +35,9 @@ public class OfflineSkysongNPCs extends SkysongNPCs {
     // M11: stat sheets
     private final FakeStatSheets fakeSheets = new FakeStatSheets();
     private final FakeCarriedItems fakeItems = new FakeCarriedItems();
+    // M17
+    private final FakeItemTags fakeItemTags = new FakeItemTags();
+    private final FakeNpcSpawner fakeSpawner = new FakeNpcSpawner();
 
     /** Loads it with the commands and permissions of the real plugin.yml. */
     public static OfflineSkysongNPCs load() {
@@ -105,5 +110,21 @@ public class OfflineSkysongNPCs extends SkysongNPCs {
 
     public FakeCarriedItems fakeItems() {
         return fakeItems;
+    }
+
+    // M17
+
+    @Override
+    protected ItemTagGateway hookItemTags() {
+        return fakeItemTags;
+    }
+
+    @Override
+    protected NpcSpawner hookSpawner() {
+        return fakeSpawner;
+    }
+
+    public FakeNpcSpawner fakeSpawner() {
+        return fakeSpawner;
     }
 }

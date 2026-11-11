@@ -128,3 +128,18 @@ proficiency:
   done: "<prefix><green><npc>'s <proficiency> is now <tier>."
   unknown: "<prefix><red>There is no proficiency called <proficiency>."
   unknown-tier: "<prefix><red>There is no tier called <tier>."
+
+# --- M17: placing an NPC from a blueprint item ---
+place:
+  # <npc>: the new NPC's name.
+  placed: "<prefix><green>Placed <npc>. It is waiting for its first setup."
+  no-permission: "<prefix><red>You may not place NPCs."
+  # <template>: the template id on the item.
+  unknown-template: "<prefix><red>This item places an NPC template the server does not have (<template>). Tell staff."
+  no-character: "<prefix><red>Play a character first: the NPC will belong to them."
+  no-space: "<prefix><red>The NPC needs two free blocks above where you click."
+  no-access-here: "<prefix><red>You cannot place NPCs here."
+  # <limit>: the limit in config.yml.
+  character-limit: "<prefix><red>This character already has <limit> NPC(s) out. Pick one up first."
+  chunk-limit: "<prefix><red>This area already holds <limit> NPC(s)."
+  failed: "<prefix><red>Something went wrong making the NPC, so it was not placed and you keep the item. The console says what."

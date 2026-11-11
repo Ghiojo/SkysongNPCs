@@ -159,4 +159,17 @@ class NpcRegistryTest {
             seen.add("deleted " + npc.id() + " " + why);
         }
     }
+
+    // M17
+
+    @Test
+    void createdNpcsWaitForSetupWithTheirTemplate() {
+        UUID npc = UUID.randomUUID();
+
+        NpcRecord record = registry.create(npc, ALICE_DEFAULT, "guard_dog");
+
+        assertEquals(new NpcRecord(npc, ALICE_DEFAULT, NpcState.SETUP, "guard_dog"), record);
+        assertEquals(List.of(record), store.loadAll());
+        assertThrows(IllegalStateException.class, () -> registry.create(npc, ALICE_DEFAULT, "guard_dog"));
+    }
 }
