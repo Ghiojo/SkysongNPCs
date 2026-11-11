@@ -55,3 +55,10 @@ placing:
     per-character: 0
     # How many Skysong NPCs one chunk may hold. 0 for no limit. Staff are not limited.
     per-chunk: 0
+
+# --- M5: access policies ---
+# A policy is a named set of grants many NPCs follow at once (/snpc policy). What an NPC
+# allows is its policy's grants plus its own.
+policies:
+  # How many policies one character may make. 0 for no limit. Staff are not limited.
+  per-character: 0
