@@ -4,6 +4,9 @@ import org.bukkit.plugin.InvalidDescriptionException;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.mockbukkit.mockbukkit.MockBukkit;
 import org.skysongdev.skysongnpcs.characters.CharacterLookup;
+import org.skysongdev.skysongnpcs.inventory.NpcContainers;
+import org.skysongdev.skysongnpcs.cloning.NpcCloning;
+import org.skysongdev.skysongnpcs.cloning.SheetCopier;
 import org.skysongdev.skysongnpcs.menu.NpcMenuService;
 import org.skysongdev.skysongnpcs.items.ItemTagGateway;
 import org.skysongdev.skysongnpcs.items.NpcSpawner;
@@ -14,7 +17,9 @@ import org.skysongdev.skysongnpcs.sheets.NpcSheetService;
 import org.skysongdev.skysongnpcs.sheets.StatSheets;
 import org.skysongdev.skysongnpcs.storage.DatabaseSettings;
 import org.skysongdev.skysongnpcs.storage.InMemoryGrantStore;
+import org.skysongdev.skysongnpcs.storage.InMemoryGroupStore;
 import org.skysongdev.skysongnpcs.storage.InMemoryNpcStore;
+import org.skysongdev.skysongnpcs.storage.InMemoryPolicyStore;
 import org.skysongdev.skysongnpcs.storage.Stores;
 
 import java.io.IOException;
@@ -23,6 +28,9 @@ import java.io.StringReader;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
+
+// M10: wardrobe
+import org.skysongdev.skysongnpcs.wardrobe.WardrobeGateway;
 
 /**
  * The plugin with its records in memory, and Citizens and SkysongStats replaced by fakes the
@@ -40,6 +48,10 @@ public class OfflineSkysongNPCs extends SkysongNPCs {
     // M17
     private final FakeItemTags fakeItemTags = new FakeItemTags();
     private final FakeNpcSpawner fakeSpawner = new FakeNpcSpawner();
+    // M9: inventory and equipment
+    private final FakeNpcContainers fakeContainers = new FakeNpcContainers();
+    // M10: wardrobe
+    private final FakeWardrobe fakeWardrobe = new FakeWardrobe();
 
     /** Loads it with the commands and permissions of the real plugin.yml. */
     public static OfflineSkysongNPCs load() {
@@ -63,7 +75,8 @@ public class OfflineSkysongNPCs extends SkysongNPCs {
 
     @Override
     protected Stores openStores(DatabaseSettings settings) {
-        return new Stores(new InMemoryNpcStore(), new InMemoryGrantStore());
+        return new Stores(new InMemoryNpcStore(), new InMemoryGrantStore(), new InMemoryPolicyStore(),
+                new InMemoryGroupStore());
     }
 
     @Override
@@ -128,6 +141,63 @@ public class OfflineSkysongNPCs extends SkysongNPCs {
 
     public FakeNpcSpawner fakeSpawner() {
         return fakeSpawner;
+    }
+
+    // M9: inventory and equipment
+
+    @Override
+    protected NpcContainers hookContainers() {
+        return fakeContainers;
+    }
+
+    public FakeNpcContainers fakeContainers() {
+        return fakeContainers;
+    }
+
+    // M10: wardrobe
+
+    @Override
+    protected WardrobeGateway hookWardrobe() {
+        return fakeWardrobe;
+    }
+
+    public FakeWardrobe fakeWardrobe() {
+        return fakeWardrobe;
+    }
+
+    // M13: cloning
+    private final FakeSheetCopier fakeCopier = new FakeSheetCopier(fakeSheets);
+    private NpcCloning cloning;
+
+    @Override
+    protected SheetCopier hookSheetCopier() {
+        return fakeCopier;
+    }
+
+    @Override
+    protected void listenForNpcRemovals(NpcCloning cloning) {
+        // Citizens' remove event is not on the test classpath; tests call cloning().removed.
+        this.cloning = cloning;
+    }
+
+    public FakeSheetCopier fakeCopier() {
+        return fakeCopier;
+    }
+
+    public NpcCloning cloning() {
+        return cloning;
+    }
+
+    // M7: movement
+    private final FakeMover fakeMover = new FakeMover();
+
+    @Override
+    protected org.skysongdev.skysongnpcs.movement.NpcMover hookMover() {
+        return fakeMover;
+    }
+
+    public FakeMover fakeMover() {
+        return fakeMover;
     }
 
     // M12: injuries, conditions and ancestry

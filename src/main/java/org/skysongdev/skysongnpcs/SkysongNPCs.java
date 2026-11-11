@@ -16,7 +16,20 @@ import org.skysongdev.skysongnpcs.characters.StatsCharacterLookup;
 import org.skysongdev.skysongnpcs.citizens.CitizensListener;
 import org.skysongdev.skysongnpcs.citizens.CitizensMenuListener;
 import org.skysongdev.skysongnpcs.citizens.CitizensNpcLookup;
+import org.skysongdev.skysongnpcs.cloning.CitizensRemoveListener;
+import org.skysongdev.skysongnpcs.cloning.CloneListener;
+import org.skysongdev.skysongnpcs.cloning.NpcCloning;
+import org.skysongdev.skysongnpcs.cloning.RebuildingSheetCopier;
+import org.skysongdev.skysongnpcs.cloning.SheetCopier;
 import org.skysongdev.skysongnpcs.commands.AccessCommand;
+import org.skysongdev.skysongnpcs.commands.GroupCommand;
+import org.skysongdev.skysongnpcs.groups.LuckPermsGroups;
+import org.skysongdev.skysongnpcs.groups.PlayerGroupProvider;
+import org.skysongdev.skysongnpcs.groups.PlayerGroupRegistry;
+import org.skysongdev.skysongnpcs.api.groups.PlayerGroup;
+import org.skysongdev.skysongnpcs.api.groups.PlayerGroups;
+import org.skysongdev.skysongnpcs.api.access.GroupProvider;
+import org.skysongdev.skysongnpcs.storage.GroupStore;
 import org.skysongdev.skysongnpcs.citizens.CitizensNpcSpawner;
 import org.skysongdev.skysongnpcs.commands.AdoptCommand;
 import org.skysongdev.skysongnpcs.commands.MenuCommand;
@@ -62,9 +75,41 @@ import org.skysongdev.skysongnpcs.sheets.StatsReloadListener;
 import org.skysongdev.skysongnpcs.templates.TemplateRegistry;
 import org.skysongdev.skysongnpcs.worldguard.WorldGuardPlaceRegions;
 
+// M5: access policies
+import org.skysongdev.skysongnpcs.commands.PolicyCommand;
+import org.skysongdev.skysongnpcs.policy.EventFiringPolicyChanges;
+import org.skysongdev.skysongnpcs.policy.PolicyListener;
+import org.skysongdev.skysongnpcs.policy.PolicyRegistry;
+import org.skysongdev.skysongnpcs.storage.PolicyStore;
+// M9: inventory and equipment
+import org.skysongdev.skysongnpcs.citizens.CitizensNpcContainers;
+import org.skysongdev.skysongnpcs.commands.ContainerCommand;
+import org.skysongdev.skysongnpcs.inventory.Container;
+import org.skysongdev.skysongnpcs.inventory.ContainerButtons;
+import org.skysongdev.skysongnpcs.inventory.ContainerService;
+import org.skysongdev.skysongnpcs.inventory.NpcContainers;
+import org.skysongdev.skysongnpcs.inventory.ReadOnlyViewListener;
+// M10: wardrobe
+import org.skysongdev.skysongnpcs.commands.WardrobeCommand;
+import org.skysongdev.skysongnpcs.wardrobe.NpcWardrobes;
+import org.skysongdev.skysongnpcs.wardrobe.SkysongWardrobeGateway;
+import org.skysongdev.skysongnpcs.wardrobe.WardrobeButton;
+import org.skysongdev.skysongnpcs.wardrobe.WardrobeGateway;
+import org.skysongdev.skysongnpcs.wardrobe.WardrobeViewListener;
+
+// M7: movement
+import org.skysongdev.skysongnpcs.citizens.CitizensMover;
+import org.skysongdev.skysongnpcs.commands.MovementCommands;
+import org.skysongdev.skysongnpcs.movement.MovementButton;
+import org.skysongdev.skysongnpcs.movement.MovementService;
+import org.skysongdev.skysongnpcs.movement.MovementSettings;
+import org.skysongdev.skysongnpcs.movement.NpcMover;
+
 import java.io.File;
 import java.util.List;
+import java.util.Optional;
 import java.util.logging.Level;
+import java.util.stream.Stream;
 
 // M12: injuries, conditions and ancestry
 import org.skysongdev.skysongnpcs.commands.AncestryCommand;
@@ -72,7 +117,6 @@ import org.skysongdev.skysongnpcs.commands.ConditionCommand;
 import org.skysongdev.skysongnpcs.commands.InjuryCommand;
 import org.skysongdev.skysongnpcs.sheets.SheetEffects;
 import org.skysongdev.skysongnpcs.sheets.SkysongStatsEffects;
-import java.util.stream.Stream;
 
 /**
  * Entry point of SkysongNPCs. It only builds and wires the plugin's parts;
@@ -99,6 +143,19 @@ public class SkysongNPCs extends JavaPlugin {
     private boolean worldGuard;
     private Blueprints blueprints;
     private NpcFactory factory;
+    // M5: access policies
+    private PolicyStore policyStore;
+    private PolicyRegistry policies;
+    // M9: inventory and equipment
+    private ContainerService containers;
+    // M10: wardrobe
+    private NpcWardrobes wardrobes;
+    // M4
+    private GroupStore groupStore;
+    private PlayerGroupRegistry groups;
+
+    // M7: movement
+    private MovementService movement;
 
     /** M17: WorldGuard is optional; its flags must be registered before it enables, so here. */
     @Override
@@ -118,6 +175,8 @@ public class SkysongNPCs extends JavaPlugin {
             Stores stores = openStores(configuration.database());
             store = stores.npcs();
             grantStore = stores.grants();
+            policyStore = stores.policies();
+            groupStore = stores.groups();
         } catch (RuntimeException failed) {
             getLogger().log(Level.SEVERE, "Could not reach the database in config.yml (" + configuration.database()
                     + "). SkysongNPCs is disabled.", failed);
@@ -137,6 +196,12 @@ public class SkysongNPCs extends JavaPlugin {
         access = new AccessService(grants, characters, new ActionPresets(() -> configuration.config()), getLogger());
         getServer().getPluginManager().registerEvents(new AccessListener(access), this);
 
+        // M5: access policies. NPCs also allow what the policy they follow grants.
+        policies = new PolicyRegistry(policyStore, new EventFiringPolicyChanges(getServer().getPluginManager()));
+        policies.load();
+        access.usePolicies(policies);
+        getServer().getPluginManager().registerEvents(new PolicyListener(policies), this);
+
         // M11: stat sheets and templates
         StatSheets statSheets = hookSheets();
         templates = new TemplateRegistry(new File(getDataFolder(), "templates"),
@@ -149,6 +214,17 @@ public class SkysongNPCs extends JavaPlugin {
         long recountTicks = Math.max(1, configuration.config().getInt("sheets.item-recount-seconds", 5)) * 20L;
         getServer().getScheduler().runTaskTimer(this, () -> sheets.recountAll(false), recountTicks, recountTicks);
 
+        // M13: cloning. A copy gets its own copy of the original's sheet; a removed NPC's sheet is deleted.
+        NpcCloning cloning = new NpcCloning(hookSheetCopier(), sheets, getLogger());
+        getServer().getPluginManager().registerEvents(new CloneListener(cloning), this);
+        listenForNpcRemovals(cloning);
+
+        // M4: player groups (group:) and LuckPerms groups (lp:) for grants.
+        groups = new PlayerGroupRegistry(groupStore, grants, policies);
+        groups.load();
+        access.registerBuiltIn(PlayerGroup.TYPE, new PlayerGroupProvider(groups));
+        hookLuckPerms().ifPresent(luckPerms -> access.registerBuiltIn(PlayerGroups.LUCKPERMS_TYPE, luckPerms));
+
         NpcTargeting targeting = new NpcTargeting(registry, citizens, characters, configuration);
 
         // The NPC menu: right-click or /snpc menu.
@@ -157,24 +233,55 @@ public class SkysongNPCs extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new MenuListener(menu), this);
         hookMenuClicks(menu);
 
+        AccessCommand accessCommand = new AccessCommand(targeting, access, configuration);
+        // M9: inventory and equipment, from the menu and /snpc inventory and /snpc equip.
+        containers = new ContainerService(registry, citizens, hookContainers(), access, configuration);
+        new ContainerButtons(containers, configuration, citizens).register(this, menu);
+        getServer().getPluginManager().registerEvents(new ReadOnlyViewListener(), this);
+        // M10: wardrobe, through SkysongWardrobe when it is installed.
+        WardrobeGateway wardrobeGateway = hookWardrobe();
+        wardrobes = new NpcWardrobes(this, registry, citizens, access, menu, configuration, wardrobeGateway);
+        wardrobeGateway.guard(this, wardrobes);
+        new WardrobeButton(wardrobes, access, citizens, configuration).register(this, menu);
+        getServer().getPluginManager().registerEvents(new WardrobeViewListener(wardrobes), this);
+
         List<SubCommand> subCommands = List.of(
                 new ReloadCommand(configuration, List.of(templates)),
                 new AdoptCommand(targeting),
                 new ReleaseCommand(targeting),
                 new OwnerCommand(targeting),
-                new AccessCommand(targeting, access, configuration),
+                accessCommand,
                 new MenuCommand(targeting, menu),
                 // M11: stat sheets and templates
                 new SheetCommand(targeting, access, sheets, templates, configuration),
                 new StatsCommand(targeting, sheets),
                 new ModifierCommand(targeting, sheets),
-                new ProficiencyCommand(targeting, sheets));
+                new ProficiencyCommand(targeting, sheets),
+                // M5: access policies
+                new PolicyCommand(targeting, access, accessCommand, policies, configuration),
+                // M9: inventory and equipment
+                new ContainerCommand(targeting, containers, Container.INVENTORY),
+                new ContainerCommand(targeting, containers, Container.EQUIPMENT),
+                // M10: wardrobe
+                new WardrobeCommand(targeting, wardrobes));
+
+        // M7: movement (/snpc select, tphere, follow, look, and the Movement button)
+        movement = new MovementService(registry, hookMover(), () -> MovementSettings.read(configuration.config()));
+        new MovementButton(movement, access, citizens, configuration).register(this, menu);
+        subCommands = Stream.concat(subCommands.stream(),
+                new MovementCommands(targeting, citizens, access, movement, configuration).subCommands().stream()).toList();
+
+        // M4: player groups (/snpc group)
+        subCommands = Stream.concat(subCommands.stream(),
+                Stream.of(new GroupCommand(targeting, groups, configuration))).toList();
+
         // M12: injuries, conditions and ancestry on NPC sheets.
         effects = hookEffects();
         subCommands = Stream.concat(subCommands.stream(), Stream.of(
                 new InjuryCommand(targeting, sheets, effects),
                 new ConditionCommand(targeting, sheets, effects, configuration),
                 new AncestryCommand(targeting, sheets, effects, configuration))).toList();
+
         NpcCommands commands = new NpcCommands(subCommands, configuration, getPluginMeta().getVersion());
         getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS,
                 event -> commands.register(event.registrar()));
@@ -190,13 +297,22 @@ public class SkysongNPCs extends JavaPlugin {
 
         // Last, so other plugins only see the API once everything behind it is ready.
         getServer().getServicesManager().register(SkysongNpcsApi.class, new SkysongNpcsApiImpl(registry, citizens, access, menu,
-                        sheets, templates, factory, blueprints, effects),
+                        sheets, templates, factory, blueprints, policies,
+                        containers, movement, groups, effects),
                 this, ServicePriority.Normal);
     }
 
     @Override
     public void onDisable() {
         getServer().getServicesManager().unregisterAll(this);
+        if (policyStore != null) {
+            policyStore.close();
+            policyStore = null;
+        }
+        if (groupStore != null) {
+            groupStore.close();
+            groupStore = null;
+        }
         if (grantStore != null) {
             grantStore.close();
             grantStore = null;
@@ -244,6 +360,18 @@ public class SkysongNPCs extends JavaPlugin {
     /** Counts every NPC's items again after a SkysongStats reload. */
     protected void listenForStatsReloads(NpcSheetService sheets) {
         getServer().getPluginManager().registerEvents(new StatsReloadListener(sheets), this);
+    }
+
+    // M13: cloning
+
+    /** How the plugin copies and deletes sheets in SkysongStats. */
+    protected SheetCopier hookSheetCopier() {
+        return new RebuildingSheetCopier(this);
+    }
+
+    /** Deletes a sheet when Citizens removes its NPC. Tests have no Citizens, so they skip it. */
+    protected void listenForNpcRemovals(NpcCloning cloning) {
+        getServer().getPluginManager().registerEvents(new CitizensRemoveListener(cloning), this);
     }
 
     /** The NPC templates; null while the plugin is disabled. */
@@ -307,6 +435,65 @@ public class SkysongNPCs extends JavaPlugin {
     /** For tests that place NPCs against the running plugin. */
     public NpcFactory factory() {
         return factory;
+    }
+
+    // M5: access policies
+
+    /** The access policies; null while the plugin is disabled. */
+    public PolicyRegistry policies() {
+        return policies;
+    }
+
+    // M9: inventory and equipment
+
+    /** How the plugin reads and edits NPCs' inventories and equipment, in Citizens. */
+    protected NpcContainers hookContainers() {
+        return new CitizensNpcContainers();
+    }
+
+    /** NPC inventories and equipment; null while the plugin is disabled. */
+    public ContainerService containers() {
+        return containers;
+    }
+
+    // M10: wardrobe
+
+    /** SkysongWardrobe's NPC wardrobes, or none when it is not installed. */
+    protected WardrobeGateway hookWardrobe() {
+        if (!getServer().getPluginManager().isPluginEnabled("SkysongWardrobe")) {
+            return WardrobeGateway.NONE;
+        }
+        // Only reached when SkysongWardrobe is enabled, so its classes are never loaded without it.
+        return SkysongWardrobeGateway.hook(this);
+    }
+
+    /** NPC wardrobes; null while the plugin is disabled. */
+    public NpcWardrobes wardrobes() {
+        return wardrobes;
+    }
+
+    // M7: movement
+
+    /** How NPCs are moved, through Citizens. */
+    protected NpcMover hookMover() {
+        return new CitizensMover();
+    }
+
+    /** Moves NPCs; null while the plugin is disabled. */
+    public MovementService movement() {
+        return movement;
+    }
+
+    // M4: player groups
+
+    /** The lp: group provider, when LuckPerms is installed. */
+    protected Optional<GroupProvider> hookLuckPerms() {
+        return LuckPermsGroups.hook(getServer());
+    }
+
+    /** The player groups; null while the plugin is disabled. */
+    public PlayerGroupRegistry groups() {
+        return groups;
     }
 
     // M12

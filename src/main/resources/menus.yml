@@ -23,3 +23,19 @@ npc-menu:
     "skysongnpcs:info":
       slot: 13
       material: NAME_TAG
+    # M9: inventory and equipment
+    "skysongnpcs:inventory":
+      slot: 15
+      material: CHEST
+    "skysongnpcs:equipment":
+      slot: 16
+      material: IRON_CHESTPLATE
+    # M10: wardrobe. Dresses the NPC (wardrobe-edit) or shows what it wears (wardrobe-view).
+    "skysongnpcs:wardrobe":
+      slot: 14
+      material: LEATHER_CHESTPLATE
+
+    # M7: movement
+    "skysongnpcs:movement":
+      slot: 11
+      material: LEAD

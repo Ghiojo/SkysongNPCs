@@ -5,11 +5,17 @@ import org.bukkit.plugin.RegisteredServiceProvider;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.skysongdev.skysongnpcs.api.access.Access;
+import org.skysongdev.skysongnpcs.api.inventory.NpcInventories;
+import org.skysongdev.skysongnpcs.api.groups.PlayerGroups;
 import org.skysongdev.skysongnpcs.api.menu.NpcMenu;
+import org.skysongdev.skysongnpcs.api.movement.NpcMovement;
 import org.skysongdev.skysongnpcs.api.items.NpcItems;
 import org.skysongdev.skysongnpcs.api.npc.Npcs;
 import org.skysongdev.skysongnpcs.api.sheet.NpcSheets;
+// M12
 import org.skysongdev.skysongnpcs.api.sheet.NpcEffects;
+// M5: access policies
+import org.skysongdev.skysongnpcs.api.policy.Policies;
 
 /**
  * Entry point of the SkysongNPCs API, the supported way for other plugins (SkysongEconomy
@@ -99,13 +105,53 @@ public interface SkysongNpcsApi {
      */
     @NotNull NpcItems items();
 
+    // M5: access policies
+
+    /**
+     * Access policies: named sets of grants many NPCs follow at once.
+     *
+     * @return the policies part of the API
+     * @since 0.7.0
+     */
+    @NotNull Policies policies();
+
+    // M9
+
+    /**
+     * NPC inventories and equipment: open them for a player by their access, or read them.
+     *
+     * @return the inventories part of the API
+     * @since 0.8.0
+     */
+    @NotNull NpcInventories inventories();
+
+    // M7: movement
+
+    /**
+     * Movement: teleport NPCs, make them follow someone, and make them look at nearby players.
+     *
+     * @return the movement part of the API
+     * @since 0.9.0
+     */
+    @NotNull NpcMovement movement();
+
+    // M4
+
+    /**
+     * Player groups ({@code group:<id>}) and LuckPerms groups ({@code lp:<group>}) that grants can name.
+     *
+     * @return the groups part of the API
+     * @since 0.10.0
+     */
+    @NotNull PlayerGroups groups();
+
     // M12
 
     /**
      * Injuries, conditions and ancestry on NPCs' stat sheets.
      *
      * @return the effects part of the API
-     * @since 0.7.0
+     * @since 0.11.0
      */
     @NotNull NpcEffects effects();
 }

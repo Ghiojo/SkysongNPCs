@@ -65,8 +65,9 @@ access:
   no-actions: "<prefix><red>Name the actions after the group, or a preset: <presets>."
   # <word>: what was typed. <actions>, <presets>: every action and preset.
   unknown-action: "<prefix><red><word> is not an action or a preset.<newline><gray>Actions: <actions><newline>Presets: <presets>"
-  # <types>: the group types other plugins added, or no-types below.
-  bad-group: "<prefix><red><group> is not a group. Use player:NAME, \"player:NAME/PROFILE\", perm:NODE, or a type from another plugin: <types>."
+  # <types>: the other group types: group (player groups), lp (with LuckPerms) and those
+  # other plugins added; no-types below when there are none.
+  bad-group: "<prefix><red><group> is not a group. Use player:NAME, \"player:NAME/PROFILE\", perm:NODE, or TYPE:NAME with one of these types: <types>."
   no-types: "none"
   bad-source: "<prefix><red><source> is not a plugin name."
 
@@ -143,6 +144,148 @@ place:
   character-limit: "<prefix><red>This character already has <limit> NPC(s) out. Pick one up first."
   chunk-limit: "<prefix><red>This area already holds <limit> NPC(s)."
   failed: "<prefix><red>Something went wrong making the NPC, so it was not placed and you keep the item. The console says what."
+
+# --- M5: access policies (/snpc policy) ---
+# A policy is a named set of grants many NPCs follow at once. <policy>: its name.
+# <owner>: who it belongs to. <members>: how many NPCs follow it. <npc>, <group> and
+# <actions> as in access, above.
+policy:
+  # How a plugin's policy's owner is written. <plugin>: the plugin's name.
+  owner-plugin: "plugin <plugin>"
+  show: "<prefix><gray><npc> follows policy <white><policy></white> of <owner>."
+  show-none: "<prefix><gray><npc> follows no policy."
+  list-header: "<prefix><gray>Policies:"
+  list-entry: "<gray> - <white><policy></white> <dark_gray>(<owner>)</dark_gray>: <members> NPC(s)"
+  list-empty: "<prefix><gray>No policies yet. Make one with /snpc policy create <white>name</white>."
+  info-header: "<prefix><gray>Policy <white><policy></white> of <owner>, followed by <members> NPC(s), lets in:"
+  info-entry: "<gray> - <white><group></white>: <actions>"
+  info-empty: "<prefix><gray>Policy <white><policy></white> of <owner> lets nobody in yet. <members> NPC(s) follow it."
+  created: "<prefix><green>Made policy <policy>. Add grants with /snpc policy grant <policy> and put NPCs in it with /snpc policy assign <policy>."
+  deleted: "<prefix><green>Deleted policy <policy>. Its <members> NPC(s) now follow no policy."
+  taken: "<prefix><red>There is already a policy called <policy>."
+  bad-id: "<prefix><red><policy> can't be a policy name: use lower-case letters, digits, - _ and . only."
+  # <limit>: the limit in config.yml.
+  limit: "<prefix><red>This character already has <limit> policies."
+  unknown: "<prefix><red>There is no policy called <policy>."
+  not-yours: "<prefix><red>Policy <policy> is not yours."
+  no-character: "<prefix><red>Play a character first: policies belong to characters."
+  granted: "<prefix><green><group> now has <actions> on every NPC following <policy>."
+  revoked: "<prefix><green><group> now has only <actions> on NPCs following <policy>."
+  revoked-all: "<prefix><green><group> no longer has any access through <policy>."
+  not-granted: "<prefix><yellow>Policy <policy> gives <group> nothing."
+  assigned: "<prefix><green><npc> now follows policy <policy>."
+  already: "<prefix><yellow><npc> already follows policy <policy>."
+  unassigned: "<prefix><green><npc> no longer follows policy <policy>."
+
+# --- M9: inventory and equipment ---
+# /snpc inventory [view], /snpc equip [view], and the menu's Inventory and Equipment
+# buttons. Whoever may change them gets Citizens' own editor; whoever may only look gets a
+# read-only copy. <npc>: the NPC's name.
+containers:
+  # Citizens' editors need the NPC in the world; a read-only copy does not.
+  not-placed: "<prefix><red><npc> is not placed in the world, so its items can't be changed now. /snpc inventory view still shows them."
+  inventory:
+    view-title: "<dark_gray><npc>'s inventory (view only)"
+    not-allowed: "<prefix><red>You may not see <npc>'s inventory."
+    button:
+      name: "<white>Inventory"
+      lore-edit:
+        - "<gray>Click to change what <npc> carries."
+      lore-view:
+        - "<gray>Click to see what <npc> carries."
+  equipment:
+    view-title: "<dark_gray><npc>'s equipment (view only)"
+    not-allowed: "<prefix><red>You may not see <npc>'s equipment."
+    button:
+      name: "<white>Equipment"
+      lore-edit:
+        - "<gray>Click to change what <npc> wears and holds."
+      lore-view:
+        - "<gray>Click to see what <npc> wears and holds."
+
+# --- M10: wardrobe (/snpc wardrobe and the menu's Wardrobe button). <npc>: the NPC's name. ---
+wardrobe:
+  # The menu button. lore-edit for players who may dress the NPC, lore-view for those who may only look.
+  button:
+    name: "<white>Wardrobe"
+    lore-edit:
+      - "<gray>Dress <white><npc></white>."
+    lore-view:
+      - "<gray>See what <white><npc></white> wears."
+  # The title of the read-only view, for players with wardrobe-view only.
+  view-title: "<dark_gray><npc>'s wardrobe"
+  nothing-worn: "<prefix><gray><npc> wears nothing from a wardrobe."
+  # Also sent when /sw npc or another plugin tries to open a managed NPC's wardrobe for them.
+  not-allowed: "<prefix><red>You may not open <npc>'s wardrobe."
+  view-only: "<prefix><red>You may only look at <npc>'s wardrobe: use /snpc wardrobe."
+  stored: "<prefix><red><npc> is packed into its item, so its wardrobe stays closed."
+  unavailable: "<prefix><red>NPC wardrobes need SkysongWardrobe, which is not running."
+  not-found: "<prefix><red>Citizens no longer has <npc>."
+  not-a-player-npc: "<prefix><red><npc> is not a player NPC, so it has no wardrobe."
+  in-use: "<prefix><red>Someone else is dressing <npc> right now."
+  closed: "<prefix><red>Wardrobes are closed until staff fix SkysongWardrobe's wardrobe.yml."
+# --- M7: movement ---
+# /snpc select, tphere, follow, look, and the menu's Movement button. <npc>: the NPC's name.
+movement:
+  selected: "<prefix><green>Selected <npc>. NPC commands act on it whenever you are not looking at another NPC."
+  select-not-allowed: "<prefix><red>You can't do anything with <npc>."
+  not-allowed: "<prefix><red>You may not do that with <npc>."
+  not-placed: "<prefix><red><npc> is not out in the world."
+  teleported: "<prefix><green>Brought <npc> to you."
+  other-world: "<prefix><red><npc> is in another world."
+  # <max>: config.yml's movement.teleport.max-distance.
+  too-far: "<prefix><red><npc> is more than <max> blocks away."
+  # <target>: who it follows. <distance>: how close it stays, in blocks.
+  follow-on: "<prefix><green><npc> now follows <target>, staying <distance> blocks away."
+  follow-off: "<prefix><green><npc> stopped following."
+  # <max>: config.yml's movement.follow.max-distance.
+  follow-above-max: "<prefix><red>NPCs can follow at most <max> blocks away."
+  follow-not-others: "<prefix><red>NPCs can only follow the player who asks."
+  # <player>: the name typed.
+  player-offline: "<prefix><red><player> is not online."
+  # <range>: in blocks.
+  look-on: "<prefix><green><npc> now looks at players within <range> blocks."
+  look-off: "<prefix><green><npc> stopped looking at players."
+  # <max>: config.yml's movement.look.max-range.
+  look-above-max: "<prefix><red>NPCs can look at most <max> blocks away."
+  # The Movement button. Its lore shows only the lines the viewer may use.
+  button:
+    name: "<white>Movement"
+    teleport: "<gray>Left-click: <white>bring here"
+    # <state>: on or off, below.
+    follow: "<gray>Right-click: <white>follow you <dark_gray>(<state>)"
+    look: "<gray>Shift-click: <white>look at players <dark_gray>(<state>)"
+    "on": "on"
+    "off": "off"
+
+# --- M4: player groups (/snpc group). A grant names one as group:NAME. ---
+# <group>: the group's name. <owner>: who made it. <member>: a member, as written below.
+group:
+  list-header: "<prefix><gray>Groups you can change:"
+  # <count>: how many members it has.
+  list-entry: "<gray> - <white><group></white> <dark_gray>(<owner>)</dark_gray>: <count> member(s)"
+  list-empty: "<prefix><gray>You have no groups. Make one with /snpc group create NAME."
+  created: "<prefix><green>Made group <group>. Let it use an NPC with /snpc access grant group:<group> ACTIONS."
+  # <grants>: how many grants named it, now gone.
+  deleted: "<prefix><green>Deleted group <group>, and the <grants> grant(s) that named it."
+  added: "<prefix><green><member> is now in <group>."
+  removed: "<prefix><green><member> is no longer in <group>."
+  already-member: "<prefix><yellow><member> is already in <group>."
+  not-member: "<prefix><yellow><member> is not in <group>."
+  info-header: "<prefix><gray>Group <white><group></white>, made by <owner>:"
+  info-entry: "<gray> - <white><member>"
+  info-empty: "<prefix><gray>Group <group>, made by <owner>, has no members."
+  unknown: "<prefix><red>There is no group called <group>."
+  taken: "<prefix><red>The name <group> is taken."
+  bad-name: "<prefix><red><group> can't be a group name: use up to 32 lower-case letters, digits, - and _."
+  not-yours: "<prefix><red>Only <owner> and staff can change group <group>."
+  no-character: "<prefix><red>Play a character first: the group will belong to them."
+  # <limit>: the limit in config.yml.
+  group-limit: "<prefix><red>This character already has <limit> group(s)."
+  member-limit: "<prefix><red><group> already has <limit> members."
+  # How <member> is written. <player>: the player's name. <profile>: their character's profile.
+  member-every: "<player> (every character)"
+  member-character: "<player> (<profile>)"
 
 # --- M12: injuries, conditions and ancestry on NPC stat sheets ---
 # /snpc injury [list | award | remove | discover | forget <injury>] (staff, skysongnpcs.injuries).

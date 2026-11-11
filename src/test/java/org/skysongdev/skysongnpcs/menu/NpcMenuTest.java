@@ -110,7 +110,8 @@ class NpcMenuTest {
         assertEquals(Material.PAPER, top.getItem(4).getType());
 
         alice.closeInventory();
-        plugin.configuration().menus().set("npc-menu.buttons.skysongnpcs:info.hidden", true);
+        // Every button hidden, the Information button and those later milestones add.
+        menu.buttons().forEach(id -> plugin.configuration().menus().set("npc-menu.buttons." + id + ".hidden", true));
         assertFalse(menu.open(alice, guard));
     }
 
@@ -122,7 +123,10 @@ class NpcMenuTest {
                 context -> context.viewer().equals(bob), click -> clicks.incrementAndGet());
 
         assertEquals("skysongeconomy:payroll", id);
-        assertEquals(List.of("skysongnpcs:info", "skysongeconomy:payroll"), menu.buttons());
+        // SkysongNPCs' own buttons come first, the Information button leading.
+        List<String> ids = menu.buttons();
+        assertEquals("skysongnpcs:info", ids.get(0));
+        assertEquals("skysongeconomy:payroll", ids.get(ids.size() - 1));
         // Bob has no access, but the economy button lets him in, and it is all he sees.
         assertTrue(menu.open(bob, guard));
         Inventory top = bob.getOpenInventory().getTopInventory();
@@ -141,7 +145,7 @@ class NpcMenuTest {
 
         server.getPluginManager().disablePlugin(economy);
 
-        assertEquals(List.of("skysongnpcs:info"), menu.buttons());
+        assertTrue(menu.buttons().stream().allMatch(id -> id.startsWith("skysongnpcs:")));
     }
 
     @Test

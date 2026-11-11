@@ -55,3 +55,41 @@ placing:
     per-character: 0
     # How many Skysong NPCs one chunk may hold. 0 for no limit. Staff are not limited.
     per-chunk: 0
+
+# --- M5: access policies ---
+# A policy is a named set of grants many NPCs follow at once (/snpc policy). What an NPC
+# allows is its policy's grants plus its own.
+policies:
+  # How many policies one character may make. 0 for no limit. Staff are not limited.
+  per-character: 0
+
+# --- M7: movement (/snpc tphere, follow, look, and the menu's Movement button) ---
+# Limits for players with the teleport, follow and look actions. Owners are held to them
+# too; staff (skysongnpcs.admin) are not. Distances are in blocks.
+movement:
+  teleport:
+    # How far away an NPC may be brought from. 0 for any distance.
+    max-distance: 0
+    # Whether an NPC may be brought from another world.
+    other-worlds: true
+  follow:
+    # How close a following NPC stays when no distance is given (and from the menu).
+    default-distance: 3
+    # The largest distance players may ask for.
+    max-distance: 10
+    # Whether players may make an NPC follow someone other than themselves.
+    others: true
+  look:
+    # How far away players get looked at when no range is given (and from the menu).
+    default-range: 5
+    # The largest range players may ask for.
+    max-range: 16
+
+# --- M4: player groups (/snpc group) ---
+# Named lists of characters a player makes, which a grant names as group:NAME.
+# LuckPerms groups need no setup: a grant names them as lp:GROUP.
+groups:
+  # How many groups one character may make. 0 for no limit. Staff are not limited.
+  per-character: 10
+  # How many members one group may have. 0 for no limit. Staff are not limited.
+  max-members: 50

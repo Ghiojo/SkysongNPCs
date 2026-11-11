@@ -70,12 +70,16 @@ dependencies {
         transitive = false
     }
     compileOnly skysongStatsApi
+    // Cloning's SkysongStats side is tested against the real API types, with mocks behind them.
+    testImplementation skysongStatsApi
     compileOnly skysongItemsApi
     // Optional at runtime (plugin.yml softdepend:): only the wardrobe hooks touch it.
     compileOnly skysongWardrobeApi
     // The MySQL connection pool, the same version SkysongStats uses. Paper downloads it from
     // plugin.yml's libraries: list, so it is not shaded.
     compileOnly 'com.zaxxer:HikariCP:6.2.1'
+    // M4: optional at runtime (plugin.yml softdepend:): only lp: groups touch it.
+    compileOnly 'net.luckperms:api:5.4'
     // M17: WorldGuard is optional (plugin.yml softdepend:): its npc-place flag decides who may
     // place NPCs in a region. 7.0.17, as SkysongWardrobe uses; it ships on the server, never shaded.
     compileOnly('com.sk89q.worldguard:worldguard-bukkit:7.0.17') {
@@ -95,8 +99,8 @@ dependencies {
     // The NPC table is tested on H2 in MySQL mode: its SQL is plain MySQL.
     testImplementation 'com.h2database:h2:2.3.232'
     testImplementation 'com.zaxxer:HikariCP:6.2.1'
-    // M12: SkysongStats' records (Injury, Ancestry...) are plain data the fakes build.
-    testImplementation skysongStatsApi
+    // M4: lp: groups are tested against a mocked LuckPerms API.
+    testImplementation 'net.luckperms:api:5.4'
 }
 
 def targetJavaVersion = 21

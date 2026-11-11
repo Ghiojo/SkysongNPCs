@@ -25,7 +25,7 @@ import java.util.UUID;
  *
  * <p>SkysongNPCs implements this interface; other plugins must not.
  *
- * @since 0.7.0
+ * @since 0.11.0
  */
 @ApiStatus.NonExtendable
 public interface NpcEffects {
