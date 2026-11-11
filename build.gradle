@@ -37,6 +37,14 @@ repositories {
             includeGroup 'net.citizensnpcs'
         }
     }
+    // M17: EngineHub serves WorldGuard and WorldEdit, for the optional npc-place region flag.
+    maven {
+        name = 'enginehub'
+        url = 'https://maven.enginehub.org/repo/'
+        content {
+            includeGroupByRegex 'com\\.sk89q.*'
+        }
+    }
     mavenCentral()
     maven {
         name = 'papermc-repo'
@@ -68,6 +76,13 @@ dependencies {
     // The MySQL connection pool, the same version SkysongStats uses. Paper downloads it from
     // plugin.yml's libraries: list, so it is not shaded.
     compileOnly 'com.zaxxer:HikariCP:6.2.1'
+    // M17: WorldGuard is optional (plugin.yml softdepend:): its npc-place flag decides who may
+    // place NPCs in a region. 7.0.17, as SkysongWardrobe uses; it ships on the server, never shaded.
+    compileOnly('com.sk89q.worldguard:worldguard-bukkit:7.0.17') {
+        exclude group: 'org.bukkit'
+        exclude group: 'org.spigotmc'
+        exclude group: 'io.papermc.paper'
+    }
 
     // Tests run on JUnit 6 and MockBukkit 4.116.3, the same versions the other Skysong
     // plugins use. That MockBukkit release mocks Paper 1.21.11, the API this plugin compiles against.

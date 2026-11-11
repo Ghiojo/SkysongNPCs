@@ -138,4 +138,21 @@ public final class NpcRegistry {
 
         enum Deletion { REMOVED, RELEASED }
     }
+
+    // M17: NPCs made from a template, by a blueprint item or the API.
+
+    /**
+     * Starts managing an NPC that was just made from a template, in state
+     * {@link org.skysongdev.skysongnpcs.api.npc.NpcState#SETUP}. The caller checks that Citizens has it.
+     *
+     * @throws IllegalStateException when it is managed already
+     */
+    public NpcRecord create(UUID npc, NpcOwner owner, String template) {
+        Objects.requireNonNull(owner, "owner");
+        Objects.requireNonNull(template, "template");
+        if (records.containsKey(npc)) {
+            throw new IllegalStateException("NPC " + npc + " is managed already");
+        }
+        return put(new NpcRecord(npc, owner, org.skysongdev.skysongnpcs.api.npc.NpcState.SETUP, template));
+    }
 }

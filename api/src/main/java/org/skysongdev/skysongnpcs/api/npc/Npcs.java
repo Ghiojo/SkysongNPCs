@@ -1,7 +1,9 @@
 package org.skysongdev.skysongnpcs.api.npc;
 
+import org.bukkit.Location;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Optional;
@@ -94,4 +96,26 @@ public interface Npcs {
      * @throws IllegalArgumentException when the NPC is not managed
      */
     @NotNull ManagedNpc setOwner(@NotNull UUID npc, @NotNull NpcOwner owner);
+
+    // M17
+
+    /**
+     * Makes a new Citizens NPC from a template and spawns it, managed from the start in state
+     * {@link NpcState#SETUP}, with a stat sheet when the template has one. This is what placing a
+     * blueprint item does, without the player's checks (space, regions, limits) and without
+     * {@link org.skysongdev.skysongnpcs.api.event.NpcPlaceEvent}.
+     *
+     * @param template the template's id, as in templates/&lt;id&gt;.yml
+     * @param name     the NPC's name, or null for the template's
+     * @param owner    its owner
+     * @param location where it stands
+     * @return the new NPC
+     * @throws IllegalArgumentException when there is no such template
+     * @throws IllegalStateException    when Citizens could not spawn it there (another plugin
+     *                                  refused the spawn), or its stat sheet could not be made;
+     *                                  nothing is left behind
+     * @since 0.6.0
+     */
+    @NotNull ManagedNpc create(@NotNull String template, @Nullable String name, @NotNull NpcOwner owner,
+                               @NotNull Location location);
 }

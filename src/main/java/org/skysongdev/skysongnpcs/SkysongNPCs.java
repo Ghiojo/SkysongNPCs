@@ -17,6 +17,7 @@ import org.skysongdev.skysongnpcs.citizens.CitizensListener;
 import org.skysongdev.skysongnpcs.citizens.CitizensMenuListener;
 import org.skysongdev.skysongnpcs.citizens.CitizensNpcLookup;
 import org.skysongdev.skysongnpcs.commands.AccessCommand;
+import org.skysongdev.skysongnpcs.citizens.CitizensNpcSpawner;
 import org.skysongdev.skysongnpcs.commands.AdoptCommand;
 import org.skysongdev.skysongnpcs.commands.MenuCommand;
 import org.skysongdev.skysongnpcs.commands.NpcCommands;
@@ -29,6 +30,16 @@ import org.skysongdev.skysongnpcs.config.PluginConfiguration;
 import org.skysongdev.skysongnpcs.menu.InfoButton;
 import org.skysongdev.skysongnpcs.menu.MenuListener;
 import org.skysongdev.skysongnpcs.menu.NpcMenuService;
+import org.skysongdev.skysongnpcs.items.BlueprintTags;
+import org.skysongdev.skysongnpcs.items.Blueprints;
+import org.skysongdev.skysongnpcs.items.ItemTagGateway;
+import org.skysongdev.skysongnpcs.items.NpcFactory;
+import org.skysongdev.skysongnpcs.items.NpcPlaceListener;
+import org.skysongdev.skysongnpcs.items.NpcPlacer;
+import org.skysongdev.skysongnpcs.items.NpcSpawner;
+import org.skysongdev.skysongnpcs.items.PlaceRegions;
+import org.skysongdev.skysongnpcs.items.PlacingSettings;
+import org.skysongdev.skysongnpcs.items.SkysongItemsTagGateway;
 import org.skysongdev.skysongnpcs.npc.NpcLookup;
 import org.skysongdev.skysongnpcs.npc.NpcRegistry;
 import org.skysongdev.skysongnpcs.storage.Database;
@@ -49,6 +60,7 @@ import org.skysongdev.skysongnpcs.sheets.SkysongStatsSheets;
 import org.skysongdev.skysongnpcs.sheets.StatSheets;
 import org.skysongdev.skysongnpcs.sheets.StatsReloadListener;
 import org.skysongdev.skysongnpcs.templates.TemplateRegistry;
+import org.skysongdev.skysongnpcs.worldguard.WorldGuardPlaceRegions;
 
 import java.io.File;
 import java.util.List;
@@ -73,6 +85,19 @@ public class SkysongNPCs extends JavaPlugin {
     // M11: stat sheets and templates
     private TemplateRegistry templates;
     private NpcSheetService sheets;
+    // M17
+    private boolean worldGuard;
+    private Blueprints blueprints;
+    private NpcFactory factory;
+
+    /** M17: WorldGuard is optional; its flags must be registered before it enables, so here. */
+    @Override
+    public void onLoad() {
+        if (getServer().getPluginManager().getPlugin("WorldGuard") != null) {
+            WorldGuardPlaceRegions.registerFlag(getLogger());
+            worldGuard = true;
+        }
+    }
 
     @Override
     public void onEnable() {
@@ -138,9 +163,18 @@ public class SkysongNPCs extends JavaPlugin {
         getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS,
                 event -> commands.register(event.registrar()));
 
+        // M17: blueprint items place NPCs.
+        blueprints = new Blueprints(hookItemTags());
+        NpcSpawner spawner = hookSpawner();
+        factory = new NpcFactory(templates, registry, spawner, sheets::create);
+        NpcPlacer placer = new NpcPlacer(blueprints, factory, registry, characters, spawner,
+                worldGuard ? new WorldGuardPlaceRegions() : PlaceRegions.ANYWHERE,
+                () -> PlacingSettings.read(configuration.config()), getServer().getPluginManager(), getLogger());
+        getServer().getPluginManager().registerEvents(new NpcPlaceListener(placer, configuration), this);
+
         // Last, so other plugins only see the API once everything behind it is ready.
         getServer().getServicesManager().register(SkysongNpcsApi.class, new SkysongNpcsApiImpl(registry, citizens, access, menu,
-                        sheets, templates),
+                        sheets, templates, factory, blueprints),
                 this, ServicePriority.Normal);
     }
 
@@ -234,5 +268,28 @@ public class SkysongNPCs extends JavaPlugin {
     /** The NPC menu; null while the plugin is disabled. */
     public NpcMenuService menu() {
         return menu;
+    }
+
+    // M17
+
+    /** Registers the blueprint tags with SkysongItems and returns how blueprints are read. */
+    protected ItemTagGateway hookItemTags() {
+        getServer().getPluginManager().registerEvents(new BlueprintTags(this), this);
+        return new SkysongItemsTagGateway();
+    }
+
+    /** How new NPCs are made in Citizens. */
+    protected NpcSpawner hookSpawner() {
+        return new CitizensNpcSpawner();
+    }
+
+    /** For tests that place NPCs against the running plugin. */
+    public Blueprints blueprints() {
+        return blueprints;
+    }
+
+    /** For tests that place NPCs against the running plugin. */
+    public NpcFactory factory() {
+        return factory;
     }
 }

@@ -41,3 +41,17 @@ sheets:
   # item-tag stats (Arcrot...). Only NPCs whose items changed are sent to SkysongStats.
   # Read on start only.
   item-recount-seconds: 5
+
+# --- M17: placing NPCs from blueprint items ---
+# A blueprint is any SkysongItems item with the npc_blueprint tag set to a template id
+# (/si tag set npc_blueprint guard_dog). Right-clicking the top of a block places the NPC
+# there, owned by the character the player is playing, and uses up one item outside
+# creative. With WorldGuard, regions decide through the npc-place flag: members may place,
+# others only where it is set to allow.
+placing:
+  limits:
+    # How many NPCs one character may have out in the world (picked-up ones do not count).
+    # 0 for no limit. Staff (skysongnpcs.admin) are not limited.
+    per-character: 0
+    # How many Skysong NPCs one chunk may hold. 0 for no limit. Staff are not limited.
+    per-chunk: 0
