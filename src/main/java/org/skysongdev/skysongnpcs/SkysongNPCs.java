@@ -3,13 +3,19 @@ package org.skysongdev.skysongnpcs;
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.skysongdev.skysongnpcs.access.AccessListener;
+import org.skysongdev.skysongnpcs.access.AccessRegistry;
+import org.skysongdev.skysongnpcs.access.AccessService;
+import org.skysongdev.skysongnpcs.access.ActionPresets;
 import org.skysongdev.skysongnpcs.api.SkysongNpcsApi;
+import org.skysongdev.skysongnpcs.api.event.NpcAccessChangeEvent;
 import org.skysongdev.skysongnpcs.apiimpl.EventFiringChanges;
 import org.skysongdev.skysongnpcs.apiimpl.SkysongNpcsApiImpl;
 import org.skysongdev.skysongnpcs.characters.CharacterLookup;
 import org.skysongdev.skysongnpcs.characters.StatsCharacterLookup;
 import org.skysongdev.skysongnpcs.citizens.CitizensListener;
 import org.skysongdev.skysongnpcs.citizens.CitizensNpcLookup;
+import org.skysongdev.skysongnpcs.commands.AccessCommand;
 import org.skysongdev.skysongnpcs.commands.AdoptCommand;
 import org.skysongdev.skysongnpcs.commands.NpcCommands;
 import org.skysongdev.skysongnpcs.commands.NpcTargeting;
@@ -22,7 +28,9 @@ import org.skysongdev.skysongnpcs.npc.NpcLookup;
 import org.skysongdev.skysongnpcs.npc.NpcRegistry;
 import org.skysongdev.skysongnpcs.storage.Database;
 import org.skysongdev.skysongnpcs.storage.DatabaseSettings;
+import org.skysongdev.skysongnpcs.storage.GrantStore;
 import org.skysongdev.skysongnpcs.storage.NpcStore;
+import org.skysongdev.skysongnpcs.storage.Stores;
 
 import java.util.List;
 import java.util.logging.Level;
@@ -40,6 +48,8 @@ public class SkysongNPCs extends JavaPlugin {
     private NpcRegistry registry;
     private NpcLookup citizens;
     private CharacterLookup characters;
+    private GrantStore grantStore;
+    private AccessService access;
 
     @Override
     public void onEnable() {
@@ -47,7 +57,9 @@ public class SkysongNPCs extends JavaPlugin {
         configuration.reload();
 
         try {
-            store = openStore(configuration.database());
+            Stores stores = openStores(configuration.database());
+            store = stores.npcs();
+            grantStore = stores.grants();
         } catch (RuntimeException failed) {
             getLogger().log(Level.SEVERE, "Could not reach the database in config.yml (" + configuration.database()
                     + "). SkysongNPCs is disabled.", failed);
@@ -61,33 +73,44 @@ public class SkysongNPCs extends JavaPlugin {
         citizens = hookCitizens(registry);
         characters = hookCharacters();
 
+        AccessRegistry grants = new AccessRegistry(grantStore, (npc, group, source, previous, current) ->
+                getServer().getPluginManager().callEvent(new NpcAccessChangeEvent(npc, group, source, previous, current)));
+        grants.load();
+        access = new AccessService(grants, characters, new ActionPresets(() -> configuration.config()), getLogger());
+        getServer().getPluginManager().registerEvents(new AccessListener(access), this);
+
         NpcTargeting targeting = new NpcTargeting(registry, citizens, characters, configuration);
         List<SubCommand> subCommands = List.of(
                 new ReloadCommand(configuration),
                 new AdoptCommand(targeting),
                 new ReleaseCommand(targeting),
-                new OwnerCommand(targeting));
+                new OwnerCommand(targeting),
+                new AccessCommand(targeting, access, configuration));
         NpcCommands commands = new NpcCommands(subCommands, configuration, getPluginMeta().getVersion());
         getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS,
                 event -> commands.register(event.registrar()));
 
         // Last, so other plugins only see the API once everything behind it is ready.
-        getServer().getServicesManager().register(SkysongNpcsApi.class, new SkysongNpcsApiImpl(registry, citizens),
+        getServer().getServicesManager().register(SkysongNpcsApi.class, new SkysongNpcsApiImpl(registry, citizens, access),
                 this, ServicePriority.Normal);
     }
 
     @Override
     public void onDisable() {
         getServer().getServicesManager().unregisterAll(this);
+        if (grantStore != null) {
+            grantStore.close();
+            grantStore = null;
+        }
         if (store != null) {
-            // Waits for the queued writes, so no change is lost on shutdown.
+            // Waits for the queued writes, so no change is lost on shutdown. Last: it owns the pool.
             store.close();
             store = null;
         }
     }
 
-    /** Connects to MySQL. Tests replace it with a store in memory. */
-    protected NpcStore openStore(DatabaseSettings settings) {
+    /** Connects to MySQL. Tests replace it with stores in memory. */
+    protected Stores openStores(DatabaseSettings settings) {
         return Database.open(settings, getLogger()::warning);
     }
 
@@ -120,5 +143,10 @@ public class SkysongNPCs extends JavaPlugin {
     /** For tests that build commands against the running plugin. */
     public CharacterLookup characters() {
         return characters;
+    }
+
+    /** Who may do what with the NPCs; null while the plugin is disabled. */
+    public AccessService access() {
+        return access;
     }
 }

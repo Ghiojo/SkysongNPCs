@@ -7,8 +7,9 @@ import org.skysongdev.skysongnpcs.characters.CharacterLookup;
 import org.skysongdev.skysongnpcs.npc.NpcLookup;
 import org.skysongdev.skysongnpcs.npc.NpcRegistry;
 import org.skysongdev.skysongnpcs.storage.DatabaseSettings;
+import org.skysongdev.skysongnpcs.storage.InMemoryGrantStore;
 import org.skysongdev.skysongnpcs.storage.InMemoryNpcStore;
-import org.skysongdev.skysongnpcs.storage.NpcStore;
+import org.skysongdev.skysongnpcs.storage.Stores;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -47,8 +48,8 @@ public class OfflineSkysongNPCs extends SkysongNPCs {
     }
 
     @Override
-    protected NpcStore openStore(DatabaseSettings settings) {
-        return new InMemoryNpcStore();
+    protected Stores openStores(DatabaseSettings settings) {
+        return new Stores(new InMemoryNpcStore(), new InMemoryGrantStore());
     }
 
     @Override

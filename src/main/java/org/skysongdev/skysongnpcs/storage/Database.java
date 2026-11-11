@@ -5,7 +5,7 @@ import com.zaxxer.hikari.HikariDataSource;
 
 import java.util.function.Consumer;
 
-/** Opens the MySQL connection pool and the NPC table behind it. */
+/** Opens the MySQL connection pool and the tables behind it. */
 public final class Database {
     static final int MAXIMUM_POOL_SIZE = 3;
 
@@ -13,16 +13,22 @@ public final class Database {
     }
 
     /**
-     * Connects, creates the table when it is missing, and returns a store whose writes run in
-     * the background. Every failed write goes to {@code log}.
+     * Connects, creates the tables when they are missing, and returns stores whose writes run
+     * in the background. Every failed write goes to {@code log}.
      *
      * @throws RuntimeException when MySQL cannot be reached; the plugin cannot run without it
      */
-    public static NpcStore open(DatabaseSettings settings, Consumer<String> log) {
+    public static Stores open(DatabaseSettings settings, Consumer<String> log) {
         HikariDataSource pool = new HikariDataSource(config(settings));
         try {
-            return new QueuedNpcStore(new SqlNpcStore(pool, pool::close),
+            // Both tables first, so a failure leaves no writer thread behind.
+            SqlNpcStore npcTable = new SqlNpcStore(pool, pool::close);
+            SqlGrantStore grantTable = new SqlGrantStore(pool, log);
+            NpcStore npcs = new QueuedNpcStore(npcTable,
                     failed -> log.accept("Could not save an NPC change: " + failed.getMessage()));
+            GrantStore grants = new QueuedGrantStore(grantTable,
+                    failed -> log.accept("Could not save an access change: " + failed.getMessage()));
+            return new Stores(npcs, grants);
         } catch (RuntimeException failed) {
             pool.close();
             throw failed;
@@ -35,7 +41,7 @@ public final class Database {
         config.setJdbcUrl(settings.jdbcUrl());
         config.setUsername(settings.user());
         config.setPassword(settings.password());
-        // One background writer and a load on enable need very few connections.
+        // A few background writers and a load on enable need very few connections.
         config.setMaximumPoolSize(MAXIMUM_POOL_SIZE);
         // Fail on enable, not on the first write, when MySQL cannot be reached.
         config.setInitializationFailTimeout(1);

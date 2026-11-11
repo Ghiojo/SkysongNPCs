@@ -46,3 +46,26 @@ owner:
   show: "<prefix><gray><npc> belongs to <white><owner></white>."
   done: "<prefix><green><npc> now belongs to <owner>."
   same: "<prefix><yellow><npc> already belongs to <owner>."
+
+# /snpc access: who may do what with the NPC. <npc>: its name. <group>: a group,
+# such as player:Alice or perm:my.node. <source>: who made a grant (owner-side, below,
+# or a plugin's name). <actions>: action ids, comma separated.
+access:
+  owner-side: "owner"
+  # <owner>: the NPC's owner.
+  list-header: "<prefix><gray>Besides <owner> and staff, these may use <white><npc></white>:"
+  list-entry: "<gray> - <white><group></white> <dark_gray>(<source>)</dark_gray>: <actions>"
+  list-empty: "<prefix><gray>Only <owner> and staff may use <npc>."
+  granted: "<prefix><green><group> now has <actions> on <npc>."
+  revoked: "<prefix><green><group> now has only <actions> on <npc>."
+  revoked-all: "<prefix><green><group> no longer has any access to <npc> from <source>."
+  not-granted: "<prefix><yellow><group> has no access to <npc> from <source>."
+  not-allowed: "<prefix><red>You may not change who can use <npc>."
+  # <presets>: the preset names.
+  no-actions: "<prefix><red>Name the actions after the group, or a preset: <presets>."
+  # <word>: what was typed. <actions>, <presets>: every action and preset.
+  unknown-action: "<prefix><red><word> is not an action or a preset.<newline><gray>Actions: <actions><newline>Presets: <presets>"
+  # <types>: the group types other plugins added, or no-types below.
+  bad-group: "<prefix><red><group> is not a group. Use player:NAME, \"player:NAME/PROFILE\", perm:NODE, or a type from another plugin: <types>."
+  no-types: "none"
+  bad-source: "<prefix><red><source> is not a plugin name."
