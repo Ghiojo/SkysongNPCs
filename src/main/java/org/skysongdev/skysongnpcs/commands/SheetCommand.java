@@ -94,12 +94,25 @@ public final class SheetCommand implements SubCommand {
             npcs.send(sender, "sheet.not-allowed", Map.of("npc", name));
             return;
         }
+        showSheet(sender, npc.get());
+    }
+
+    /**
+     * Shows an NPC's sheet in chat, without checking who may see it; the NPC menu's Sheet
+     * button checks that itself.
+     */
+    public void showSheet(CommandSender sender, NpcRecord npc) {
+        NpcTargeting npcs = targeting.npcs();
+        String name = npcs.npcName(npc.id());
         List<String> lines = configuration.messages().lines("sheet.lines");
-        targeting.sheets().stats().render(npc.get().id(), lines, name).ifPresent(rendered -> {
-            rendered.forEach(sender::sendMessage);
-            // M16: the NPC's abilities, each a word with its description on hover.
-            footer.apply(npc.get().id()).ifPresent(sender::sendMessage);
-        });
+        Optional<List<Component>> rendered = targeting.sheets().stats().render(npc.id(), lines, name);
+        if (rendered.isEmpty()) {
+            npcs.send(sender, "sheet.none", Map.of("npc", name));
+            return;
+        }
+        rendered.get().forEach(sender::sendMessage);
+        // M16: the NPC's abilities, each a word with its description on hover.
+        footer.apply(npc.id()).ifPresent(sender::sendMessage);
     }
 
     private void create(CommandSender sender, String templateId) {
