@@ -108,3 +108,8 @@ citizens-commands:
   guarded: [npc, trait, waypoints, wp, template, tpl]
   # Their subcommands anyone may still use, because they do not change the selected NPC.
   open: [help, list, select, sel, create]
+# --- M18: picking NPCs up into items ---
+# Picking an NPC up gives back the blueprint it was placed from, holding the NPC. NPCs not
+# placed from a blueprint (adopted, or made by a plugin) come back as this item instead.
+pickup:
+  item: ARMOR_STAND

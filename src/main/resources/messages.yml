@@ -443,3 +443,43 @@ appearance:
         - "<gray>Now: <white><glow>"
         - "<yellow>Left-click: on or off"
         - "<yellow>Right-click: next colour"
+# --- M18: picking NPCs up into items (/snpc pickup, the menu's Pick up button) ---
+# <npc>: the NPC's name.
+pickup:
+  picked-up: "<prefix><green>Picked <npc> up. Place its item to bring it back."
+  not-allowed: "<prefix><red>You may not pick <npc> up."
+  already-stored: "<prefix><red><npc> is picked up already."
+  failed: "<prefix><red>Could not pick <npc> up: Citizens does not have it. Tell staff."
+  # Lines added to the NPC item's lore. <owner>: who owns the NPC.
+  item:
+    # The item's name, only for NPCs that were not placed from a blueprint
+    # (their item is config.yml's pickup.item).
+    name: "<white><npc>"
+    lore:
+      - "<gray>Holds <white><npc></white>"
+      - "<gray>Owner: <white><owner></white>"
+  button:
+    name: "<white>Pick up"
+    lore:
+      - "<gray>Click to pack <npc> into an item."
+
+# Placing a picked-up NPC again from its item. <npc>: the NPC's name.
+npc-item:
+  returned: "<prefix><green>Placed <npc> again."
+  npc-gone: "<prefix><red>The NPC this item held no longer exists."
+  # A copy of the current item while the NPC is out. <world>, <x>, <y>, <z>: where it stands
+  # (? when its chunk is not loaded).
+  already-placed: "<prefix><red><npc> is already out, at <x> <y> <z> in <world>."
+  # An item with an old ticket: a duplicate, or one kept from an earlier pickup.
+  stale-item: "<prefix><red>This item no longer holds <npc>: a newer item does. Staff have been told."
+  # Sent to online staff for every stale item. <player>: who tried to place it.
+  stale-item-staff: "<prefix><gold><player> tried to place <npc> from a stale item (a duplicate or an old one)."
+  not-yours: "<prefix><red>Only <npc>'s owner, or someone they let pick it up, may place it."
+
+# /snpc reissue [player] (staff): a new item for the selected picked-up NPC.
+# <npc>: the NPC's name. <player>: who gets the item.
+reissue:
+  done: "<prefix><green>Gave <player> a new item for <npc>. Every older item for it no longer works."
+  placed: "<prefix><red><npc> is out in the world, not picked up. Use /snpc pickup instead."
+  not-online: "<prefix><red><player> is not online."
+  who: "<prefix><red>Name the player who gets the item: /snpc reissue <white>player</white>."

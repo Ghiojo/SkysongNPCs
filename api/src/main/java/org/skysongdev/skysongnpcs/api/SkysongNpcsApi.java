@@ -99,7 +99,8 @@ public interface SkysongNpcsApi {
     // M17
 
     /**
-     * Blueprint items, which place new NPCs: make them and read them.
+     * Blueprint items, which place new NPCs, and NPC items, which hold picked-up ones:
+     * make them and read them.
      *
      * @return the items part of the API
      * @since 0.6.0

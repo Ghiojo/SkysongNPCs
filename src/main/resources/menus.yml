@@ -43,6 +43,10 @@ npc-menu:
     "skysongnpcs:appearance":
       slot: 12
       material: ARMOR_STAND
+    # M18: pickup. Packs the NPC into its item (owner, staff or the pickup action).
+    "skysongnpcs:pickup":
+      slot: 22
+      material: BUNDLE
 
 # --- M8: appearance ---
 # The one-row menu the Appearance button opens. Its buttons are back, name, skin, nameplate, pose, sitting

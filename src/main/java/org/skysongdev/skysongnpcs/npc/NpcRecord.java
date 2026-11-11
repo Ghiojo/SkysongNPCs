@@ -48,4 +48,11 @@ public record NpcRecord(@NotNull UUID id, @NotNull NpcOwner owner, @NotNull NpcS
     public NpcRecord copiedTo(UUID copy) {
         return new NpcRecord(copy, owner, state, templateId);
     }
+
+    // M18: pickup
+
+    /** The same record in another state. */
+    public NpcRecord withState(NpcState newState) {
+        return new NpcRecord(id, owner, newState, templateId);
+    }
 }

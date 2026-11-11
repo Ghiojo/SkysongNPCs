@@ -27,6 +27,7 @@ public final class Database {
             SqlPolicyStore policyTables = new SqlPolicyStore(pool, log);
             // M4
             SqlGroupStore groupTable = new SqlGroupStore(pool, log);
+            SqlNpcItemStore itemTable = new SqlNpcItemStore(pool, log);
             NpcStore npcs = new QueuedNpcStore(npcTable,
                     failed -> log.accept("Could not save an NPC change: " + failed.getMessage()));
             GrantStore grants = new QueuedGrantStore(grantTable,
@@ -36,7 +37,9 @@ public final class Database {
             // M4
             GroupStore groups = new QueuedGroupStore(groupTable,
                     failed -> log.accept("Could not save a group change: " + failed.getMessage()));
-            return new Stores(npcs, grants, policies, groups);
+            NpcItemStore items = new QueuedNpcItemStore(itemTable,
+                    failed -> log.accept("Could not save an NPC item change: " + failed.getMessage()));
+            return new Stores(npcs, grants, policies, groups, items);
         } catch (RuntimeException failed) {
             pool.close();
             throw failed;

@@ -112,6 +112,14 @@ import org.skysongdev.skysongnpcs.movement.MovementButton;
 import org.skysongdev.skysongnpcs.movement.MovementService;
 import org.skysongdev.skysongnpcs.movement.MovementSettings;
 import org.skysongdev.skysongnpcs.movement.NpcMover;
+// M18: pickup and anti-clone
+import org.skysongdev.skysongnpcs.commands.PickupCommand;
+import org.skysongdev.skysongnpcs.commands.ReissueCommand;
+import org.skysongdev.skysongnpcs.items.NpcItemListener;
+import org.skysongdev.skysongnpcs.items.NpcPickup;
+import org.skysongdev.skysongnpcs.items.NpcTickets;
+import org.skysongdev.skysongnpcs.items.PickupButton;
+import org.skysongdev.skysongnpcs.storage.NpcItemStore;
 
 import java.io.File;
 import java.util.List;
@@ -166,6 +174,9 @@ public class SkysongNPCs extends JavaPlugin {
 
     // M7: movement
     private MovementService movement;
+    // M18: pickup and anti-clone
+    private NpcItemStore itemStore;
+    private NpcPickup pickup;
 
     /** M17: WorldGuard is optional; its flags must be registered before it enables, so here. */
     @Override
@@ -187,6 +198,7 @@ public class SkysongNPCs extends JavaPlugin {
             grantStore = stores.grants();
             policyStore = stores.policies();
             groupStore = stores.groups();
+            itemStore = stores.items();
         } catch (RuntimeException failed) {
             getLogger().log(Level.SEVERE, "Could not reach the database in config.yml (" + configuration.database()
                     + "). SkysongNPCs is disabled.", failed);
@@ -304,6 +316,10 @@ public class SkysongNPCs extends JavaPlugin {
         subCommands = Stream.concat(subCommands.stream(),
                 new AppearanceCommands(targeting, access, appearance, appearanceMenu, configuration).subCommands().stream()).toList();
 
+        // M18: pickup and anti-clone (/snpc pickup, /snpc reissue).
+        subCommands = Stream.concat(subCommands.stream(), Stream.of(
+                new PickupCommand(targeting, () -> pickup),
+                new ReissueCommand(targeting, () -> pickup, getLogger()))).toList();
         NpcCommands commands = new NpcCommands(subCommands, configuration, getPluginMeta().getVersion());
         getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS,
                 event -> commands.register(event.registrar()));
@@ -317,16 +333,30 @@ public class SkysongNPCs extends JavaPlugin {
                 () -> PlacingSettings.read(configuration.config()), getServer().getPluginManager(), getLogger());
         getServer().getPluginManager().registerEvents(new NpcPlaceListener(placer, configuration), this);
 
+        // M18: picking NPCs up into items, and placing them again only from the current item.
+        NpcTickets tickets = new NpcTickets(itemStore, getLogger());
+        tickets.load();
+        pickup = new NpcPickup(registry, tickets, blueprints, spawner, access, citizens, targeting::ownerName,
+                configuration, getServer().getPluginManager());
+        placer.usePickup(pickup);
+        getServer().getPluginManager().registerEvents(new NpcItemListener(pickup), this);
+        new PickupButton(pickup, access, configuration).register(this, menu);
+
         // Last, so other plugins only see the API once everything behind it is ready.
         getServer().getServicesManager().register(SkysongNpcsApi.class, new SkysongNpcsApiImpl(registry, citizens, access, menu,
                         sheets, templates, factory, blueprints, policies,
-                        containers, movement, groups, effects, appearance),
+                        containers, movement, groups, effects, appearance,
+                        pickup),
                 this, ServicePriority.Normal);
     }
 
     @Override
     public void onDisable() {
         getServer().getServicesManager().unregisterAll(this);
+        if (itemStore != null) {
+            itemStore.close();
+            itemStore = null;
+        }
         if (policyStore != null) {
             policyStore.close();
             policyStore = null;
@@ -540,5 +570,12 @@ public class SkysongNPCs extends JavaPlugin {
     /** NPCs' looks; null while the plugin is disabled. */
     public AppearanceService appearance() {
         return appearance;
+    }
+
+    // M18: pickup and anti-clone
+
+    /** Picking NPCs up into items; null while the plugin is disabled. */
+    public NpcPickup pickup() {
+        return pickup;
     }
 }

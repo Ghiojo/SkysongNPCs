@@ -8,10 +8,15 @@ import org.bukkit.event.HandlerList;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.skysongdev.skysongnpcs.api.npc.NpcOwner;
 
+import java.util.Optional;
+import java.util.UUID;
+
 /**
- * A player is about to place an NPC from a blueprint item. Fired on the main thread once
+ * A player is about to place an NPC from a blueprint item, or to place a picked-up NPC
+ * again from its NPC item (see {@link #getNpc()}). Fired on the main thread once
  * every SkysongNPCs check has passed (permission, space, regions, limits) and before the NPC
  * is made. Cancelling it places nothing, keeps the item and sends the player no message, so
  * the plugin that cancels says why.
@@ -27,10 +32,19 @@ public final class NpcPlaceEvent extends Event implements Cancellable {
     private final NpcOwner owner;
     private final Location location;
     private boolean cancelled;
+    // M18
+    private final @Nullable UUID npc;
 
     @ApiStatus.Internal
     public NpcPlaceEvent(@NotNull Player player, @NotNull ItemStack item, @NotNull String template,
                          @NotNull NpcOwner owner, @NotNull Location location) {
+        this(player, item, template, owner, location, null);
+    }
+
+    @ApiStatus.Internal
+    public NpcPlaceEvent(@NotNull Player player, @NotNull ItemStack item, @NotNull String template,
+                         @NotNull NpcOwner owner, @NotNull Location location, @Nullable UUID npc) {
+        this.npc = npc;
         this.player = player;
         this.item = item.clone();
         this.template = template;
@@ -53,7 +67,8 @@ public final class NpcPlaceEvent extends Event implements Cancellable {
     }
 
     /**
-     * @return the id of the template the NPC is made from
+     * @return the id of the template the NPC is made from; for an NPC placed again, the
+     *         template it was made from, or an empty string when it has none
      */
     public @NotNull String getTemplate() {
         return template;
@@ -71,6 +86,14 @@ public final class NpcPlaceEvent extends Event implements Cancellable {
      */
     public @NotNull Location getLocation() {
         return location.clone();
+    }
+
+    /**
+     * @return the picked-up NPC an NPC item places again; empty when a blueprint makes a new one
+     * @since 0.13.0
+     */
+    public @NotNull Optional<UUID> getNpc() {
+        return Optional.ofNullable(npc);
     }
 
     @Override

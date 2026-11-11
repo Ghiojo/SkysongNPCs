@@ -18,8 +18,13 @@ public final class BlueprintTags implements Listener {
     public static final String BLUEPRINT = "npc_blueprint";
     /** Optional: the placed NPC's name, instead of the template's. */
     public static final String NAME = "npc_name";
+    // M18: NPC items, which hold a picked-up NPC.
+    /** The picked-up NPC an NPC item holds: its Citizens UUID. */
+    public static final String NPC_ID = "npc_id";
+    /** The ticket an NPC item carries; only the NPC's current ticket places it. */
+    public static final String TICKET = "npc_ticket";
 
-    static final List<String> ALL = List.of(BLUEPRINT, NAME);
+    static final List<String> ALL = List.of(BLUEPRINT, NAME, NPC_ID, TICKET);
 
     private final Plugin plugin;
 
