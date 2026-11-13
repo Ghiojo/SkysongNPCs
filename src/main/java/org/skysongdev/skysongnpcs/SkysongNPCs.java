@@ -51,6 +51,7 @@ import org.skysongdev.skysongnpcs.items.NpcFactory;
 import org.skysongdev.skysongnpcs.items.NpcPlaceListener;
 import org.skysongdev.skysongnpcs.items.NpcPlacer;
 import org.skysongdev.skysongnpcs.items.NpcSpawner;
+import org.skysongdev.skysongnpcs.items.SpotFinder;
 import org.skysongdev.skysongnpcs.items.PlaceRegions;
 import org.skysongdev.skysongnpcs.items.PlacingSettings;
 import org.skysongdev.skysongnpcs.items.SkysongItemsTagGateway;
@@ -147,6 +148,7 @@ import org.skysongdev.skysongnpcs.commands.PointsCommand;
 import org.skysongdev.skysongnpcs.commands.RespecCommand;
 import org.skysongdev.skysongnpcs.npc.NpcRecord;
 import org.skysongdev.skysongnpcs.storage.ChoiceStore;
+import java.util.function.Supplier;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -493,9 +495,12 @@ public class SkysongNPCs extends JavaPlugin {
         factory = new NpcFactory(templates, registry, spawner, sheets::create);
         // Removing an NPC through the API (Economy's dismiss, downgrade and business deletion).
         NpcRemover remover = new NpcRemover(registry, spawner::destroy, cloning::removed);
+        PlaceRegions placeRegions = worldGuard ? new WorldGuardPlaceRegions() : PlaceRegions.ANYWHERE;
+        Supplier<PlacingSettings> placingSettings = () -> PlacingSettings.read(configuration.config());
         NpcPlacer placer = new NpcPlacer(blueprints, factory, registry, characters, spawner,
-                worldGuard ? new WorldGuardPlaceRegions() : PlaceRegions.ANYWHERE,
-                () -> PlacingSettings.read(configuration.config()), getServer().getPluginManager(), getLogger());
+                placeRegions, placingSettings, getServer().getPluginManager(), getLogger());
+        // The API's free-spot search, with the same checks as placing (except the character limit).
+        SpotFinder spots = new SpotFinder(registry, spawner, placeRegions, placingSettings);
         getServer().getPluginManager().registerEvents(new NpcPlaceListener(placer, configuration), this);
         // M14: a new NPC gets its starting points.
         factory.addCreatedHook(new StartingPoints(statPoints, templateChoices, blueprints));
@@ -515,7 +520,7 @@ public class SkysongNPCs extends JavaPlugin {
         new PickupButton(pickup, access, configuration).register(this, menu);
 
         // Last, so other plugins only see the API once everything behind it is ready.
-        getServer().getServicesManager().register(SkysongNpcsApi.class, new SkysongNpcsApiImpl(registry, citizens, remover, access, menu,
+        getServer().getServicesManager().register(SkysongNpcsApi.class, new SkysongNpcsApiImpl(registry, citizens, remover, spots, access, menu,
                         sheets, templates, factory, blueprints, policies,
                         containers, movement, groups, effects, appearance,
                         pickup, statPoints, choiceMenu, picks, abilities, abilitiesMenu),

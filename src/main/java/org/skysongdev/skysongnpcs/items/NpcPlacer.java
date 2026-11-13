@@ -63,6 +63,7 @@ public final class NpcPlacer {
     private final NpcSpawner spawner;
     private final PlaceRegions regions;
     private final Supplier<PlacingSettings> settings;
+    private final SpotFinder spots;
     private final PluginManager events;
     private final Logger logger;
 
@@ -78,6 +79,7 @@ public final class NpcPlacer {
         this.settings = settings;
         this.events = events;
         this.logger = logger;
+        this.spots = new SpotFinder(registry, spawner, regions, settings);
     }
 
     /** Tries to place the item in the player's hand on top of {@code ground}. Main thread only. */
@@ -145,7 +147,7 @@ public final class NpcPlacer {
      */
     private Spot spot(Player player, Block ground, NpcOwner owner) {
         Block feet = ground.getRelative(BlockFace.UP);
-        if (feet.getType().isCollidable() || feet.getRelative(BlockFace.UP).getType().isCollidable()) {
+        if (!SpotFinder.hasRoom(feet)) {
             return Spot.refused(Outcome.of(Result.NO_SPACE));
         }
         Location location = feet.getLocation().add(0.5, 0, 0.5);
@@ -177,7 +179,7 @@ public final class NpcPlacer {
     }
 
     private int managedIn(Block feet) {
-        return (int) spawner.spawnedIn(feet.getChunk()).stream().filter(registry::isManaged).count();
+        return spots.managedIn(feet.getChunk());
     }
 
     /** The yaw that faces back at a player looking along {@code playerYaw}, in steps of 45 degrees. */

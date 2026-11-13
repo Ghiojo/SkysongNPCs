@@ -60,6 +60,11 @@ placing:
     per-character: 0
     # How many Skysong NPCs one chunk may hold. 0 for no limit. Staff are not limited.
     per-chunk: 0
+  # Other plugins can ask for a free spot near a location (npcs().findSpot in the API), with
+  # the same checks as above except per-character. This caps how far that search looks, in
+  # blocks along each axis; a larger radius costs more on the main thread.
+  find-spot:
+    max-radius: 16
 
 # --- M5: access policies ---
 # A policy is a named set of grants many NPCs follow at once (/snpc policy). What an NPC

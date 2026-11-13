@@ -2,12 +2,14 @@ package org.skysongdev.skysongnpcs.apiimpl;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.skysongdev.skysongnpcs.api.npc.ManagedNpc;
 import org.skysongdev.skysongnpcs.api.npc.NpcOwner;
 import org.skysongdev.skysongnpcs.api.npc.Npcs;
 import org.skysongdev.skysongnpcs.items.NpcFactory;
+import org.skysongdev.skysongnpcs.items.SpotFinder;
 import org.skysongdev.skysongnpcs.npc.NpcLookup;
 import org.skysongdev.skysongnpcs.npc.NpcRegistry;
 import org.skysongdev.skysongnpcs.npc.NpcRemover;
@@ -24,12 +26,14 @@ final class NpcsImpl implements Npcs {
     private final NpcLookup citizens;
     private final NpcFactory factory;
     private final NpcRemover remover;
+    private final SpotFinder spots;
 
-    NpcsImpl(NpcRegistry registry, NpcLookup citizens, NpcFactory factory, NpcRemover remover) {
+    NpcsImpl(NpcRegistry registry, NpcLookup citizens, NpcFactory factory, NpcRemover remover, SpotFinder spots) {
         this.registry = registry;
         this.citizens = citizens;
         this.factory = factory;
         this.remover = remover;
+        this.spots = spots;
     }
 
     @Override
@@ -117,5 +121,19 @@ final class NpcsImpl implements Npcs {
         } catch (RuntimeException failed) {
             throw new IllegalStateException("Could not make an NPC from the template " + template, failed);
         }
+    }
+
+    // Free spots
+
+    @Override
+    public @NotNull Optional<Location> findSpot(@NotNull Location near, int radius) {
+        mainThread();
+        return spots.find(Objects.requireNonNull(near, "near"), radius, null);
+    }
+
+    @Override
+    public @NotNull Optional<Location> findSpot(@NotNull Location near, int radius, @NotNull Player placer) {
+        mainThread();
+        return spots.find(Objects.requireNonNull(near, "near"), radius, Objects.requireNonNull(placer, "placer"));
     }
 }

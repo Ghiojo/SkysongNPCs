@@ -1,6 +1,7 @@
 package org.skysongdev.skysongnpcs.api.npc;
 
 import org.bukkit.Location;
+import org.bukkit.entity.Player;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -128,7 +129,8 @@ public interface Npcs {
      * Makes a new Citizens NPC from a template and spawns it, managed from the start in state
      * {@link NpcState#SETUP}, with a stat sheet when the template has one. This is what placing a
      * blueprint item does, without the player's checks (space, regions, limits) and without
-     * {@link org.skysongdev.skysongnpcs.api.event.NpcPlaceEvent}.
+     * {@link org.skysongdev.skysongnpcs.api.event.NpcPlaceEvent}. To get the space, region and
+     * chunk checks, ask {@link #findSpot(Location, int)} for the location first.
      *
      * @param template the template's id, as in templates/&lt;id&gt;.yml
      * @param name     the NPC's name, or null for the template's
@@ -143,4 +145,41 @@ public interface Npcs {
      */
     @NotNull ManagedNpc create(@NotNull String template, @Nullable String name, @NotNull NpcOwner owner,
                                @NotNull Location location);
+
+    // Free spots
+
+    /**
+     * The closest spot to {@code near} where a new NPC can stand, for {@link #create}: two free
+     * blocks (feet and head) on solid ground, in a chunk under config.yml's
+     * {@code placing.limits.per-chunk}. The owner's per-character limit is not checked, since
+     * that one is for blueprint items.
+     *
+     * <p>It looks no further than {@code radius} blocks along each axis, and never further than
+     * config.yml's {@code placing.find-spot.max-radius} (16 by default). Only loaded chunks are
+     * searched. Region flags are not checked: use {@link #findSpot(Location, int, Player)} when a
+     * player is placing the NPC.
+     *
+     * @param near   where to look around
+     * @param radius how far to look, in blocks; 0 checks {@code near}'s own block only
+     * @return the middle of the block the NPC's feet would be in, facing as {@code near} does;
+     *         empty when there is no free spot
+     * @throws IllegalArgumentException when {@code near} has no world or {@code radius} is negative
+     * @since 0.19.0
+     */
+    @NotNull Optional<Location> findSpot(@NotNull Location near, int radius);
+
+    /**
+     * {@link #findSpot(Location, int)} for an NPC a player is placing: also checks that
+     * regions let that player place NPCs there (WorldGuard's {@code npc-place} flag, the same as
+     * blueprint items), and staff ({@code skysongnpcs.admin}) are not held to the per-chunk
+     * limit.
+     *
+     * @param near   where to look around
+     * @param radius how far to look, in blocks
+     * @param placer the player the NPC is placed for
+     * @return the spot, or empty when there is none
+     * @throws IllegalArgumentException when {@code near} has no world or {@code radius} is negative
+     * @since 0.19.0
+     */
+    @NotNull Optional<Location> findSpot(@NotNull Location near, int radius, @NotNull Player placer);
 }
