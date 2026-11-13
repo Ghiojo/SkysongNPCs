@@ -71,11 +71,29 @@ public interface NpcChoices {
 
     /**
      * Gives back every spent choice: the stats lose what points added, and the points (and
-     * other plugins' choices, such as proficiency picks) are unspent again.
+     * other plugins' choices, such as proficiency picks) are unspent again. Fires
+     * {@link org.skysongdev.skysongnpcs.api.event.NpcRespecEvent} (since 0.21.0).
      *
-     * @return how many choices were given back
+     * @return how many choices were given back; 0 when the NPC is not managed
      */
     int respec(@NotNull UUID npc);
+
+    /**
+     * Gives back only the choices one source's grants paid for: the stat points spent from
+     * that source's point grants and the proficiencies picked with its pick grants. Every
+     * other source's choices stay as they are. Fires
+     * {@link org.skysongdev.skysongnpcs.api.event.NpcRespecEvent} with that source.
+     *
+     * <p>Grants and their unspent points and picks are not touched: take those back with
+     * {@link #takeUnspentPoints} and {@link #takeUnspentPicks} after the respec.
+     *
+     * @param npc    the NPC's Citizens UUID
+     * @param source the source, exactly as it was granted with
+     * @return how many choices were given back; 0 when the NPC is not managed or that source
+     *         paid for none
+     * @since 0.21.0
+     */
+    int respec(@NotNull UUID npc, @NotNull String source);
 
     /** Whether the NPC is waiting for its first setup. */
     boolean inSetup(@NotNull UUID npc);

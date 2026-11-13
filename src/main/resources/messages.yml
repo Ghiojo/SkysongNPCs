@@ -509,6 +509,8 @@ choices:
   setup-complete: "<prefix><green><npc> is set up and ready."
   # /snpc respec (staff). <choices>: how many were given back.
   respec: "<prefix><green>Gave back <choices> choice(s) of <npc>."
+  # /snpc respec <source>: only what one source's grants paid for. <source>: as typed.
+  respec-source: "<prefix><green>Gave back <choices> choice(s) of <npc> paid for by <source>."
   back:
     name: "<gray>Back"
     lore: []

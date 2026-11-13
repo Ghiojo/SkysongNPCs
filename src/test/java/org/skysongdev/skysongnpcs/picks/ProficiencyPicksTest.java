@@ -166,6 +166,21 @@ class ProficiencyPicksTest {
     }
 
     @Test
+    void respecForOneSourceLeavesTheOthersPicks() {
+        PickGrant economy = picks.grant(npc, "economy:martial", "combat", "expert", 1);
+        PickGrant template = picks.grant(npc, "template", "combat", "expert", 1);
+        picks.pick(null, economy.id(), List.of("swords"));
+        picks.pick(null, template.id(), List.of("bows"));
+
+        assertEquals(1, picks.respec(npc, "economy:martial"));
+
+        assertEquals(Optional.of("untrained"), catalog.tier(npc, "swords"));
+        assertEquals(Optional.of("expert"), catalog.tier(npc, "bows"));
+        assertEquals(1, picks.unspent(npc, "economy:martial"));
+        assertEquals(0, picks.unspent(npc, "template"));
+    }
+
+    @Test
     void respecLeavesATierStaffChangedSince() {
         PickGrant grant = picks.grant(npc, "template", "combat", "proficient", 1);
         picks.pick(null, grant.id(), List.of("swords"));

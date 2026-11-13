@@ -2,6 +2,8 @@ package org.skysongdev.skysongnpcs.choices;
 
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.Nullable;
+import org.skysongdev.skysongnpcs.api.event.NpcRespecEvent;
 import org.skysongdev.skysongnpcs.api.npc.NpcState;
 import org.skysongdev.skysongnpcs.choices.menu.ChoiceGui;
 import org.skysongdev.skysongnpcs.choices.menu.Guis;
@@ -12,7 +14,9 @@ import org.skysongdev.skysongnpcs.npc.NpcRegistry;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 /**
  * Where a player makes an NPC's pending choices: the Assign points button and
@@ -30,12 +34,18 @@ public final class ChoiceMenu {
     private final NpcRegistry registry;
     private final NpcLookup citizens;
     private final List<ChoicePage> pages = new ArrayList<>();
+    private final Consumer<NpcRespecEvent> respecced;
 
-    public ChoiceMenu(Guis guis, SetupFlow setup, NpcRegistry registry, NpcLookup citizens) {
+    /**
+     * @param respecced hears about every respec; the plugin fires {@link NpcRespecEvent} with it
+     */
+    public ChoiceMenu(Guis guis, SetupFlow setup, NpcRegistry registry, NpcLookup citizens,
+                      Consumer<NpcRespecEvent> respecced) {
         this.guis = guis;
         this.setup = setup;
         this.registry = registry;
         this.citizens = citizens;
+        this.respecced = Objects.requireNonNull(respecced, "respecced");
     }
 
     /** Adds a page after the ones already added. */
@@ -79,7 +89,23 @@ public final class ChoiceMenu {
 
     /** Gives back every choice the NPC made, on every page. @return how many */
     public int respec(UUID npc) {
-        return pages.stream().mapToInt(page -> page.respec(npc)).sum();
+        return respec(npc, null);
+    }
+
+    /**
+     * Gives back the choices one source's grants paid for, on every page, or every choice when
+     * {@code source} is null, and fires {@link NpcRespecEvent}. Nothing happens for an NPC
+     * that is not managed.
+     *
+     * @return how many were given back
+     */
+    public int respec(UUID npc, @Nullable String source) {
+        if (!registry.isManaged(npc)) {
+            return 0;
+        }
+        int givenBack = pages.stream().mapToInt(page -> page.respec(npc, source)).sum();
+        respecced.accept(new NpcRespecEvent(npc, source, givenBack));
+        return givenBack;
     }
 
     private ChoiceGui draw(Player player, NpcRecord npc) {

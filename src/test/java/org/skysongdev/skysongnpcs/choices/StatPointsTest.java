@@ -142,6 +142,26 @@ class StatPointsTest {
     }
 
     @Test
+    void respecForOneSourceGivesBackOnlyWhatItsGrantsPaidFor() {
+        points.grant(npc, "economy:martial", 2, List.of("strength"));
+        points.grant(npc, "staff", 2, List.of());
+        points.spend(npc, "str", 3, null);
+        assertEquals(5, sheets.value(npc, "strength"));
+
+        assertEquals(2, points.respec(npc, "economy:martial"));
+
+        assertEquals(3, sheets.value(npc, "strength"));
+        assertEquals(2, points.unspent(npc, "economy:martial"));
+        assertEquals(1, points.unspent(npc, "staff"));
+        assertEquals(0, points.respec(npc, "economy:martial"));
+        assertEquals(0, points.respec(npc, "nobody"));
+        // What stayed spent is still saved.
+        StatPoints reloaded = newPoints();
+        reloaded.load();
+        assertEquals(1, reloaded.spentOn(npc, "strength"));
+    }
+
+    @Test
     void everythingSurvivesARestart() {
         points.grant(npc, "staff", 3, List.of("strength"));
         points.spend(npc, "str", 1, null);
