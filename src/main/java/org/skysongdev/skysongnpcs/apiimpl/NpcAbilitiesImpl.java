@@ -4,10 +4,13 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.skysongdev.skysongnpcs.abilities.AbilitiesMenu;
+import org.skysongdev.skysongnpcs.abilities.AbilityChoiceService;
 import org.skysongdev.skysongnpcs.abilities.AbilityDefinition;
 import org.skysongdev.skysongnpcs.abilities.AbilityService;
 import org.skysongdev.skysongnpcs.api.ability.NpcAbilities;
 import org.skysongdev.skysongnpcs.api.ability.NpcAbility;
+import org.skysongdev.skysongnpcs.api.ability.AbilityChoiceResult;
+import org.skysongdev.skysongnpcs.api.ability.NpcAbilityChoice;
 
 import java.util.List;
 import java.util.Objects;
@@ -19,10 +22,12 @@ import java.util.UUID;
 final class NpcAbilitiesImpl implements NpcAbilities {
     private final AbilityService abilities;
     private final AbilitiesMenu menu;
+    private final AbilityChoiceService choices;
 
-    NpcAbilitiesImpl(AbilityService abilities, AbilitiesMenu menu) {
+    NpcAbilitiesImpl(AbilityService abilities, AbilitiesMenu menu, AbilityChoiceService choices) {
         this.abilities = abilities;
         this.menu = menu;
+        this.choices = choices;
     }
 
     @Override
@@ -79,6 +84,33 @@ final class NpcAbilitiesImpl implements NpcAbilities {
     public boolean revoke(@NotNull UUID npc, @NotNull String ability) {
         mainThread();
         return abilities.revoke(Objects.requireNonNull(npc, "npc"), Objects.requireNonNull(ability, "ability"));
+    }
+
+    @Override
+    public @NotNull NpcAbilityChoice grantChoice(@NotNull UUID npc, @NotNull String source,
+                                                 @NotNull List<String> options, int count) {
+        mainThread();
+        return choices.toApi(choices.grant(Objects.requireNonNull(npc, "npc"), Objects.requireNonNull(source, "source"),
+                List.copyOf(options), count));
+    }
+
+    @Override
+    public @NotNull List<NpcAbilityChoice> choices(@NotNull UUID npc) {
+        mainThread();
+        return choices.grants(Objects.requireNonNull(npc, "npc")).stream().map(choices::toApi).toList();
+    }
+
+    @Override
+    public @NotNull AbilityChoiceResult choose(@NotNull UUID choice, @NotNull List<String> picked) {
+        mainThread();
+        return choices.choose(null, Objects.requireNonNull(choice, "choice"), List.copyOf(picked));
+    }
+
+    @Override
+    public int takeUnspentChoices(@NotNull UUID npc, @NotNull String source) {
+        mainThread();
+        return choices.removeUnspent(Objects.requireNonNull(npc, "npc"), Objects.requireNonNull(source, "source"),
+                Integer.MAX_VALUE);
     }
 
     @Override

@@ -32,6 +32,7 @@ public final class Database {
             SqlChoiceStore choiceTables = new SqlChoiceStore(pool, log);
             SqlPickStore pickTables = new SqlPickStore(pool, log);
             SqlAbilityStore abilityTable = new SqlAbilityStore(pool, log);
+            SqlAbilityChoiceStore abilityChoiceTables = new SqlAbilityChoiceStore(pool, log);
             NpcStore npcs = new QueuedNpcStore(npcTable,
                     failed -> log.accept("Could not save an NPC change: " + failed.getMessage()));
             GrantStore grants = new QueuedGrantStore(grantTable,
@@ -50,7 +51,9 @@ public final class Database {
                     failed -> log.accept("Could not save a proficiency pick change: " + failed.getMessage()));
             AbilityStore abilities = new QueuedAbilityStore(abilityTable,
                     failed -> log.accept("Could not save an ability change: " + failed.getMessage()));
-            return new Stores(npcs, grants, policies, groups, items, choices, picks, abilities);
+            AbilityChoiceStore abilityChoices = new QueuedAbilityChoiceStore(abilityChoiceTables,
+                    failed -> log.accept("Could not save an ability choice change: " + failed.getMessage()));
+            return new Stores(npcs, grants, policies, groups, items, choices, picks, abilities, abilityChoices);
         } catch (RuntimeException failed) {
             pool.close();
             throw failed;

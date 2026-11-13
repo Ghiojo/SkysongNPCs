@@ -699,3 +699,39 @@ abilities:
     lore:
       - "<gray>Abilities: <white><count>"
       - "<yellow>Click to see them."
+
+# Ability choices: a grant lets the NPC choose abilities from a list. The choice menu's page
+# and the setup step after the proficiency picks. <left>: choices left. <ability>: an
+# ability's name without its colours.
+ability-choices:
+  nothing: "<prefix><gray><npc> has no abilities to choose right now."
+  chosen: "<prefix><green><npc> now has <ability>."
+  icon:
+    name: "<gold>Ability choices"
+    lore:
+      - "<gray>Choices left: <white><left>"
+  title: "<dark_gray>Choose <left> abilit(ies)"
+  # An ability that can be chosen. Its description comes first in the lore.
+  option:
+    name: "<white><ability>"
+    lore:
+      - "<yellow>Click to select."
+  selected:
+    name: "<green><ability>"
+    lore:
+      - "<yellow>Click to unselect."
+  left:
+    name: "<gold>Ability choices"
+    lore:
+      - "<gray>Choices left: <white><left>"
+  # <count>: how many are selected.
+  confirm:
+    name: "<green>Confirm <count> abilit(ies)"
+    lore:
+      - "<gray>Only staff can undo choices."
+  # Why a choice was not saved.
+  result:
+    no-such-choice: "<prefix><red>That choice is no longer there."
+    nothing-chosen: "<prefix><red>Choose an ability first."
+    too-many: "<prefix><red>That is more abilities than there are choices left."
+    not-an-option: "<prefix><red>That ability cannot be chosen."
