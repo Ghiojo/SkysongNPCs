@@ -86,7 +86,7 @@ public class OfflineSkysongNPCs extends SkysongNPCs {
         return new Stores(new InMemoryNpcStore(), new InMemoryGrantStore(), new InMemoryPolicyStore(),
                 new InMemoryGroupStore(),
                 new InMemoryNpcItemStore(), new InMemoryChoiceStore(), new InMemoryPickStore(),
-                new InMemoryAbilityStore());
+                new InMemoryAbilityStore(), new org.skysongdev.skysongnpcs.storage.InMemoryAbilityChoiceStore());
     }
 
     @Override

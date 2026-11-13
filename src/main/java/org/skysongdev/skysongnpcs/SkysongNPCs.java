@@ -166,6 +166,10 @@ import org.skysongdev.skysongnpcs.storage.PickStore;
 // M16: abilities
 import org.skysongdev.skysongnpcs.abilities.AbilitiesButton;
 import org.skysongdev.skysongnpcs.abilities.AbilitiesMenu;
+import org.skysongdev.skysongnpcs.abilities.AbilityChoiceListener;
+import org.skysongdev.skysongnpcs.abilities.AbilityChoicePage;
+import org.skysongdev.skysongnpcs.abilities.AbilityChoiceService;
+import org.skysongdev.skysongnpcs.storage.AbilityChoiceStore;
 import org.skysongdev.skysongnpcs.abilities.AbilityChoices;
 import org.skysongdev.skysongnpcs.abilities.AbilityListener;
 import org.skysongdev.skysongnpcs.abilities.AbilityRegistry;
@@ -256,6 +260,9 @@ public class SkysongNPCs extends JavaPlugin {
     private AbilityStore abilityStore;
     private AbilityService abilities;
     private AbilitiesMenu abilitiesMenu;
+    // Ability choices
+    private AbilityChoiceStore abilityChoiceStore;
+    private AbilityChoiceService abilityChoices;
 
     @Override
     public void onEnable() {
@@ -274,6 +281,7 @@ public class SkysongNPCs extends JavaPlugin {
 
             // M16: abilities
             abilityStore = stores.abilities();
+            abilityChoiceStore = stores.abilityChoices();
         } catch (RuntimeException failed) {
             getLogger().log(Level.SEVERE, "Could not reach the database in config.yml (" + configuration.database()
                     + "). SkysongNPCs is disabled.", failed);
@@ -481,6 +489,16 @@ public class SkysongNPCs extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new PicksListener(picks), this);
         subCommands = Stream.concat(subCommands.stream(), Stream.of(
                 new PicksCommand(targeting, access, picks))).toList();
+        // Ability choices, a setup step after the picks and a page of the choice menu.
+        abilityChoices = new AbilityChoiceService(registry, abilities, abilityChoiceStore,
+                (npc, player, grant, ability) -> getServer().getPluginManager().callEvent(new NpcChoiceResolvedEvent(
+                        npc, player, NpcChoiceResolvedEvent.ABILITY_CHOICES, ability, 1)),
+                getLogger());
+        abilityChoices.load();
+        AbilityChoicePage abilityChoicePage = new AbilityChoicePage(guis, abilityChoices, abilities.definitions(), citizens);
+        setup.addStep(abilityChoicePage);
+        choiceMenu.addPage(abilityChoicePage);
+        getServer().getPluginManager().registerEvents(new AbilityChoiceListener(abilityChoices), this);
 
         // M16: abilities (/snpc abilities)
         subCommands = Stream.concat(subCommands.stream(),
@@ -523,7 +541,7 @@ public class SkysongNPCs extends JavaPlugin {
         getServer().getServicesManager().register(SkysongNpcsApi.class, new SkysongNpcsApiImpl(registry, citizens, remover, spots, access, menu,
                         sheets, templates, factory, blueprints, policies,
                         containers, movement, groups, effects, appearance,
-                        pickup, statPoints, choiceMenu, picks, abilities, abilitiesMenu),
+                        pickup, statPoints, choiceMenu, picks, abilities, abilitiesMenu, abilityChoices),
                 this, ServicePriority.Normal);
     }
 
@@ -549,6 +567,10 @@ public class SkysongNPCs extends JavaPlugin {
         if (choiceStore != null) {
             choiceStore.close();
             choiceStore = null;
+        }
+        if (abilityChoiceStore != null) {
+            abilityChoiceStore.close();
+            abilityChoiceStore = null;
         }
         // M16: abilities
         if (abilityStore != null) {
@@ -624,6 +646,10 @@ public class SkysongNPCs extends JavaPlugin {
     }
 
     /** The NPCs' proficiency picks; null while the plugin is disabled. */
+    public AbilityChoiceService abilityChoices() {
+        return abilityChoices;
+    }
+
     public ProficiencyPicks picks() {
         return picks;
     }

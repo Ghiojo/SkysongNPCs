@@ -39,7 +39,7 @@ import org.skysongdev.skysongnpcs.picks.ProficiencyPicks;
 /** The plugin's implementation of {@link SkysongNpcsApi}; each milestone adds its part here. */
 public final class SkysongNpcsApiImpl implements SkysongNpcsApi {
     /** Raised with every change to the api module, as {@link SkysongNpcsApi#apiVersion()} describes. */
-    public static final String API_VERSION = "0.22.0";
+    public static final String API_VERSION = "0.23.0";
 
     private final Npcs npcs;
     private final Access access;
@@ -72,7 +72,8 @@ public final class SkysongNpcsApiImpl implements SkysongNpcsApi {
                               AppearanceService appearance,
                               NpcPickup pickup, StatPoints points, ChoiceMenu choiceMenu,
                               ProficiencyPicks picks,
-                              AbilityService abilities, AbilitiesMenu abilitiesMenu) {
+                              AbilityService abilities, AbilitiesMenu abilitiesMenu,
+                              org.skysongdev.skysongnpcs.abilities.AbilityChoiceService abilityChoices) {
         this.npcs = new NpcsImpl(registry, citizens, factory, remover, spots);
         this.access = new AccessImpl(registry, access);
         this.menu = menu;
@@ -85,7 +86,7 @@ public final class SkysongNpcsApiImpl implements SkysongNpcsApi {
         this.effects = new NpcEffectsImpl(registry, sheets, effects);
         this.appearance = new NpcAppearanceImpl(appearance);
         this.choices = new NpcChoicesImpl(registry, points, choiceMenu, picks);
-        this.abilities = new NpcAbilitiesImpl(abilities, abilitiesMenu);
+        this.abilities = new NpcAbilitiesImpl(abilities, abilitiesMenu, abilityChoices);
     }
 
     @Override
