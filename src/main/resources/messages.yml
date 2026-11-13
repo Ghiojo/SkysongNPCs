@@ -619,6 +619,24 @@ picks:
     lore:
       - "<gray>Picks left: <white><left>"
       - "<gray>Each one goes up to <white><tier></white>."
+  # Promotions: when a grant allows them, a proficiency it picked can go one tier further
+  # for <cost> pick(s). <current>: its tier now. <next>: the tier it would go to.
+  promote-option:
+    name: "<aqua>Promote <proficiency>"
+    lore:
+      - "<gray>Now: <white><current>"
+      - "<gray>Promoted: <white><next>"
+      - "<gray>Costs <white><cost></white> pick(s)."
+      - "<yellow>Click to select."
+  promote-selected:
+    name: "<green>Promote <proficiency>"
+    lore:
+      - "<gray>Now: <white><current>"
+      - "<gray>Promoted: <white><next>"
+      - "<gray>Costs <white><cost></white> pick(s)."
+      - "<yellow>Click to unselect."
+  # <tier>: the tier it went up to.
+  promoted: "<prefix><green><npc>'s <proficiency> is promoted to <tier>."
   # <count>: how many are selected.
   confirm:
     name: "<green>Confirm <count> pick(s)"
@@ -643,6 +661,11 @@ picks:
   unknown-skill: "<prefix><red>There is no skill called <skill>."
   # /snpc picks grant and take (staff). <count>: how many.
   granted: "<prefix><green><npc> got <count> <skill> pick(s) up to <tier>."
+  # With promote-to. <promote>: the promotions' tier. <cost>: picks per promotion.
+  granted-promoting: "<prefix><green><npc> got <count> <skill> pick(s) up to <tier>, which may promote up to <promote> for <cost> pick(s) each."
+  promote-not-above: "<prefix><red>Promotions must go above <tier>, not to <promote>."
+  # /snpc picks promote, when no grant can promote that proficiency.
+  cannot-promote: "<prefix><red><npc> cannot promote <proficiency> now."
   taken: "<prefix><green>Took <count> unspent pick(s) from <source> away from <npc>."
 # M16: abilities. <npc>: the NPC's name. <ability>: an ability's id as typed.
 abilities:

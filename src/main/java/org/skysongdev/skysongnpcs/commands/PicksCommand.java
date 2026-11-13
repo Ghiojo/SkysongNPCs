@@ -9,6 +9,7 @@ import com.mojang.brigadier.context.CommandContext;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.Nullable;
 import org.skysongdev.skysongnpcs.access.AccessService;
 import org.skysongdev.skysongnpcs.api.access.NpcAction;
 import org.skysongdev.skysongnpcs.npc.NpcRecord;
@@ -28,7 +29,11 @@ import java.util.Optional;
  *   <li>{@code /snpc picks}: its grants and how many picks each has left ({@code choose}).</li>
  *   <li>{@code /snpc picks pick <proficiency>}: spends one pick of that proficiency's skill
  *       ({@code choose}); the picks page of {@code /snpc choose} does the same with clicks.</li>
- *   <li>{@code /snpc picks grant <skill> <tier> [count]} (staff): gives picks, source {@code staff}.</li>
+ *   <li>{@code /snpc picks promote <proficiency>}: promotes a picked proficiency one tier, with
+ *       a grant that allows it ({@code choose}).</li>
+ *   <li>{@code /snpc picks grant <skill> <tier> [count] [promote-to] [cost]} (staff): gives
+ *       picks, source {@code staff}; with promote-to, they may also promote up to that tier for
+ *       cost picks each (1 when left out).</li>
  *   <li>{@code /snpc picks take <source> [count]} (staff): takes back unspent picks of a source.</li>
  * </ul>
  * Spent picks are given back by {@code /snpc respec}, with the other choices.
@@ -41,6 +46,8 @@ public final class PicksCommand implements SubCommand {
     private static final String COUNT = "count";
     private static final String SOURCE = "source";
     private static final String PROFICIENCY = "proficiency";
+    private static final String PROMOTE_TO = "promote-to";
+    private static final String COST = "cost";
 
     private final NpcTargeting targeting;
     private final AccessService access;
@@ -69,17 +76,37 @@ public final class PicksCommand implements SubCommand {
                                     pick(context.getSource().getSender(), StringArgumentType.getString(context, PROFICIENCY));
                                     return Command.SINGLE_SUCCESS;
                                 })))
+                .then(LiteralArgumentBuilder.<CommandSourceStack>literal("promote")
+                        .then(RequiredArgumentBuilder.<CommandSourceStack, String>argument(PROFICIENCY, StringArgumentType.word())
+                                .suggests(SheetTargeting.suggest(() -> catalog.skillIds().stream()
+                                        .flatMap(skill -> catalog.proficienciesOf(skill).stream()).toList()))
+                                .executes(context -> {
+                                    promote(context.getSource().getSender(), StringArgumentType.getString(context, PROFICIENCY));
+                                    return Command.SINGLE_SUCCESS;
+                                })))
                 .then(LiteralArgumentBuilder.<CommandSourceStack>literal("grant")
                         .requires(source -> targeting.isStaff(source.getSender()))
                         .then(RequiredArgumentBuilder.<CommandSourceStack, String>argument(SKILL, StringArgumentType.word())
                                 .suggests(SheetTargeting.suggest(catalog::skillIds))
                                 .then(RequiredArgumentBuilder.<CommandSourceStack, String>argument(TIER, StringArgumentType.word())
                                         .suggests(SheetTargeting.suggest(catalog::tierIds))
-                                        .executes(context -> grant(context, 1))
+                                        .executes(context -> grant(context, 1, null, 0))
                                         .then(RequiredArgumentBuilder.<CommandSourceStack, Integer>argument(COUNT,
                                                         IntegerArgumentType.integer(1))
                                                 .executes(context -> grant(context,
-                                                        IntegerArgumentType.getInteger(context, COUNT)))))))
+                                                        IntegerArgumentType.getInteger(context, COUNT), null, 0))
+                                                .then(RequiredArgumentBuilder.<CommandSourceStack, String>argument(PROMOTE_TO,
+                                                                StringArgumentType.word())
+                                                        .suggests(SheetTargeting.suggest(catalog::tierIds))
+                                                        .executes(context -> grant(context,
+                                                                IntegerArgumentType.getInteger(context, COUNT),
+                                                                StringArgumentType.getString(context, PROMOTE_TO), 1))
+                                                        .then(RequiredArgumentBuilder.<CommandSourceStack, Integer>argument(COST,
+                                                                        IntegerArgumentType.integer(1))
+                                                                .executes(context -> grant(context,
+                                                                        IntegerArgumentType.getInteger(context, COUNT),
+                                                                        StringArgumentType.getString(context, PROMOTE_TO),
+                                                                        IntegerArgumentType.getInteger(context, COST)))))))))
                 .then(LiteralArgumentBuilder.<CommandSourceStack>literal("take")
                         .requires(source -> targeting.isStaff(source.getSender()))
                         .then(RequiredArgumentBuilder.<CommandSourceStack, String>argument(SOURCE, StringArgumentType.string())
@@ -136,7 +163,28 @@ public final class PicksCommand implements SubCommand {
         targeting.send(sender, key, placeholders);
     }
 
-    private int grant(CommandContext<CommandSourceStack> context, int count) {
+    private void promote(CommandSender sender, String proficiency) {
+        Optional<NpcRecord> npc = mayChoose(sender);
+        if (npc.isEmpty()) {
+            return;
+        }
+        ProficiencyCatalog catalog = picks.catalog();
+        PickResult result = picks.promoteAny(sender instanceof Player player ? player : null, npc.get().id(), proficiency);
+        Optional<String> id = catalog.proficiencyId(proficiency);
+        Map<String, String> placeholders = Map.of("npc", targeting.npcName(npc.get().id()),
+                "proficiency", id.map(catalog::proficiencyName).orElse(proficiency),
+                "skill", id.flatMap(catalog::skillOf).map(catalog::skillName).orElse("?"),
+                "tier", id.flatMap(found -> catalog.tier(npc.get().id(), found)).map(catalog::tierName).orElse("?"));
+        String key = switch (result) {
+            case DONE -> "picks.promoted";
+            case UNKNOWN_PROFICIENCY -> "proficiency.unknown";
+            case WRONG_SKILL, NOT_AN_OPTION -> "picks.cannot-promote";
+            default -> PicksPage.resultKey(result);
+        };
+        targeting.send(sender, key, placeholders);
+    }
+
+    private int grant(CommandContext<CommandSourceStack> context, int count, @Nullable String promoteTo, int cost) {
         CommandSender sender = context.getSource().getSender();
         Optional<NpcRecord> npc = targeting.managedTarget(sender);
         if (npc.isEmpty()) {
@@ -150,10 +198,19 @@ public final class PicksCommand implements SubCommand {
             targeting.send(sender, "picks.unknown-skill", Map.of("skill", skill));
         } else if (catalog.tierId(tier).isEmpty()) {
             targeting.send(sender, "proficiency.unknown-tier", Map.of("tier", tier));
+        } else if (promoteTo != null && catalog.tierId(promoteTo).isEmpty()) {
+            targeting.send(sender, "proficiency.unknown-tier", Map.of("tier", promoteTo));
+        } else if (promoteTo != null
+                && catalog.rank(catalog.tierId(promoteTo).get()) <= catalog.rank(catalog.tierId(tier).get())) {
+            targeting.send(sender, "picks.promote-not-above", Map.of("tier", catalog.tierName(catalog.tierId(tier).get()),
+                    "promote", catalog.tierName(catalog.tierId(promoteTo).get())));
         } else {
-            PickGrant grant = picks.grant(npc.get().id(), STAFF_SOURCE, skill, tier, count);
-            targeting.send(sender, "picks.granted", Map.of("npc", name, "count", String.valueOf(count),
-                    "skill", catalog.skillName(grant.skill()), "tier", catalog.tierName(grant.tier())));
+            PickGrant grant = picks.grant(npc.get().id(), STAFF_SOURCE, skill, tier, count, promoteTo, cost);
+            Map<String, String> placeholders = Map.of("npc", name, "count", String.valueOf(count),
+                    "skill", catalog.skillName(grant.skill()), "tier", catalog.tierName(grant.tier()),
+                    "promote", promoteTo == null ? "" : catalog.tierName(grant.promotion().tier()),
+                    "cost", String.valueOf(cost));
+            targeting.send(sender, promoteTo == null ? "picks.granted" : "picks.granted-promoting", placeholders);
         }
         return Command.SINGLE_SUCCESS;
     }

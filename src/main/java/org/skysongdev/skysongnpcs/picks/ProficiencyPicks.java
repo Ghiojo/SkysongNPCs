@@ -10,10 +10,12 @@ import org.skysongdev.skysongnpcs.storage.PickStore;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -27,6 +29,10 @@ import java.util.logging.Logger;
  * already at that tier or above cannot be picked, and one grant cannot pick the same
  * proficiency twice. Several picks of one grant are checked together and saved together, so
  * a confirm screen either saves all of them or none.
+ *
+ * <p>A grant with a {@link PickPromotion} also lets its picks promote: raise a proficiency
+ * the grant picked one tier further, up to the promotion's tier, for the promotion's cost in
+ * picks. A respec undoes promotions first, newest first, then the picks.
  */
 public final class ProficiencyPicks {
     private final NpcRegistry registry;
@@ -38,6 +44,8 @@ public final class ProficiencyPicks {
     private final Map<UUID, PickGrant> grants = new LinkedHashMap<>();
     /** Spends by grant id, oldest first. */
     private final Map<UUID, List<PickSpend>> spends = new LinkedHashMap<>();
+    /** Promotions by grant id, oldest first. */
+    private final Map<UUID, List<PromotionSpend>> promotions = new LinkedHashMap<>();
 
     public ProficiencyPicks(NpcRegistry registry, ProficiencyCatalog catalog, PickStore store, Changes changes,
                             Logger logger) {
@@ -52,6 +60,7 @@ public final class ProficiencyPicks {
     public void load() {
         grants.clear();
         spends.clear();
+        promotions.clear();
         Set<UUID> stale = new HashSet<>();
         for (PickGrant grant : store.loadGrants()) {
             if (registry.isManaged(grant.npc())) {
@@ -65,6 +74,12 @@ public final class ProficiencyPicks {
                 spends.computeIfAbsent(spend.grant(), ignored -> new ArrayList<>()).add(spend);
             }
         }
+        for (PromotionSpend promotion : store.loadPromotions()) {
+            if (grants.containsKey(promotion.grant())) {
+                promotions.computeIfAbsent(promotion.grant(), ignored -> new ArrayList<>()).add(promotion);
+            }
+        }
+        promotions.values().forEach(list -> list.sort(Comparator.comparingInt(PromotionSpend::step)));
         stale.forEach(store::deleteAll);
         if (!stale.isEmpty()) {
             logger.info("Dropped the proficiency picks of " + stale.size() + " NPC(s) that are no longer managed.");
@@ -87,6 +102,22 @@ public final class ProficiencyPicks {
      *                                  unknown, the count is under 1 or the source is not valid
      */
     public PickGrant grant(UUID npc, String source, String skill, String tier, int count) {
+        return grant(npc, source, skill, tier, count, null, 0);
+    }
+
+    /**
+     * {@link #grant(UUID, String, String, String, int)} whose picks may also promote: raise a
+     * proficiency the grant picked one tier further, up to {@code promoteTo}, for
+     * {@code promotionCost} picks. Picks are added to an existing grant only when its
+     * promotion is the same too.
+     *
+     * @param promoteTo     a SkysongStats tier id above {@code tier}; null for no promotion
+     * @param promotionCost 1 or more when {@code promoteTo} is given
+     * @throws IllegalArgumentException also when {@code promoteTo} is unknown or not above
+     *                                  {@code tier}, or the cost is under 1
+     */
+    public PickGrant grant(UUID npc, String source, String skill, String tier, int count,
+                           @Nullable String promoteTo, int promotionCost) {
         if (!registry.isManaged(npc)) {
             throw new IllegalArgumentException("NPC " + npc + " is not managed");
         }
@@ -97,12 +128,23 @@ public final class ProficiencyPicks {
         if (count < 1) {
             throw new IllegalArgumentException("A grant gives 1 pick or more, not " + count);
         }
+        PickPromotion promotion = null;
+        if (promoteTo != null) {
+            String maxTier = catalog.tierId(promoteTo)
+                    .orElseThrow(() -> new IllegalArgumentException("SkysongStats has no tier " + promoteTo));
+            if (catalog.rank(maxTier) <= catalog.rank(tierId)) {
+                throw new IllegalArgumentException("Promotions go above the grant's tier " + tierId + ", not to " + maxTier);
+            }
+            promotion = new PickPromotion(maxTier, promotionCost);
+        }
+        PickPromotion wanted = promotion;
         Optional<PickGrant> same = grants.values().stream()
                 .filter(grant -> grant.npc().equals(npc) && grant.source().equals(source)
-                        && grant.skill().equals(skillId) && grant.tier().equals(tierId))
+                        && grant.skill().equals(skillId) && grant.tier().equals(tierId)
+                        && Objects.equals(grant.promotion(), wanted))
                 .findFirst();
         PickGrant saved = same.map(grant -> grant.withCount(grant.count() + count))
-                .orElseGet(() -> new PickGrant(UUID.randomUUID(), npc, source, skillId, tierId, count));
+                .orElseGet(() -> new PickGrant(UUID.randomUUID(), npc, source, skillId, tierId, count, wanted));
         grants.put(saved.id(), saved);
         store.saveGrant(saved);
         return saved;
@@ -122,9 +164,15 @@ public final class ProficiencyPicks {
         return List.copyOf(spends.getOrDefault(grant, List.of()));
     }
 
-    /** The picks of a grant not spent yet. */
+    /** What a grant's picks promoted, oldest first. */
+    public List<PromotionSpend> promotions(UUID grant) {
+        return List.copyOf(promotions.getOrDefault(grant, List.of()));
+    }
+
+    /** The picks of a grant not spent yet, on picks or promotions. */
     public int remaining(PickGrant grant) {
-        return Math.max(0, grant.count() - spends.getOrDefault(grant.id(), List.of()).size());
+        int promoted = promotions.getOrDefault(grant.id(), List.of()).stream().mapToInt(PromotionSpend::cost).sum();
+        return Math.max(0, grant.count() - spends.getOrDefault(grant.id(), List.of()).size() - promoted);
     }
 
     /** An NPC's grants that still have picks, oldest first. */
@@ -166,6 +214,7 @@ public final class ProficiencyPicks {
             if (count == 0) {
                 grants.remove(grant.id());
                 spends.remove(grant.id());
+                promotions.remove(grant.id());
                 store.deleteGrant(grant.id());
             } else {
                 PickGrant smaller = grant.withCount(count);
@@ -197,6 +246,104 @@ public final class ProficiencyPicks {
             }
         }
         return options;
+    }
+
+    /**
+     * The proficiencies a grant can promote now: those it picked that are at its tier or above
+     * and below its promotion's tier, while it has the picks a promotion costs. Empty for a
+     * grant without promotion or an NPC without a sheet.
+     */
+    public List<String> promotable(PickGrant grant) {
+        PickPromotion promotion = grant.promotion();
+        if (promotion == null || remaining(grant) < promotion.cost()) {
+            return List.of();
+        }
+        int from = catalog.rank(grant.tier());
+        int to = catalog.rank(promotion.tier());
+        List<String> options = new ArrayList<>();
+        for (PickSpend spend : spends.getOrDefault(grant.id(), List.of())) {
+            Optional<String> tier = catalog.tier(grant.npc(), spend.proficiency());
+            if (tier.isPresent() && catalog.rank(tier.get()) >= from && catalog.rank(tier.get()) < to) {
+                options.add(spend.proficiency());
+            }
+        }
+        return options;
+    }
+
+    /** Whether a grant has anything to spend on now: a pick or a promotion. */
+    public boolean spendable(PickGrant grant) {
+        return remaining(grant) > 0 && (!options(grant).isEmpty() || !promotable(grant).isEmpty());
+    }
+
+    /**
+     * Promotes a proficiency a grant picked: one tier up, for the promotion's cost in picks.
+     *
+     * @param player who chose it, or null for the API and staff commands
+     * @return {@link PickResult#DONE} when saved; {@link PickResult#TOO_MANY} when the grant
+     *         has fewer picks left than a promotion costs; {@link PickResult#NOT_AN_OPTION}
+     *         when the grant cannot promote it
+     */
+    public PickResult promote(@Nullable Player player, UUID grantId, String proficiency) {
+        PickGrant grant = grants.get(grantId);
+        Optional<NpcRecord> npc = grant == null ? Optional.empty() : registry.get(grant.npc());
+        if (npc.isEmpty()) {
+            return PickResult.NO_SUCH_GRANT;
+        }
+        Optional<String> id = catalog.proficiencyId(proficiency);
+        if (id.isEmpty()) {
+            return PickResult.UNKNOWN_PROFICIENCY;
+        }
+        if (!catalog.skillOf(id.get()).map(grant.skill()::equals).orElse(false)) {
+            return PickResult.WRONG_SKILL;
+        }
+        PickPromotion promotion = grant.promotion();
+        if (promotion != null && remaining(grant) < promotion.cost()) {
+            return PickResult.TOO_MANY;
+        }
+        if (!promotable(grant).contains(id.get())) {
+            return catalog.tier(grant.npc(), id.get()).isEmpty() ? PickResult.NO_SHEET : PickResult.NOT_AN_OPTION;
+        }
+        String from = catalog.tier(grant.npc(), id.get()).orElseThrow();
+        String to = catalog.tierIds().get(catalog.rank(from) + 1);
+        if (!catalog.setTier(grant.npc(), id.get(), to)) {
+            return PickResult.NO_SHEET;
+        }
+        List<PromotionSpend> made = promotions.computeIfAbsent(grant.id(), ignored -> new ArrayList<>());
+        int step = made.isEmpty() ? 0 : made.getLast().step() + 1;
+        PromotionSpend spend = new PromotionSpend(grant.id(), step, id.get(), from, to, promotion.cost());
+        made.add(spend);
+        store.savePromotion(spend);
+        changes.picked(npc.get(), player, grant, id.get());
+        return PickResult.DONE;
+    }
+
+    /**
+     * Promotes a proficiency with the NPC's oldest grant that can. When none can, the answer of
+     * the first grant of its skill says why.
+     *
+     * @return {@link PickResult#WRONG_SKILL} when no grant of its skill can promote
+     */
+    public PickResult promoteAny(@Nullable Player player, UUID npc, String proficiency) {
+        Optional<String> skill = catalog.proficiencyId(proficiency).flatMap(catalog::skillOf);
+        if (skill.isEmpty()) {
+            return PickResult.UNKNOWN_PROFICIENCY;
+        }
+        PickResult first = PickResult.WRONG_SKILL;
+        boolean tried = false;
+        for (PickGrant grant : grants(npc)) {
+            if (!grant.skill().equals(skill.get()) || grant.promotion() == null) {
+                continue;
+            }
+            PickResult result = promote(player, grant.id(), proficiency);
+            if (result == PickResult.DONE) {
+                return result;
+            }
+            if (!tried) {
+                first = result;
+                tried = true;
+            }
+        }
+        return first;
     }
 
     /**
@@ -282,8 +429,11 @@ public final class ProficiencyPicks {
 
     /** A grant as the API shows it. */
     public ProficiencyPickGrant toApi(PickGrant grant) {
+        PickPromotion promotion = grant.promotion();
         return new ProficiencyPickGrant(grant.id(), grant.source(), grant.skill(), grant.tier(), grant.count(),
-                spends(grant.id()).stream().map(PickSpend::proficiency).toList());
+                spends(grant.id()).stream().map(PickSpend::proficiency).toList(),
+                promotion == null ? null : promotion.tier(), promotion == null ? 0 : promotion.cost(),
+                promotions(grant.id()).stream().map(PromotionSpend::proficiency).toList());
     }
 
     /**
@@ -306,6 +456,17 @@ public final class ProficiencyPicks {
         for (PickGrant grant : grants(npc)) {
             if (source != null && !grant.source().equals(source)) {
                 continue;
+            }
+            List<PromotionSpend> promoted = promotions.remove(grant.id());
+            if (promoted != null) {
+                for (int i = promoted.size() - 1; i >= 0; i--) {
+                    PromotionSpend promotion = promoted.get(i);
+                    if (catalog.tier(npc, promotion.proficiency()).map(promotion.toTier()::equals).orElse(false)) {
+                        catalog.setTier(npc, promotion.proficiency(), promotion.fromTier());
+                    }
+                    store.deletePromotion(grant.id(), promotion.step());
+                    refunded += promotion.cost();
+                }
             }
             List<PickSpend> spent = spends.remove(grant.id());
             if (spent == null) {
@@ -332,6 +493,7 @@ public final class ProficiencyPicks {
         ids.forEach(id -> {
             grants.remove(id);
             spends.remove(id);
+            promotions.remove(id);
         });
         store.deleteAll(npc);
     }
@@ -352,6 +514,12 @@ public final class ProficiencyPicks {
                 PickSpend copiedSpend = new PickSpend(copied.id(), spend.proficiency(), spend.previousTier());
                 spends.computeIfAbsent(copied.id(), ignored -> new ArrayList<>()).add(copiedSpend);
                 store.saveSpend(copiedSpend);
+            }
+            for (PromotionSpend promotion : promotions.getOrDefault(grant.id(), List.of())) {
+                PromotionSpend copiedPromotion = new PromotionSpend(copied.id(), promotion.step(),
+                        promotion.proficiency(), promotion.fromTier(), promotion.toTier(), promotion.cost());
+                promotions.computeIfAbsent(copied.id(), ignored -> new ArrayList<>()).add(copiedPromotion);
+                store.savePromotion(copiedPromotion);
             }
         }
     }

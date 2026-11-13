@@ -2,6 +2,7 @@ package org.skysongdev.skysongnpcs.storage;
 
 import org.skysongdev.skysongnpcs.picks.PickGrant;
 import org.skysongdev.skysongnpcs.picks.PickSpend;
+import org.skysongdev.skysongnpcs.picks.PromotionSpend;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -13,6 +14,23 @@ import java.util.UUID;
 public class InMemoryPickStore implements PickStore {
     private final Map<UUID, PickGrant> grants = new LinkedHashMap<>();
     private final List<PickSpend> spends = new ArrayList<>();
+    private final List<PromotionSpend> promotions = new ArrayList<>();
+
+    @Override
+    public synchronized List<PromotionSpend> loadPromotions() {
+        return new ArrayList<>(promotions);
+    }
+
+    @Override
+    public synchronized void savePromotion(PromotionSpend promotion) {
+        deletePromotion(promotion.grant(), promotion.step());
+        promotions.add(promotion);
+    }
+
+    @Override
+    public synchronized void deletePromotion(UUID grant, int step) {
+        promotions.removeIf(saved -> saved.grant().equals(grant) && saved.step() == step);
+    }
 
     @Override
     public synchronized List<PickGrant> loadGrants() {
@@ -33,6 +51,7 @@ public class InMemoryPickStore implements PickStore {
     public synchronized void deleteGrant(UUID grant) {
         grants.remove(grant);
         spends.removeIf(spend -> spend.grant().equals(grant));
+        promotions.removeIf(promotion -> promotion.grant().equals(grant));
     }
 
     @Override
@@ -51,6 +70,7 @@ public class InMemoryPickStore implements PickStore {
         grants.values().removeIf(grant -> {
             if (grant.npc().equals(npc)) {
                 spends.removeIf(spend -> spend.grant().equals(grant.id()));
+                promotions.removeIf(promotion -> promotion.grant().equals(grant.id()));
                 return true;
             }
             return false;

@@ -53,7 +53,7 @@ public final class PicksPage implements ChoicePage, SetupStep {
         return picks.pending(npc);
     }
 
-    /** Only when there is something to pick: a pick left on a grant whose skill has a proficiency below its tier. */
+    /** Only when there is something to spend: a pick left on a grant with a proficiency to pick or promote. */
     @Override
     public boolean applies(NpcRecord npc) {
         return !spendable(npc.id()).isEmpty();
@@ -86,7 +86,7 @@ public final class PicksPage implements ChoicePage, SetupStep {
     }
 
     private List<UUID> spendable(UUID npc) {
-        return picks.open(npc).stream().filter(grant -> !picks.options(grant).isEmpty()).map(PickGrant::id).toList();
+        return picks.open(npc).stream().filter(picks::spendable).map(PickGrant::id).toList();
     }
 
     /**
@@ -103,23 +103,26 @@ public final class PicksPage implements ChoicePage, SetupStep {
                 continue;
             }
             List<String> options = picks.options(grant).stream().limit(MAX_OPTIONS).toList();
-            if (options.isEmpty()) {
+            List<String> promotable = picks.promotable(grant).stream().limit(MAX_OPTIONS - options.size()).toList();
+            if (options.isEmpty() && promotable.isEmpty()) {
                 continue;
             }
-            int rows = (options.size() + 8) / 9 + 1;
+            int rows = (options.size() + promotable.size() + 8) / 9 + 1;
             ChoiceGui gui = guis.page(player, rows, "picks.title", placeholders(grant, Map.of()));
-            draw(gui, grant, options, new LinkedHashSet<>(), () -> show(player, npc, left, after, back), back);
+            draw(gui, grant, options, promotable, new LinkedHashSet<>(), new LinkedHashSet<>(),
+                    () -> show(player, npc, left, after, back), back);
             guis.show(gui);
             return;
         }
         after.run();
     }
 
-    private void draw(ChoiceGui gui, PickGrant grant, List<String> options, Set<String> selected,
-                      Runnable next, Runnable back) {
+    private void draw(ChoiceGui gui, PickGrant grant, List<String> options, List<String> promotable,
+                      Set<String> selected, Set<String> promoting, Runnable next, Runnable back) {
         gui.clear();
         ProficiencyCatalog catalog = picks.catalog();
-        int left = picks.remaining(grant) - selected.size();
+        int cost = grant.promotion() == null ? 0 : grant.promotion().cost();
+        int left = picks.remaining(grant) - selected.size() - promoting.size() * cost;
         for (int i = 0; i < options.size(); i++) {
             String proficiency = options.get(i);
             boolean chosen = selected.contains(proficiency);
@@ -129,12 +132,34 @@ public final class PicksPage implements ChoicePage, SetupStep {
                             "current", catalog.tier(grant.npc(), proficiency).map(catalog::tierName).orElse("?"))));
             gui.button(i, icon, click -> {
                 if (!selected.remove(proficiency)) {
-                    if (selected.size() >= picks.remaining(grant)) {
+                    if (left < 1) {
                         return;
                     }
                     selected.add(proficiency);
                 }
-                draw(gui, grant, options, selected, next, back);
+                draw(gui, grant, options, promotable, selected, promoting, next, back);
+            });
+        }
+        for (int i = 0; i < promotable.size(); i++) {
+            String proficiency = promotable.get(i);
+            boolean chosen = promoting.contains(proficiency);
+            String current = catalog.tier(grant.npc(), proficiency).orElse("?");
+            int rank = catalog.rank(current);
+            String nextTier = rank >= 0 && rank + 1 < catalog.tierIds().size() ? catalog.tierIds().get(rank + 1) : current;
+            ItemStack icon = guis.icon(chosen ? Material.EXPERIENCE_BOTTLE : Material.GLASS_BOTTLE,
+                    chosen ? "picks.promote-selected" : "picks.promote-option", placeholders(grant, Map.of(
+                            "proficiency", catalog.proficiencyName(proficiency),
+                            "current", catalog.tierName(current),
+                            "next", catalog.tierName(nextTier),
+                            "cost", Integer.toString(cost))));
+            gui.button(options.size() + i, icon, click -> {
+                if (!promoting.remove(proficiency)) {
+                    if (left < cost) {
+                        return;
+                    }
+                    promoting.add(proficiency);
+                }
+                draw(gui, grant, options, promotable, selected, promoting, next, back);
             });
         }
         int bottom = gui.size() - 9;
@@ -144,11 +169,11 @@ public final class PicksPage implements ChoicePage, SetupStep {
         gui.label(bottom + 4, guis.icon(Material.PAPER, "picks.left",
                 placeholders(grant, Map.of("left", Integer.toString(left)))));
         gui.button(bottom + 8, guis.icon(Material.LIME_DYE, "picks.confirm",
-                placeholders(grant, Map.of("count", Integer.toString(selected.size())))),
-                click -> confirm(gui, grant, selected, next));
+                placeholders(grant, Map.of("count", Integer.toString(selected.size() + promoting.size())))),
+                click -> confirm(gui, grant, selected, promoting, next));
     }
 
-    private void confirm(ChoiceGui gui, PickGrant grant, Set<String> selected, Runnable next) {
+    private void confirm(ChoiceGui gui, PickGrant grant, Set<String> selected, Set<String> promoting, Runnable next) {
         Player player = gui.viewer();
         if (!selected.isEmpty()) {
             PickResult result = picks.pick(player, grant.id(), List.copyOf(selected));
@@ -161,7 +186,18 @@ public final class PicksPage implements ChoicePage, SetupStep {
                 guis.send(player, resultKey(result), placeholders(grant, Map.of()));
             }
         }
+        for (String proficiency : promoting) {
+            String name = picks.catalog().proficiencyName(proficiency);
+            PickResult result = picks.promote(player, grant.id(), proficiency);
+            if (result == PickResult.DONE) {
+                String tier = picks.catalog().tier(grant.npc(), proficiency).map(picks.catalog()::tierName).orElse("?");
+                guis.send(player, "picks.promoted", placeholders(grant, Map.of("proficiency", name, "tier", tier)));
+            } else {
+                guis.send(player, resultKey(result), placeholders(grant, Map.of("proficiency", name)));
+            }
+        }
         selected.clear();
+        promoting.clear();
         guis.close(gui);
         next.run();
     }

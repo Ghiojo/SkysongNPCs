@@ -1,7 +1,9 @@
 package org.skysongdev.skysongnpcs.storage;
 
 import org.skysongdev.skysongnpcs.picks.PickGrant;
+import org.skysongdev.skysongnpcs.picks.PickPromotion;
 import org.skysongdev.skysongnpcs.picks.PickSpend;
+import org.skysongdev.skysongnpcs.picks.PromotionSpend;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -16,7 +18,10 @@ import java.util.UUID;
 import java.util.function.Consumer;
 
 /**
- * The {@code snpc_pick_grants} and {@code snpc_pick_spends} tables. A spend row names its
+ * The {@code snpc_pick_grants} and {@code snpc_pick_spends} tables, and since 0.22.0
+ * {@code snpc_pick_promotion_rules} (a grant's promotion, one row per grant that has one) and
+ * {@code snpc_pick_promotions} (the promotions made). The promotion tables are new tables
+ * rather than new columns, so existing tables need no migration. A spend row names its
  * grant, and every spend row also carries the NPC so one NPC's rows go in one statement. The
  * pool belongs to the NPC store, so closing this does nothing. Every call runs on the caller's
  * thread; {@link QueuedPickStore} moves the writes off the main thread.
@@ -39,7 +44,40 @@ public final class SqlPickStore implements PickStore {
               previous_tier VARCHAR(64) NOT NULL,
               PRIMARY KEY (grant_id, proficiency)
             )""";
-    private static final String LOAD_GRANTS = "SELECT id, npc, source, skill, tier, pick_count FROM snpc_pick_grants";
+    static final String CREATE_PROMOTION_RULES = """
+            CREATE TABLE IF NOT EXISTS snpc_pick_promotion_rules (
+              grant_id CHAR(36) NOT NULL PRIMARY KEY,
+              npc CHAR(36) NOT NULL,
+              max_tier VARCHAR(64) NOT NULL,
+              cost INT NOT NULL
+            )""";
+    static final String CREATE_PROMOTIONS = """
+            CREATE TABLE IF NOT EXISTS snpc_pick_promotions (
+              grant_id CHAR(36) NOT NULL,
+              step INT NOT NULL,
+              npc CHAR(36) NOT NULL,
+              proficiency VARCHAR(64) NOT NULL,
+              from_tier VARCHAR(64) NOT NULL,
+              to_tier VARCHAR(64) NOT NULL,
+              cost INT NOT NULL,
+              PRIMARY KEY (grant_id, step)
+            )""";
+    private static final String LOAD_GRANTS = "SELECT g.id, g.npc, g.source, g.skill, g.tier, g.pick_count, "
+            + "r.max_tier, r.cost FROM snpc_pick_grants g LEFT JOIN snpc_pick_promotion_rules r ON r.grant_id = g.id";
+    private static final String SAVE_RULE = "INSERT INTO snpc_pick_promotion_rules (grant_id, npc, max_tier, cost) "
+            + "VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE max_tier = VALUES(max_tier), cost = VALUES(cost)";
+    private static final String DELETE_RULE = "DELETE FROM snpc_pick_promotion_rules WHERE grant_id = ?";
+    private static final String LOAD_PROMOTIONS = "SELECT grant_id, step, proficiency, from_tier, to_tier, cost "
+            + "FROM snpc_pick_promotions ORDER BY grant_id, step";
+    private static final String SAVE_PROMOTION = "INSERT INTO snpc_pick_promotions "
+            + "(grant_id, step, npc, proficiency, from_tier, to_tier, cost) "
+            + "VALUES (?, ?, (SELECT npc FROM snpc_pick_grants WHERE id = ?), ?, ?, ?, ?) "
+            + "ON DUPLICATE KEY UPDATE proficiency = VALUES(proficiency), from_tier = VALUES(from_tier), "
+            + "to_tier = VALUES(to_tier), cost = VALUES(cost)";
+    private static final String DELETE_PROMOTION = "DELETE FROM snpc_pick_promotions WHERE grant_id = ? AND step = ?";
+    private static final String DELETE_GRANT_PROMOTIONS = "DELETE FROM snpc_pick_promotions WHERE grant_id = ?";
+    private static final String DELETE_ALL_PROMOTIONS = "DELETE FROM snpc_pick_promotions WHERE npc = ?";
+    private static final String DELETE_ALL_RULES = "DELETE FROM snpc_pick_promotion_rules WHERE npc = ?";
     private static final String LOAD_SPENDS = "SELECT grant_id, proficiency, previous_tier FROM snpc_pick_spends";
     private static final String SAVE_GRANT = "INSERT INTO snpc_pick_grants (id, npc, source, skill, tier, pick_count) "
             + "VALUES (?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE pick_count = VALUES(pick_count)";
@@ -67,6 +105,8 @@ public final class SqlPickStore implements PickStore {
              Statement statement = connection.createStatement()) {
             statement.execute(CREATE_GRANTS);
             statement.execute(CREATE_SPENDS);
+            statement.execute(CREATE_PROMOTION_RULES);
+            statement.execute(CREATE_PROMOTIONS);
         } catch (SQLException e) {
             throw new StorageException("Unable to create the proficiency pick tables", e);
         }
@@ -81,9 +121,11 @@ public final class SqlPickStore implements PickStore {
             while (results.next()) {
                 String id = results.getString("id");
                 try {
+                    String maxTier = results.getString("max_tier");
+                    PickPromotion promotion = maxTier == null ? null : new PickPromotion(maxTier, results.getInt("cost"));
                     grants.add(new PickGrant(UUID.fromString(id), UUID.fromString(results.getString("npc")),
                             results.getString("source"), results.getString("skill"), results.getString("tier"),
-                            results.getInt("pick_count")));
+                            results.getInt("pick_count"), promotion));
                 } catch (IllegalArgumentException unreadable) {
                     log.accept("Skipped the proficiency pick grant " + id + " that could not be read: "
                             + unreadable.getMessage());
@@ -118,16 +160,61 @@ public final class SqlPickStore implements PickStore {
     }
 
     @Override
+    public List<PromotionSpend> loadPromotions() {
+        List<PromotionSpend> promotions = new ArrayList<>();
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(LOAD_PROMOTIONS);
+             ResultSet results = statement.executeQuery()) {
+            while (results.next()) {
+                String grant = results.getString("grant_id");
+                try {
+                    promotions.add(new PromotionSpend(UUID.fromString(grant), results.getInt("step"),
+                            results.getString("proficiency"), results.getString("from_tier"),
+                            results.getString("to_tier"), results.getInt("cost")));
+                } catch (IllegalArgumentException unreadable) {
+                    log.accept("Skipped a promotion of proficiency pick grant " + grant + " that could not be read: "
+                            + unreadable.getMessage());
+                }
+            }
+        } catch (SQLException e) {
+            throw new StorageException("Unable to load the proficiency promotions", e);
+        }
+        return promotions;
+    }
+
+    @Override
     public void saveGrant(PickGrant grant) {
-        update("Unable to save the proficiency pick grant " + grant.id(), SAVE_GRANT, grant.id().toString(),
+        String failure = "Unable to save the proficiency pick grant " + grant.id();
+        update(failure, SAVE_GRANT, grant.id().toString(),
                 grant.npc().toString(), grant.source(), grant.skill(), grant.tier(), grant.count());
+        if (grant.promotion() == null) {
+            update(failure, DELETE_RULE, grant.id().toString());
+        } else {
+            update(failure, SAVE_RULE, grant.id().toString(), grant.npc().toString(), grant.promotion().tier(),
+                    grant.promotion().cost());
+        }
     }
 
     @Override
     public void deleteGrant(UUID grant) {
         String failure = "Unable to delete the proficiency pick grant " + grant;
+        update(failure, DELETE_GRANT_PROMOTIONS, grant.toString());
+        update(failure, DELETE_RULE, grant.toString());
         update(failure, DELETE_GRANT_SPENDS, grant.toString());
         update(failure, DELETE_GRANT, grant.toString());
+    }
+
+    @Override
+    public void savePromotion(PromotionSpend promotion) {
+        update("Unable to save a promotion of proficiency pick grant " + promotion.grant(), SAVE_PROMOTION,
+                promotion.grant().toString(), promotion.step(), promotion.grant().toString(), promotion.proficiency(),
+                promotion.fromTier(), promotion.toTier(), promotion.cost());
+    }
+
+    @Override
+    public void deletePromotion(UUID grant, int step) {
+        update("Unable to delete a promotion of proficiency pick grant " + grant, DELETE_PROMOTION,
+                grant.toString(), step);
     }
 
     @Override
@@ -144,6 +231,8 @@ public final class SqlPickStore implements PickStore {
     @Override
     public void deleteAll(UUID npc) {
         String failure = "Unable to delete the proficiency picks of NPC " + npc;
+        update(failure, DELETE_ALL_PROMOTIONS, npc.toString());
+        update(failure, DELETE_ALL_RULES, npc.toString());
         update(failure, DELETE_ALL_SPENDS, npc.toString());
         update(failure, DELETE_ALL_GRANTS, npc.toString());
     }

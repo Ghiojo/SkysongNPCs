@@ -192,6 +192,64 @@ class PicksInGameTest {
     }
 
     @Test
+    void thePicksPageOffersPromotionsOfWhatTheGrantPicked() {
+        PickGrant grant = picks.grant(guard, "economy:martial", "combat", "proficient", 3, "expert", 1);
+        picks.pick(alice, grant.id(), List.of("swords"));
+        NpcRecord npc = plugin.registry().get(guard).orElseThrow();
+
+        page().open(alice, npc, () -> { });
+        Inventory shown = shown(alice);
+        // axes and bows to pick, then swords to promote.
+        assertEquals(Material.BOOK, shown.getItem(0).getType());
+        assertEquals(Material.BOOK, shown.getItem(1).getType());
+        assertEquals(Material.GLASS_BOTTLE, shown.getItem(2).getType());
+        click(alice, 2);
+        assertEquals(Material.EXPERIENCE_BOTTLE, shown.getItem(2).getType());
+        click(alice, 0);
+        click(alice, shown.getSize() - 1);
+        server.getScheduler().performOneTick();
+
+        assertEquals(Optional.of("expert"), catalog.tier(guard, "swords"));
+        assertEquals(Optional.of("proficient"), catalog.tier(guard, "axes"));
+        assertEquals(0, picks.remaining(grant));
+        assertEquals("[NPCs] Guard's Axes is now Proficient.", plain(alice));
+        assertEquals("[NPCs] Guard's Swords is promoted to Expert.", plain(alice));
+    }
+
+    @Test
+    void promotingByCommandAndGrantingPromotionsAsStaff() throws CommandSyntaxException {
+        commands.run(staff, "snpc picks grant combat proficient 2 expert");
+        assertEquals("[NPCs] Guard got 2 Combat pick(s) up to Proficient, which may promote up to Expert for 1 pick(s) each.",
+                plain(staff));
+        commands.run(staff, "snpc picks grant combat expert 1 proficient");
+        assertEquals("[NPCs] Promotions must go above Expert, not to Proficient.", plain(staff));
+
+        commands.run(alice, "snpc picks promote swords");
+        assertEquals("[NPCs] Guard cannot promote Swords now.", plain(alice));
+        commands.run(alice, "snpc picks pick swords");
+        plain(alice);
+        commands.run(alice, "snpc picks promote swords");
+        assertEquals("[NPCs] Guard's Swords is promoted to Expert.", plain(alice));
+        assertEquals(PickResult.TOO_MANY, SkysongNpcsApi.get().choices().promote(guard, "swords"));
+        assertEquals(0, SkysongNpcsApi.get().choices().unspentPicks(guard));
+    }
+
+    @Test
+    void theApiGrantsPromotingPicks() {
+        ProficiencyPickGrant grant = SkysongNpcsApi.get().choices().grantPicks(guard, "economy:martial", "combat",
+                "proficient", 2, "expert", 1);
+        assertEquals("expert", grant.promoteTo());
+        assertEquals(1, grant.promotionCost());
+        SkysongNpcsApi.get().choices().spendPick(guard, "axes");
+
+        assertEquals(PickResult.DONE, SkysongNpcsApi.get().choices().promote(guard, "axes"));
+
+        ProficiencyPickGrant after = SkysongNpcsApi.get().choices().pickGrants(guard).getFirst();
+        assertEquals(List.of("axes"), after.promoted());
+        assertEquals(0, after.unspent());
+    }
+
+    @Test
     void staffCanRespecOneSourceAndEveryRespecFiresAnEvent() throws CommandSyntaxException {
         List<NpcRespecEvent> respecs = new ArrayList<>();
         server.getPluginManager().registerEvents(new Listener() {
