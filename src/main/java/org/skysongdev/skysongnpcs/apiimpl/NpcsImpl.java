@@ -10,6 +10,7 @@ import org.skysongdev.skysongnpcs.api.npc.Npcs;
 import org.skysongdev.skysongnpcs.items.NpcFactory;
 import org.skysongdev.skysongnpcs.npc.NpcLookup;
 import org.skysongdev.skysongnpcs.npc.NpcRegistry;
+import org.skysongdev.skysongnpcs.npc.NpcRemover;
 import org.skysongdev.skysongnpcs.templates.NpcTemplate;
 
 import java.util.List;
@@ -22,11 +23,13 @@ final class NpcsImpl implements Npcs {
     private final NpcRegistry registry;
     private final NpcLookup citizens;
     private final NpcFactory factory;
+    private final NpcRemover remover;
 
-    NpcsImpl(NpcRegistry registry, NpcLookup citizens, NpcFactory factory) {
+    NpcsImpl(NpcRegistry registry, NpcLookup citizens, NpcFactory factory, NpcRemover remover) {
         this.registry = registry;
         this.citizens = citizens;
         this.factory = factory;
+        this.remover = remover;
     }
 
     @Override
@@ -74,6 +77,12 @@ final class NpcsImpl implements Npcs {
     public boolean release(@NotNull UUID npc) {
         mainThread();
         return registry.release(Objects.requireNonNull(npc, "npc")).isPresent();
+    }
+
+    @Override
+    public boolean remove(@NotNull UUID npc) {
+        mainThread();
+        return remover.remove(Objects.requireNonNull(npc, "npc"));
     }
 
     @Override

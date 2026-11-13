@@ -27,6 +27,11 @@ public final class FakeNpcLookup implements NpcLookup {
         target = npc;
     }
 
+    /** Citizens drops the NPC, as {@code /npc remove} does; false when it had none. */
+    public boolean remove(UUID npc) {
+        return npcs.remove(npc) != null;
+    }
+
     @Override
     public boolean exists(UUID npc) {
         return npcs.containsKey(npc);

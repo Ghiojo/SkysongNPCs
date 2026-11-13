@@ -56,6 +56,7 @@ import org.skysongdev.skysongnpcs.items.PlacingSettings;
 import org.skysongdev.skysongnpcs.items.SkysongItemsTagGateway;
 import org.skysongdev.skysongnpcs.npc.NpcLookup;
 import org.skysongdev.skysongnpcs.npc.NpcRegistry;
+import org.skysongdev.skysongnpcs.npc.NpcRemover;
 import org.skysongdev.skysongnpcs.storage.Database;
 import org.skysongdev.skysongnpcs.storage.DatabaseSettings;
 import org.skysongdev.skysongnpcs.storage.GrantStore;
@@ -490,6 +491,8 @@ public class SkysongNPCs extends JavaPlugin {
         blueprints = new Blueprints(hookItemTags());
         NpcSpawner spawner = hookSpawner();
         factory = new NpcFactory(templates, registry, spawner, sheets::create);
+        // Removing an NPC through the API (Economy's dismiss, downgrade and business deletion).
+        NpcRemover remover = new NpcRemover(registry, spawner::destroy, cloning::removed);
         NpcPlacer placer = new NpcPlacer(blueprints, factory, registry, characters, spawner,
                 worldGuard ? new WorldGuardPlaceRegions() : PlaceRegions.ANYWHERE,
                 () -> PlacingSettings.read(configuration.config()), getServer().getPluginManager(), getLogger());
@@ -512,7 +515,7 @@ public class SkysongNPCs extends JavaPlugin {
         new PickupButton(pickup, access, configuration).register(this, menu);
 
         // Last, so other plugins only see the API once everything behind it is ready.
-        getServer().getServicesManager().register(SkysongNpcsApi.class, new SkysongNpcsApiImpl(registry, citizens, access, menu,
+        getServer().getServicesManager().register(SkysongNpcsApi.class, new SkysongNpcsApiImpl(registry, citizens, remover, access, menu,
                         sheets, templates, factory, blueprints, policies,
                         containers, movement, groups, effects, appearance,
                         pickup, statPoints, choiceMenu, picks, abilities, abilitiesMenu),

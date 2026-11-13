@@ -46,7 +46,7 @@ public final class NpcDeleteEvent extends Event {
 
     /** Why a record was deleted. */
     public enum Cause {
-        /** The Citizens NPC itself was removed ({@code /npc remove} or {@code NPC#destroy()}). */
+        /** The Citizens NPC itself was removed ({@code /npc remove}, {@code NPC#destroy()} or {@link org.skysongdev.skysongnpcs.api.npc.Npcs#remove}). */
         REMOVED,
         /** Staff or a plugin released it ({@code /snpc release}); the Citizens NPC stays as a plain NPC. */
         RELEASED
