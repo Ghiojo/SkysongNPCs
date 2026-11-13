@@ -36,11 +36,13 @@ public final class CitizensNpcSpawner implements NpcSpawner {
     }
 
     @Override
-    public void destroy(UUID npc) {
+    public boolean destroy(UUID npc) {
         NPC found = registry().getByUniqueId(npc);
-        if (found != null) {
-            found.destroy();
+        if (found == null) {
+            return false;
         }
+        found.destroy();
+        return true;
     }
 
     @Override

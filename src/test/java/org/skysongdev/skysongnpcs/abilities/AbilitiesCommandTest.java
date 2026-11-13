@@ -210,7 +210,7 @@ class AbilitiesCommandTest {
         assertTrue(api.revoke(guard, "keen"));
         assertFalse(api.has(guard, "keen"));
         assertTrue(api.open(alice, guard));
-        assertEquals("0.17.0", SkysongNpcsApi.get().apiVersion());
+        assertEquals(org.skysongdev.skysongnpcs.apiimpl.SkysongNpcsApiImpl.API_VERSION, SkysongNpcsApi.get().apiVersion());
     }
 
     @Test

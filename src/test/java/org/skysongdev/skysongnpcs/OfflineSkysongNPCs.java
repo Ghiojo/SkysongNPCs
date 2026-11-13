@@ -186,8 +186,13 @@ public class OfflineSkysongNPCs extends SkysongNPCs {
 
     @Override
     protected void listenForNpcRemovals(NpcCloning cloning) {
-        // Citizens' remove event is not on the test classpath; tests call cloning().removed.
+        // Citizens' remove event is not on the test classpath; tests call cloning().removed, and
+        // the fake spawner runs what the plugin's two listeners do when it destroys an NPC.
         this.cloning = cloning;
+        fakeSpawner.actLikeCitizens(fakeCitizens::remove, npc -> {
+            registry().removed(npc);
+            cloning.removed(npc);
+        });
     }
 
     public FakeSheetCopier fakeCopier() {

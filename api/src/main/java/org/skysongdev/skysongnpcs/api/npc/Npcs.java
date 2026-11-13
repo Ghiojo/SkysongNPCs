@@ -13,8 +13,8 @@ import java.util.UUID;
  * The managed NPCs: Citizens NPCs SkysongNPCs keeps a record for. Plain Citizens NPCs are
  * left alone and never show up here.
  *
- * <p>A record follows its Citizens NPC: removing the NPC with {@code /npc remove} (or
- * {@code NPC#destroy()}) deletes the record and fires
+ * <p>A record follows its Citizens NPC: removing the NPC with {@code /npc remove},
+ * {@code NPC#destroy()} or {@link #remove} deletes the record and fires
  * {@link org.skysongdev.skysongnpcs.api.event.NpcDeleteEvent}, and copying it with
  * {@code /npc copy} (or {@code NPC#copy()}) gives the copy its own record and fires
  * {@link org.skysongdev.skysongnpcs.api.event.NpcCloneEvent}.
@@ -89,6 +89,27 @@ public interface Npcs {
      * @return true when it was managed, false when there was nothing to release
      */
     boolean release(@NotNull UUID npc);
+
+    /**
+     * Removes a managed NPC for good, the same as {@code /npc remove}: the Citizens NPC is
+     * destroyed, its record and everything SkysongNPCs kept for it are deleted, and its
+     * SkysongStats character (its stat sheet) is deleted. Fires
+     * {@link org.skysongdev.skysongnpcs.api.event.NpcDeleteEvent} with cause
+     * {@link org.skysongdev.skysongnpcs.api.event.NpcDeleteEvent.Cause#REMOVED REMOVED}, as any
+     * removal does.
+     *
+     * <p>It is synchronous: everything above is done when it returns. An NPC that was picked up
+     * into an item is removed too, and its item no longer places it. When Citizens has lost the
+     * NPC already, the record and sheet are still deleted.
+     *
+     * <p>Plain Citizens NPCs are never removed: use {@link #isManaged} first if that matters.
+     *
+     * @param npc the NPC's Citizens UUID
+     * @return true when it was managed and is now removed, false when it is not managed; then
+     *         nothing happens
+     * @since 0.18.0
+     */
+    boolean remove(@NotNull UUID npc);
 
     /**
      * Gives an NPC to another owner. Fires

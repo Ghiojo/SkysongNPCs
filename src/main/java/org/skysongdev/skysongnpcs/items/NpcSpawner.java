@@ -24,8 +24,13 @@ public interface NpcSpawner {
      */
     Optional<UUID> spawn(EntityType type, String name, @Nullable String skin, Location location);
 
-    /** Removes an NPC from Citizens for good, as {@code /npc remove} does. */
-    void destroy(UUID npc);
+    /**
+     * Removes an NPC from Citizens for good, as {@code /npc remove} does. On a server Citizens
+     * fires its remove event before this returns, so the record and the stat sheet are gone too.
+     *
+     * @return false when Citizens has no such NPC
+     */
+    boolean destroy(UUID npc);
 
     /** The Citizens NPCs of the main registry that stand in this chunk now. */
     List<UUID> spawnedIn(Chunk chunk);

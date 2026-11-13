@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 /** Citizens' NPC creation for tests: remembers what was spawned where. */
 public final class FakeNpcSpawner implements NpcSpawner {
@@ -42,10 +44,30 @@ public final class FakeNpcSpawner implements NpcSpawner {
         return Optional.of(npc);
     }
 
+    // Citizens' remove event, which tests cannot fire: OfflineSkysongNPCs passes what the
+    // plugin's listeners do, and the NPCs only FakeNpcLookup knows (adopted ones).
+    private Consumer<UUID> removeEvent = npc -> {
+    };
+    private Predicate<UUID> removeElsewhere = npc -> false;
+
+    /**
+     * Makes {@link #destroy} act like Citizens: an NPC it knows is also removed from
+     * {@code elsewhere}, and {@code event} runs for it as Citizens' remove event would.
+     */
+    public void actLikeCitizens(Predicate<UUID> elsewhere, Consumer<UUID> event) {
+        this.removeElsewhere = elsewhere;
+        this.removeEvent = event;
+    }
+
     @Override
-    public void destroy(UUID npc) {
-        spawned.remove(npc);
-        despawned.remove(npc);
+    public boolean destroy(UUID npc) {
+        boolean known = spawned.remove(npc) != null;
+        known |= despawned.remove(npc) != null;
+        known |= removeElsewhere.test(npc);
+        if (known) {
+            removeEvent.accept(npc);
+        }
+        return known;
     }
 
     @Override
