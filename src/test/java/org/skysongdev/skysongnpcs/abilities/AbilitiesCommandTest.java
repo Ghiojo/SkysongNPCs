@@ -112,6 +112,19 @@ class AbilitiesCommandTest {
     }
 
     @Test
+    void staffRevokeOnlyTheirOwnGrant() throws CommandSyntaxException {
+        plugin.abilities().grant(guard, "tough", "economy:module:trade");
+        plugin.abilities().grant(guard, "tough");
+
+        commands.run(staff, "snpc abilities revoke tough");
+
+        assertEquals("[NPCs] Guard keeps the ability tough: it is also held by economy:module:trade.", plain(staff));
+        assertTrue(plugin.abilities().has(guard, "tough"));
+        commands.run(staff, "snpc abilities revoke tough");
+        assertEquals("[NPCs] Guard keeps the ability tough: it is also held by economy:module:trade.", plain(staff));
+    }
+
+    @Test
     void playersCannotGrant() {
         assertThrows(CommandSyntaxException.class, () -> commands.run(alice, "snpc abilities grant tough"));
         assertThrows(CommandSyntaxException.class, () -> commands.run(alice, "snpc abilities revoke tough"));

@@ -12,6 +12,7 @@ import org.skysongdev.skysongnpcs.api.ability.NpcAbility;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 /** {@link NpcAbilities} over the plugin's {@link AbilityService}. */
@@ -51,7 +52,27 @@ final class NpcAbilitiesImpl implements NpcAbilities {
     @Override
     public boolean grant(@NotNull UUID npc, @NotNull String ability) {
         mainThread();
-        return abilities.grant(Objects.requireNonNull(npc, "npc"), Objects.requireNonNull(ability, "ability"));
+        return grant(npc, ability, STAFF);
+    }
+
+    @Override
+    public boolean grant(@NotNull UUID npc, @NotNull String ability, @NotNull String source) {
+        mainThread();
+        return abilities.grant(Objects.requireNonNull(npc, "npc"), Objects.requireNonNull(ability, "ability"),
+                Objects.requireNonNull(source, "source"));
+    }
+
+    @Override
+    public boolean revoke(@NotNull UUID npc, @NotNull String ability, @NotNull String source) {
+        mainThread();
+        return abilities.revoke(Objects.requireNonNull(npc, "npc"), Objects.requireNonNull(ability, "ability"),
+                Objects.requireNonNull(source, "source"));
+    }
+
+    @Override
+    public @NotNull Set<String> sources(@NotNull UUID npc, @NotNull String ability) {
+        mainThread();
+        return abilities.sources(Objects.requireNonNull(npc, "npc"), Objects.requireNonNull(ability, "ability"));
     }
 
     @Override

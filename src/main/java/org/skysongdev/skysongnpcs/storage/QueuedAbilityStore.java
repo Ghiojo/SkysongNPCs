@@ -23,8 +23,9 @@ public final class QueuedAbilityStore implements AbilityStore {
     }
 
     @Override
-    public void save(UUID npc, String ability, AppliedAbility applied) {
-        writer.submit(() -> store.save(npc, ability, applied));
+    public void save(UUID npc, String ability, AppliedAbility applied, List<String> sources) {
+        List<String> saved = List.copyOf(sources);
+        writer.submit(() -> store.save(npc, ability, applied, saved));
     }
 
     @Override

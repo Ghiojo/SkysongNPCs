@@ -78,6 +78,7 @@ class StartingAbilitiesTest {
         NpcRecord npc = create(null);
 
         assertEquals(List.of("tough"), plugin.abilities().of(npc.id()).stream().map(AbilityDefinition::id).toList());
+        assertEquals(java.util.Set.of(StartingAbilities.TEMPLATE), plugin.abilities().sources(npc.id(), "tough"));
     }
 
     @Test
@@ -88,6 +89,7 @@ class StartingAbilitiesTest {
         NpcRecord npc = create(blueprint);
 
         assertEquals(List.of("keen"), plugin.abilities().of(npc.id()).stream().map(AbilityDefinition::id).toList());
+        assertEquals(java.util.Set.of(StartingAbilities.BLUEPRINT), plugin.abilities().sources(npc.id(), "keen"));
     }
 
     @Test
