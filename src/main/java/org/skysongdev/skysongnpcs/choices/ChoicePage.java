@@ -2,6 +2,7 @@ package org.skysongdev.skysongnpcs.choices;
 
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.jetbrains.annotations.Nullable;
 import org.skysongdev.skysongnpcs.npc.NpcRecord;
 
 import java.util.UUID;
@@ -25,11 +26,12 @@ public interface ChoicePage {
     void open(Player player, NpcRecord npc, Runnable back);
 
     /**
-     * Gives back every choice of this kind the NPC made, for staff respec.
+     * Gives back the choices of this kind the NPC made, for a respec: the ones paid for by
+     * {@code source}'s grants, or every one when {@code source} is null.
      *
      * @return how many were given back
      */
-    default int respec(UUID npc) {
+    default int respec(UUID npc, @Nullable String source) {
         return 0;
     }
 }

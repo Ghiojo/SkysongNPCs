@@ -77,6 +77,12 @@ final class NpcChoicesImpl implements NpcChoices {
     }
 
     @Override
+    public int respec(@NotNull UUID npc, @NotNull String source) {
+        mainThread();
+        return menu.respec(Objects.requireNonNull(npc, "npc"), Objects.requireNonNull(source, "source"));
+    }
+
+    @Override
     public boolean inSetup(@NotNull UUID npc) {
         mainThread();
         return registry.get(Objects.requireNonNull(npc, "npc")).map(record -> record.state() == NpcState.SETUP).orElse(false);

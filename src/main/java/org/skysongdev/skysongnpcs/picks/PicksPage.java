@@ -3,6 +3,7 @@ package org.skysongdev.skysongnpcs.picks;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.jetbrains.annotations.Nullable;
 import org.skysongdev.skysongnpcs.api.choices.PickResult;
 import org.skysongdev.skysongnpcs.choices.ChoicePage;
 import org.skysongdev.skysongnpcs.choices.SetupFlow;
@@ -80,8 +81,8 @@ public final class PicksPage implements ChoicePage, SetupStep {
     }
 
     @Override
-    public int respec(UUID npc) {
-        return picks.respec(npc);
+    public int respec(UUID npc, @Nullable String source) {
+        return picks.respec(npc, source);
     }
 
     private List<UUID> spendable(UUID npc) {

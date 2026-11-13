@@ -4,6 +4,8 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Material;
 import org.bukkit.entity.EntityType;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
 import org.bukkit.inventory.Inventory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,6 +21,7 @@ import org.skysongdev.skysongnpcs.api.choices.NpcChoices;
 import org.skysongdev.skysongnpcs.api.choices.PickResult;
 import org.skysongdev.skysongnpcs.api.choices.ProficiencyPickGrant;
 import org.skysongdev.skysongnpcs.api.event.NpcChoiceResolvedEvent;
+import org.skysongdev.skysongnpcs.api.event.NpcRespecEvent;
 import org.skysongdev.skysongnpcs.api.event.NpcSetupCompleteEvent;
 import org.skysongdev.skysongnpcs.api.npc.NpcOwner;
 import org.skysongdev.skysongnpcs.api.npc.NpcState;
@@ -36,6 +39,7 @@ import org.skysongdev.skysongnpcs.templates.NpcTemplate;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -185,6 +189,34 @@ class PicksInGameTest {
 
         assertEquals(Optional.of("untrained"), catalog.tier(guard, "axes"));
         assertEquals(1, picks.pending(guard));
+    }
+
+    @Test
+    void staffCanRespecOneSourceAndEveryRespecFiresAnEvent() throws CommandSyntaxException {
+        List<NpcRespecEvent> respecs = new ArrayList<>();
+        server.getPluginManager().registerEvents(new Listener() {
+            @EventHandler
+            public void onRespec(NpcRespecEvent event) {
+                respecs.add(event);
+            }
+        }, plugin);
+        PickGrant economy = picks.grant(guard, "economy:martial", "combat", "expert", 1);
+        PickGrant template = picks.grant(guard, "template", "combat", "expert", 1);
+        picks.pick(alice, economy.id(), List.of("axes"));
+        picks.pick(alice, template.id(), List.of("swords"));
+
+        commands.run(staff, "snpc respec economy:martial");
+
+        assertEquals(Optional.of("untrained"), catalog.tier(guard, "axes"));
+        assertEquals(Optional.of("expert"), catalog.tier(guard, "swords"));
+        assertEquals(1, respecs.size());
+        assertEquals("economy:martial", respecs.get(0).getSource());
+        assertEquals(1, respecs.get(0).getGivenBack());
+
+        assertEquals(1, SkysongNpcsApi.get().choices().respec(guard));
+        assertTrue(respecs.get(1).isEverySource());
+        assertEquals(0, SkysongNpcsApi.get().choices().respec(guard, "economy:martial"));
+        assertEquals(3, respecs.size());
     }
 
     @Test

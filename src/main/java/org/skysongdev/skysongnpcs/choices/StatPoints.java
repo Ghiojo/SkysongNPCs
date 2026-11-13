@@ -25,6 +25,7 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import java.util.function.Function;
 import java.util.function.LongSupplier;
 
@@ -250,14 +251,43 @@ public final class StatPoints {
      * @return how many points were given back
      */
     public int respec(UUID npc) {
-        Map<UUID, Map<String, Integer>> spent = spends.remove(npc);
+        return respec(npc, null);
+    }
+
+    /**
+     * Gives back the spent points of one source's grants, or of every grant when
+     * {@code source} is null: each stat loses what those points added to it.
+     *
+     * @return how many points were given back
+     */
+    public int respec(UUID npc, @Nullable String source) {
+        Map<UUID, Map<String, Integer>> spent = spends.get(npc);
         if (spent == null || spent.isEmpty()) {
             return 0;
         }
+        Set<UUID> given = source == null ? Set.copyOf(spent.keySet())
+                : grants.getOrDefault(npc, List.of()).stream()
+                        .filter(grant -> grant.source.equals(source)).map(grant -> grant.id)
+                        .collect(Collectors.toSet());
         Map<String, Integer> byStat = new LinkedHashMap<>();
-        spent.values().forEach(stats -> stats.forEach((stat, points) -> byStat.merge(stat, points, Integer::sum)));
+        for (UUID grant : given) {
+            Map<String, Integer> stats = spent.remove(grant);
+            if (stats != null) {
+                stats.forEach((stat, points) -> byStat.merge(stat, points, Integer::sum));
+            }
+        }
+        if (byStat.isEmpty()) {
+            return 0;
+        }
         byStat.forEach((stat, points) -> sheets.editStat(npc, stat, StatEdit.REDUCE, points));
+        // The store deletes spends per NPC only: the ones that stay are saved again.
         store.deleteSpends(npc);
+        if (spent.isEmpty()) {
+            spends.remove(npc);
+        } else {
+            spent.forEach((grant, stats) -> stats.forEach((stat, points) ->
+                    store.saveSpend(new StoredSpend(npc, grant, stat, points))));
+        }
         return byStat.values().stream().mapToInt(Integer::intValue).sum();
     }
 

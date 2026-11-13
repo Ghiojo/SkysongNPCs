@@ -457,7 +457,7 @@ public class SkysongNPCs extends JavaPlugin {
         });
         setup.load();
         Guis guis = new Guis(this, configuration);
-        choiceMenu = new ChoiceMenu(guis, setup, registry, citizens);
+        choiceMenu = new ChoiceMenu(guis, setup, registry, citizens, getServer().getPluginManager()::callEvent);
         PointsPage pointsPage = new PointsPage(guis, statPoints, statSheets, citizens);
         setup.addStep(new AncestryStep(guis, effects, statSheets, citizens, templateOf));
         setup.addStep(pointsPage);

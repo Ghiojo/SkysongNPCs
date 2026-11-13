@@ -293,8 +293,20 @@ public final class ProficiencyPicks {
      * @return how many picks were given back
      */
     public int respec(UUID npc) {
+        return respec(npc, null);
+    }
+
+    /**
+     * {@link #respec(UUID)} for one source's grants only, or every grant when {@code source} is null.
+     *
+     * @return how many picks were given back
+     */
+    public int respec(UUID npc, @Nullable String source) {
         int refunded = 0;
         for (PickGrant grant : grants(npc)) {
+            if (source != null && !grant.source().equals(source)) {
+                continue;
+            }
             List<PickSpend> spent = spends.remove(grant.id());
             if (spent == null) {
                 continue;
