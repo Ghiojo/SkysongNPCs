@@ -25,6 +25,7 @@ import org.skysongdev.skysongnpcs.items.NpcPickup;
 import org.skysongdev.skysongnpcs.npc.NpcLookup;
 import org.skysongdev.skysongnpcs.npc.NpcRegistry;
 import org.skysongdev.skysongnpcs.npc.NpcRemover;
+import org.skysongdev.skysongnpcs.items.SpotFinder;
 import org.skysongdev.skysongnpcs.sheets.NpcSheetService;
 import org.skysongdev.skysongnpcs.templates.TemplateRegistry;
 // M5: access policies
@@ -38,7 +39,7 @@ import org.skysongdev.skysongnpcs.picks.ProficiencyPicks;
 /** The plugin's implementation of {@link SkysongNpcsApi}; each milestone adds its part here. */
 public final class SkysongNpcsApiImpl implements SkysongNpcsApi {
     /** Raised with every change to the api module, as {@link SkysongNpcsApi#apiVersion()} describes. */
-    public static final String API_VERSION = "0.18.0";
+    public static final String API_VERSION = "0.19.0";
 
     private final Npcs npcs;
     private final Access access;
@@ -62,7 +63,7 @@ public final class SkysongNpcsApiImpl implements SkysongNpcsApi {
     // M16
     private final NpcAbilities abilities;
 
-    public SkysongNpcsApiImpl(NpcRegistry registry, NpcLookup citizens, NpcRemover remover, AccessService access, NpcMenu menu,
+    public SkysongNpcsApiImpl(NpcRegistry registry, NpcLookup citizens, NpcRemover remover, SpotFinder spots, AccessService access, NpcMenu menu,
                               NpcSheetService sheets, TemplateRegistry templates,
                               NpcFactory factory, Blueprints blueprints,
                               PolicyRegistry policies,
@@ -72,7 +73,7 @@ public final class SkysongNpcsApiImpl implements SkysongNpcsApi {
                               NpcPickup pickup, StatPoints points, ChoiceMenu choiceMenu,
                               ProficiencyPicks picks,
                               AbilityService abilities, AbilitiesMenu abilitiesMenu) {
-        this.npcs = new NpcsImpl(registry, citizens, factory, remover);
+        this.npcs = new NpcsImpl(registry, citizens, factory, remover, spots);
         this.access = new AccessImpl(registry, access);
         this.menu = menu;
         this.sheets = new NpcSheetsImpl(sheets, templates);
