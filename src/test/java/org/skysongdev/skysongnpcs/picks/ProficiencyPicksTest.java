@@ -17,6 +17,7 @@ import java.util.UUID;
 import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /** The pick rules: granting, spending, taking back, respec, delete and copy. */
@@ -163,6 +164,87 @@ class ProficiencyPicksTest {
         assertEquals(Optional.of("proficient"), catalog.tier(npc, "bows"));
         assertEquals(2, picks.pending(npc));
         assertEquals(List.of(), store.loadSpends());
+    }
+
+    @Test
+    void aPromotingGrantRaisesItsOwnPicksOneTierForItsCost() {
+        PickGrant grant = picks.grant(npc, "economy:martial", "combat", "proficient", 3, "expert", 1);
+        assertEquals(List.of(), picks.promotable(grant));
+        picks.pick(null, grant.id(), List.of("swords"));
+        catalog.setTier(npc, "bows", "proficient");
+
+        // Only what this grant picked can be promoted, not bows, which was proficient anyway.
+        assertEquals(List.of("swords"), picks.promotable(grant));
+        assertEquals(PickResult.NOT_AN_OPTION, picks.promote(null, grant.id(), "bows"));
+        assertEquals(PickResult.DONE, picks.promote(null, grant.id(), "swords"));
+
+        assertEquals(Optional.of("expert"), catalog.tier(npc, "swords"));
+        assertEquals(1, picks.remaining(grant));
+        // At the promotion's tier: nothing more to promote.
+        assertEquals(List.of(), picks.promotable(grant));
+        assertEquals(PickResult.NOT_AN_OPTION, picks.promote(null, grant.id(), "swords"));
+        assertEquals(List.of("swords", "swords"), picked);
+        assertEquals(List.of("swords"), picks.toApi(grant).promoted());
+        assertEquals(1, picks.toApi(grant).unspent());
+    }
+
+    @Test
+    void aPromotionNeedsEnoughPicksLeft() {
+        PickGrant grant = picks.grant(npc, "staff", "combat", "proficient", 2, "expert", 2);
+        picks.pick(null, grant.id(), List.of("swords"));
+
+        assertEquals(List.of(), picks.promotable(grant));
+        assertEquals(PickResult.TOO_MANY, picks.promote(null, grant.id(), "swords"));
+    }
+
+    @Test
+    void grantsOnlyMergeWithTheSamePromotion() {
+        PickGrant plain = picks.grant(npc, "staff", "combat", "proficient", 1);
+        PickGrant promoting = picks.grant(npc, "staff", "combat", "proficient", 1, "expert", 1);
+        PickGrant more = picks.grant(npc, "staff", "combat", "proficient", 2, "expert", 1);
+
+        assertNotEquals(plain.id(), promoting.id());
+        assertEquals(promoting.id(), more.id());
+        assertEquals(3, more.count());
+        assertThrows(IllegalArgumentException.class,
+                () -> picks.grant(npc, "staff", "combat", "expert", 1, "proficient", 1));
+        assertThrows(IllegalArgumentException.class,
+                () -> picks.grant(npc, "staff", "combat", "proficient", 1, "expert", 0));
+    }
+
+    @Test
+    void respecUndoesPromotionsThenPicksAndTheGrantCanPromoteAgain() {
+        PickGrant grant = picks.grant(npc, "economy:martial", "combat", "proficient", 2, "expert", 1);
+        picks.pick(null, grant.id(), List.of("swords"));
+        picks.promote(null, grant.id(), "swords");
+
+        assertEquals(2, picks.respec(npc));
+
+        assertEquals(Optional.of("untrained"), catalog.tier(npc, "swords"));
+        assertEquals(2, picks.remaining(grant));
+        assertEquals(List.of(), store.loadPromotions());
+        picks.pick(null, grant.id(), List.of("axes"));
+        assertEquals(PickResult.DONE, picks.promote(null, grant.id(), "axes"));
+    }
+
+    @Test
+    void promotionsSurviveARestartAndCopy() {
+        PickGrant grant = picks.grant(npc, "economy:martial", "combat", "proficient", 3, "expert", 1);
+        picks.pick(null, grant.id(), List.of("swords"));
+        picks.promote(null, grant.id(), "swords");
+
+        ProficiencyPicks reloaded = newPicks();
+        reloaded.load();
+        PickGrant loaded = reloaded.grant(grant.id()).orElseThrow();
+        assertEquals(grant.promotion(), loaded.promotion());
+        assertEquals(1, reloaded.remaining(loaded));
+
+        UUID copy = UUID.randomUUID();
+        registry.adopt(copy, NpcOwner.server());
+        reloaded.copy(npc, copy);
+        PickGrant copied = reloaded.grants(copy).getFirst();
+        assertEquals(1, reloaded.promotions(copied.id()).size());
+        assertEquals(1, reloaded.remaining(copied));
     }
 
     @Test

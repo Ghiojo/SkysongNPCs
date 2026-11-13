@@ -1,6 +1,7 @@
 package org.skysongdev.skysongnpcs.picks;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -18,9 +19,10 @@ import java.util.regex.Pattern;
  * @param skill  the SkysongStats skill id
  * @param tier   the SkysongStats tier id the picked proficiencies go up to
  * @param count  how many proficiencies it lets the NPC pick, 1 or more
+ * @param promotion what its picks may also do to proficiencies it picked; null for nothing
  */
 public record PickGrant(@NotNull UUID id, @NotNull UUID npc, @NotNull String source, @NotNull String skill,
-                        @NotNull String tier, int count) {
+                        @NotNull String tier, int count, @Nullable PickPromotion promotion) {
     private static final Pattern SOURCE = Pattern.compile("[^\\s]{1,64}");
 
     public PickGrant {
@@ -37,13 +39,19 @@ public record PickGrant(@NotNull UUID id, @NotNull UUID npc, @NotNull String sou
         }
     }
 
+    /** A grant whose picks only pick. */
+    public PickGrant(@NotNull UUID id, @NotNull UUID npc, @NotNull String source, @NotNull String skill,
+                     @NotNull String tier, int count) {
+        this(id, npc, source, skill, tier, count, null);
+    }
+
     /** The same grant with another count. */
     public PickGrant withCount(int newCount) {
-        return new PickGrant(id, npc, source, skill, tier, newCount);
+        return new PickGrant(id, npc, source, skill, tier, newCount, promotion);
     }
 
     /** The same grant on another NPC, under a new id: what a copied NPC gets. */
     public PickGrant copiedTo(UUID copy) {
-        return new PickGrant(UUID.randomUUID(), copy, source, skill, tier, count);
+        return new PickGrant(UUID.randomUUID(), copy, source, skill, tier, count, promotion);
     }
 }

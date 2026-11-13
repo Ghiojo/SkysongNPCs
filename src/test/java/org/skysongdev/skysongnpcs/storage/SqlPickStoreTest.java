@@ -4,7 +4,9 @@ import org.h2.jdbcx.JdbcDataSource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.skysongdev.skysongnpcs.picks.PickGrant;
+import org.skysongdev.skysongnpcs.picks.PickPromotion;
 import org.skysongdev.skysongnpcs.picks.PickSpend;
+import org.skysongdev.skysongnpcs.picks.PromotionSpend;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,6 +46,43 @@ class SqlPickStoreTest {
         assertEquals(List.of(grant), store().loadGrants());
         assertEquals(List.of(spend), store().loadSpends());
         assertEquals(List.of(), log);
+    }
+
+    @Test
+    void savesAndLoadsPromotionsAndTheGrantsThatAllowThem() {
+        PickGrant grant = new PickGrant(UUID.randomUUID(), NPC, "economy:martial", "combat", "proficient", 3,
+                new PickPromotion("expert", 1));
+        store().saveGrant(grant);
+        store().saveSpend(new PickSpend(grant.id(), "swords", "untrained"));
+        PromotionSpend first = new PromotionSpend(grant.id(), 0, "swords", "proficient", "expert", 1);
+        PromotionSpend second = new PromotionSpend(grant.id(), 1, "axes", "proficient", "expert", 1);
+        store().savePromotion(second);
+        store().savePromotion(first);
+
+        assertEquals(List.of(grant), store().loadGrants());
+        assertEquals(List.of(first, second), store().loadPromotions());
+
+        store().deletePromotion(grant.id(), 1);
+        assertEquals(List.of(first), store().loadPromotions());
+        // A grant saved without its promotion loses it.
+        store().saveGrant(new PickGrant(grant.id(), NPC, "economy:martial", "combat", "proficient", 3));
+        assertEquals(null, store().loadGrants().getFirst().promotion());
+
+        store().deleteGrant(grant.id());
+        assertEquals(List.of(), store().loadPromotions());
+    }
+
+    @Test
+    void deletingAnNpcDeletesItsPromotions() {
+        PickGrant grant = new PickGrant(UUID.randomUUID(), NPC, "staff", "combat", "proficient", 2,
+                new PickPromotion("expert", 2));
+        store().saveGrant(grant);
+        store().savePromotion(new PromotionSpend(grant.id(), 0, "swords", "proficient", "expert", 2));
+
+        store().deleteAll(NPC);
+
+        assertEquals(List.of(), store().loadGrants());
+        assertEquals(List.of(), store().loadPromotions());
     }
 
     @Test

@@ -2,6 +2,7 @@ package org.skysongdev.skysongnpcs.storage;
 
 import org.skysongdev.skysongnpcs.picks.PickGrant;
 import org.skysongdev.skysongnpcs.picks.PickSpend;
+import org.skysongdev.skysongnpcs.picks.PromotionSpend;
 
 import java.util.List;
 import java.util.Objects;
@@ -26,6 +27,21 @@ public final class QueuedPickStore implements PickStore {
     @Override
     public List<PickSpend> loadSpends() {
         return store.loadSpends();
+    }
+
+    @Override
+    public List<PromotionSpend> loadPromotions() {
+        return store.loadPromotions();
+    }
+
+    @Override
+    public void savePromotion(PromotionSpend promotion) {
+        writer.submit(() -> store.savePromotion(promotion));
+    }
+
+    @Override
+    public void deletePromotion(UUID grant, int step) {
+        writer.submit(() -> store.deletePromotion(grant, step));
     }
 
     @Override

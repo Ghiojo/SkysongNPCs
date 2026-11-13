@@ -125,6 +125,42 @@ public interface NpcChoices {
                                             @NotNull String tier, int count);
 
     /**
+     * {@link #grantPicks(UUID, String, String, String, int)} whose picks may also promote: in
+     * the picks menu (or with {@link #promote}), {@code promotionCost} of the grant's picks
+     * raise a proficiency it picked one tier further, up to {@code promoteTo}. With tier
+     * {@code proficient}, promoteTo {@code adept} and cost 1, adept costs two picks spent on
+     * the same proficiency. A respec gives promotions back with the picks, and the grant keeps
+     * its promotion, so it can promote again afterwards.
+     *
+     * <p>Picks are added to an existing grant only when its source, skill, tier and promotion
+     * are all the same.
+     *
+     * @param promoteTo     a SkysongStats tier id above {@code tier}
+     * @param promotionCost picks per promotion, 1 or more
+     * @throws IllegalArgumentException also when {@code promoteTo} does not exist or is not
+     *                                  above {@code tier}, or the cost is below 1
+     * @since 0.22.0
+     */
+    @NotNull ProficiencyPickGrant grantPicks(@NotNull UUID npc, @NotNull String source, @NotNull String skill,
+                                            @NotNull String tier, int count, @NotNull String promoteTo,
+                                            int promotionCost);
+
+    /**
+     * Promotes a proficiency as if a player chose it: one tier up, paid with the NPC's oldest
+     * grant of its skill that picked it and can promote it. Fires
+     * {@link org.skysongdev.skysongnpcs.api.event.NpcChoiceResolvedEvent} with kind
+     * {@link org.skysongdev.skysongnpcs.api.event.NpcChoiceResolvedEvent#PROFICIENCY_PICKS}.
+     *
+     * @param proficiency a SkysongStats proficiency id or alias
+     * @return {@link PickResult#DONE} when saved; {@link PickResult#TOO_MANY} when the grant has
+     *         fewer picks left than a promotion costs; {@link PickResult#NOT_AN_OPTION} when it
+     *         was not picked with a grant that promotes, or is at the promotion's tier already;
+     *         {@link PickResult#WRONG_SKILL} when no grant of its skill promotes
+     * @since 0.22.0
+     */
+    @NotNull PickResult promote(@NotNull UUID npc, @NotNull String proficiency);
+
+    /**
      * Takes back unspent picks a source gave, newest grant first. Spent picks stay.
      *
      * @param max how many at most

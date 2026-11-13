@@ -105,6 +105,23 @@ final class NpcChoicesImpl implements NpcChoices {
     }
 
     @Override
+    public @NotNull ProficiencyPickGrant grantPicks(@NotNull UUID npc, @NotNull String source, @NotNull String skill,
+                                                   @NotNull String tier, int count, @NotNull String promoteTo,
+                                                   int promotionCost) {
+        mainThread();
+        return picks.toApi(picks.grant(Objects.requireNonNull(npc, "npc"), Objects.requireNonNull(source, "source"),
+                Objects.requireNonNull(skill, "skill"), Objects.requireNonNull(tier, "tier"), count,
+                Objects.requireNonNull(promoteTo, "promoteTo"), promotionCost));
+    }
+
+    @Override
+    public @NotNull PickResult promote(@NotNull UUID npc, @NotNull String proficiency) {
+        mainThread();
+        return picks.promoteAny(null, Objects.requireNonNull(npc, "npc"),
+                Objects.requireNonNull(proficiency, "proficiency"));
+    }
+
+    @Override
     public int takeUnspentPicks(@NotNull UUID npc, @NotNull String source, int max) {
         mainThread();
         return picks.removeUnspent(Objects.requireNonNull(npc, "npc"), Objects.requireNonNull(source, "source"), max);
