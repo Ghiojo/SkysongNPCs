@@ -57,6 +57,20 @@ class SqlPolicyStoreTest {
     }
 
     @Test
+    void policiesLoadInTheOrderTheyWereMadeEvenWithinOneMillisecond() {
+        SqlPolicyStore store = store();
+        List<String> made = new ArrayList<>();
+        // Ids in reverse order, so falling back to sorting by id would show.
+        for (int i = 30; i > 0; i--) {
+            String id = "policy" + (char) ('a' + i % 26) + i;
+            store.savePolicy(id, ALICE);
+            made.add(id);
+        }
+
+        assertEquals(made, store().loadAll().policies().stream().map(PolicyStore.StoredPolicy::id).toList());
+    }
+
+    @Test
     void deletingAPolicyTakesItsGrantsAndMembersAlong() {
         store().savePolicy("shop", ALICE);
         store().saveGrant("shop", WORKERS, Set.of(NpcAction.INFO));

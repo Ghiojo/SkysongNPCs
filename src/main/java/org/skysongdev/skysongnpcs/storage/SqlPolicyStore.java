@@ -49,7 +49,10 @@ public final class SqlPolicyStore implements PolicyStore {
     private static final String LOAD_POLICIES = "SELECT id, owner FROM snpc_policies ORDER BY created, id";
     private static final String LOAD_GRANTS = "SELECT policy, member_group, actions FROM snpc_policy_grants";
     private static final String LOAD_MEMBERS = "SELECT npc, policy FROM snpc_policy_members";
-    private static final String SAVE_POLICY = "INSERT INTO snpc_policies (id, owner, created) VALUES (?, ?, ?)";
+    // created only orders policies: one past the newest, or the clock when that is later, so two
+    // policies saved in the same millisecond still load in the order they were made.
+    private static final String SAVE_POLICY = "INSERT INTO snpc_policies (id, owner, created) "
+            + "SELECT ?, ?, GREATEST(?, COALESCE(MAX(created), 0) + 1) FROM snpc_policies";
     private static final List<String> DELETE_POLICY = List.of(
             "DELETE FROM snpc_policy_members WHERE policy = ?",
             "DELETE FROM snpc_policy_grants WHERE policy = ?",
