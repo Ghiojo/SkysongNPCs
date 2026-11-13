@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -13,6 +14,13 @@ import java.util.UUID;
  * icon, and its effects on the NPC's stat sheet (stat modifiers, extra stat points, proficiency
  * picks and fixed proficiency tiers). Granting an ability applies its effects; revoking it
  * takes them away, except the stat points and picks the NPC has already spent.
+ *
+ * <p>Every grant has a source, a short text naming who gave it, as stat point and pick grants
+ * do: {@value #STAFF} for staff and for grants made before 0.20.0, {@code template} and
+ * {@code blueprint} for a new NPC's starting abilities, and whatever a plugin picks for its own
+ * (Economy might use {@code economy:module:<id>}). An NPC has an ability while at least one
+ * source holds it, with its effects applied once, so two givers of the same ability never undo
+ * each other. Revoking for one source leaves the others' holds alone.
  *
  * <p>When abilities.yml changes and is reloaded, every NPC with an ability is brought in line
  * with the file, and an ability removed from the file is revoked from every NPC.
@@ -23,6 +31,14 @@ import java.util.UUID;
  */
 @ApiStatus.NonExtendable
 public interface NpcAbilities {
+
+    /**
+     * The source of staff's grants ({@code /snpc abilities grant}), of
+     * {@link #grant(UUID, String)}, and of every grant made before sources existed.
+     *
+     * @since 0.20.0
+     */
+    String STAFF = "staff";
 
     /**
      * Every ability abilities.yml defines, in the file's order.
@@ -60,17 +76,62 @@ public interface NpcAbilities {
      * brings abilities in line (on start, on {@code /snpc reload}, or on the next grant or
      * revoke of any of its abilities).
      *
+     * <p>Since 0.20.0 this is {@link #grant(UUID, String, String)} for {@value #STAFF}.
+     *
      * @param npc     the NPC's Citizens UUID
      * @param ability the ability's id
-     * @return false when the NPC had the ability already, and nothing changed
+     * @return false when staff held the ability already, and nothing changed
      * @throws IllegalArgumentException when the NPC is not managed or abilities.yml has no
      *                                  such ability
      */
     boolean grant(@NotNull UUID npc, @NotNull String ability);
 
     /**
-     * Takes an ability away from an NPC with its effects. Stat points and proficiency picks it
-     * gave are taken back only while unspent; spent ones stay.
+     * Gives a managed NPC an ability on behalf of {@code source}. When the NPC does not have it
+     * yet, its effects are applied as {@link #grant(UUID, String)} describes and
+     * {@link org.skysongdev.skysongnpcs.api.event.NpcAbilityChangeEvent} fires. When another
+     * source holds it already, nothing changes on the NPC: the source is only added to its
+     * holders, and no event fires.
+     *
+     * @param npc     the NPC's Citizens UUID
+     * @param ability the ability's id
+     * @param source  who gives it, such as {@code economy:module:trade}
+     * @return false when this source held the ability already, and nothing changed
+     * @throws IllegalArgumentException when the NPC is not managed, abilities.yml has no such
+     *                                  ability, or the source is blank
+     * @since 0.20.0
+     */
+    boolean grant(@NotNull UUID npc, @NotNull String ability, @NotNull String source);
+
+    /**
+     * Takes {@code source}'s hold on an ability away. When no other source holds it, the NPC
+     * loses the ability with its effects, as {@link #revoke(UUID, String)} describes, and
+     * {@link org.skysongdev.skysongnpcs.api.event.NpcAbilityChangeEvent} fires. Otherwise the
+     * NPC keeps it unchanged.
+     *
+     * @param npc     the NPC's Citizens UUID
+     * @param ability the ability's id
+     * @param source  the source that gave it
+     * @return false when this source did not hold the ability, and nothing changed
+     * @since 0.20.0
+     */
+    boolean revoke(@NotNull UUID npc, @NotNull String ability, @NotNull String source);
+
+    /**
+     * Who holds one of an NPC's abilities.
+     *
+     * @param npc     the NPC's Citizens UUID
+     * @param ability the ability's id
+     * @return the sources, an unmodifiable set; empty when the NPC does not have the ability
+     * @since 0.20.0
+     */
+    @NotNull Set<String> sources(@NotNull UUID npc, @NotNull String ability);
+
+    /**
+     * Takes an ability away from an NPC with its effects, whichever sources hold it. Stat
+     * points and proficiency picks it gave are taken back only while unspent; spent ones stay.
+     * A plugin that gave the ability should use {@link #revoke(UUID, String, String)} instead,
+     * so it never takes away a grant it did not make.
      *
      * @param npc     the NPC's Citizens UUID
      * @param ability the ability's id

@@ -650,6 +650,9 @@ abilities:
   already: "<prefix><red><npc> already has the ability <ability>."
   revoked: "<prefix><green><npc> no longer has the ability <ability>."
   missing: "<prefix><red><npc> does not have the ability <ability>."
+  # Staff revoke only staff's grant. When a plugin or the template also gave the ability, the
+  # NPC keeps it. <sources>: who still holds it, such as "template, economy:module:trade".
+  held-by-others: "<prefix><yellow><npc> keeps the ability <ability>: it is also held by <sources>."
   # /snpc abilities list, and /snpc abilities from the console.
   list:
     header: "<prefix><gray><npc>'s abilities:"

@@ -4,6 +4,7 @@ import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
 
@@ -20,12 +21,20 @@ public final class NpcAbilityChangeEvent extends Event {
     private final UUID npc;
     private final String ability;
     private final Change change;
+    private final @Nullable String source;
 
     @ApiStatus.Internal
     public NpcAbilityChangeEvent(@NotNull UUID npc, @NotNull String ability, @NotNull Change change) {
+        this(npc, ability, change, null);
+    }
+
+    @ApiStatus.Internal
+    public NpcAbilityChangeEvent(@NotNull UUID npc, @NotNull String ability, @NotNull Change change,
+                                 @Nullable String source) {
         this.npc = npc;
         this.ability = ability;
         this.change = change;
+        this.source = source;
     }
 
     /**
@@ -47,6 +56,19 @@ public final class NpcAbilityChangeEvent extends Event {
      */
     public @NotNull Change getChange() {
         return change;
+    }
+
+    /**
+     * The source whose grant gave the NPC the ability, or whose revoke took the last hold away.
+     * The NPC gains or loses an ability only once, however many sources hold it, so a grant or
+     * revoke that leaves the NPC as it was fires no event.
+     *
+     * @return the source; null when it went with abilities.yml or was revoked from every source
+     *         at once
+     * @since 0.20.0
+     */
+    public @Nullable String getSource() {
+        return source;
     }
 
     @Override

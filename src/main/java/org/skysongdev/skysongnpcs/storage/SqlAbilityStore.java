@@ -1,6 +1,9 @@
 package org.skysongdev.skysongnpcs.storage;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.google.gson.JsonParseException;
 import org.skysongdev.skysongnpcs.abilities.AppliedAbility;
 
@@ -18,7 +21,8 @@ import java.util.function.Consumer;
 
 /**
  * The {@code snpc_abilities} table: one row per NPC and ability, with what the ability did to
- * the NPC as JSON. The pool belongs to the NPC store, so closing this does nothing. Every call
+ * the NPC and who holds it as JSON (sources under {@code "sources"}, so no column was added
+ * for them and older rows still read). The pool belongs to the NPC store, so closing this does nothing. Every call
  * runs on the caller's thread; {@link QueuedAbilityStore} moves the writes off the main thread.
  */
 public final class SqlAbilityStore implements AbilityStore {
@@ -35,6 +39,7 @@ public final class SqlAbilityStore implements AbilityStore {
     private static final String DELETE = "DELETE FROM snpc_abilities WHERE npc = ? AND ability = ?";
     private static final String DELETE_ALL = "DELETE FROM snpc_abilities WHERE npc = ?";
     private static final Gson GSON = new Gson();
+    private static final String SOURCES = "sources";
 
     private final DataSource dataSource;
     private final Consumer<String> log;
@@ -64,8 +69,9 @@ public final class SqlAbilityStore implements AbilityStore {
             while (results.next()) {
                 String npc = results.getString("npc");
                 try {
+                    String json = results.getString("applied");
                     abilities.add(new StoredAbility(UUID.fromString(npc), results.getString("ability"),
-                            decode(results.getString("applied"))));
+                            decode(json), sources(json)));
                 } catch (IllegalArgumentException | JsonParseException unreadable) {
                     log.accept("Skipped an ability of NPC " + npc + " that could not be read: " + unreadable.getMessage());
                 }
@@ -77,12 +83,12 @@ public final class SqlAbilityStore implements AbilityStore {
     }
 
     @Override
-    public void save(UUID npc, String ability, AppliedAbility applied) {
+    public void save(UUID npc, String ability, AppliedAbility applied, List<String> sources) {
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(SAVE)) {
             statement.setString(1, npc.toString());
             statement.setString(2, ability);
-            statement.setString(3, encode(applied));
+            statement.setString(3, encode(applied, sources));
             statement.executeUpdate();
         } catch (SQLException e) {
             throw new StorageException("Unable to save an ability of NPC " + npc, e);
@@ -116,8 +122,23 @@ public final class SqlAbilityStore implements AbilityStore {
     public void close() {
     }
 
-    static String encode(AppliedAbility applied) {
-        return GSON.toJson(applied);
+    static String encode(AppliedAbility applied, List<String> sources) {
+        JsonObject json = GSON.toJsonTree(applied).getAsJsonObject();
+        json.add(SOURCES, GSON.toJsonTree(sources));
+        return GSON.toJson(json);
+    }
+
+    /** Who holds the ability; empty for rows saved before sources existed. */
+    static List<String> sources(String json) {
+        JsonElement read = JsonParser.parseString(json);
+        if (!read.isJsonObject() || !read.getAsJsonObject().has(SOURCES)) {
+            return List.of();
+        }
+        List<String> sources = new ArrayList<>();
+        for (JsonElement source : read.getAsJsonObject().getAsJsonArray(SOURCES)) {
+            sources.add(source.getAsString());
+        }
+        return sources;
     }
 
     /** Missing parts read as empty, so rows from older versions still load. */

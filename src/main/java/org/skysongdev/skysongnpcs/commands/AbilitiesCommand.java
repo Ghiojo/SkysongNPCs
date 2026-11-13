@@ -15,9 +15,11 @@ import org.skysongdev.skysongnpcs.access.AccessService;
 import org.skysongdev.skysongnpcs.api.access.NpcAction;
 import org.skysongdev.skysongnpcs.npc.NpcRecord;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * {@code /snpc abilities}: opens the targeted NPC's abilities menu (players), or lists them
@@ -117,7 +119,7 @@ public final class AbilitiesCommand implements SubCommand {
         Map<String, String> placeholders = Map.of("npc", targeting.npcName(npc.get().id()), "ability", ability);
         if (abilities.definitions().get(ability).isEmpty()) {
             targeting.send(sender, "abilities.unknown", placeholders);
-        } else if (abilities.grant(npc.get().id(), ability)) {
+        } else if (abilities.grant(npc.get().id(), ability, AbilityService.STAFF)) {
             targeting.send(sender, "abilities.granted", placeholders);
         } else {
             targeting.send(sender, "abilities.already", placeholders);
@@ -129,8 +131,20 @@ public final class AbilitiesCommand implements SubCommand {
         if (npc.isEmpty()) {
             return;
         }
-        Map<String, String> placeholders = Map.of("npc", targeting.npcName(npc.get().id()), "ability", ability);
-        targeting.send(sender, abilities.revoke(npc.get().id(), ability) ? "abilities.revoked" : "abilities.missing",
-                placeholders);
+        UUID id = npc.get().id();
+        Map<String, String> placeholders = Map.of("npc", targeting.npcName(id), "ability", ability);
+        if (!abilities.has(id, ability)) {
+            targeting.send(sender, "abilities.missing", placeholders);
+            return;
+        }
+        // Staff take away only their own grant: a plugin's (a business module's) stays theirs to revoke.
+        abilities.revoke(id, ability, AbilityService.STAFF);
+        if (!abilities.has(id, ability)) {
+            targeting.send(sender, "abilities.revoked", placeholders);
+            return;
+        }
+        Map<String, String> held = new HashMap<>(placeholders);
+        held.put("sources", String.join(", ", abilities.sourcesInOrder(id, ability)));
+        targeting.send(sender, "abilities.held-by-others", held);
     }
 }

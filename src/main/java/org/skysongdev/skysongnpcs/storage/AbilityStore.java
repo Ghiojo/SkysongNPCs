@@ -11,8 +11,12 @@ public interface AbilityStore extends AutoCloseable {
     /** Every saved ability. Called once on enable, on the main thread. */
     List<StoredAbility> loadAll();
 
-    /** Saves an NPC's ability, adding it or replacing what was saved for it. */
-    void save(UUID npc, String ability, AppliedAbility applied);
+    /**
+     * Saves an NPC's ability, adding it or replacing what was saved for it.
+     *
+     * @param sources who holds it, in the order they granted it
+     */
+    void save(UUID npc, String ability, AppliedAbility applied, List<String> sources);
 
     /** Deletes one of an NPC's abilities, if it is there. */
     void delete(UUID npc, String ability);
@@ -24,7 +28,13 @@ public interface AbilityStore extends AutoCloseable {
     @Override
     void close();
 
-    /** An ability, the NPC it is on, and what it did. */
-    record StoredAbility(UUID npc, String ability, AppliedAbility applied) {
+    /**
+     * An ability, the NPC it is on, what it did, and who holds it (empty for rows saved before
+     * sources existed).
+     */
+    record StoredAbility(UUID npc, String ability, AppliedAbility applied, List<String> sources) {
+        public StoredAbility {
+            sources = sources == null ? List.of() : List.copyOf(sources);
+        }
     }
 }
