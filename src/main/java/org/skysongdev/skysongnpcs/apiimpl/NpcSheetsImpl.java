@@ -1,9 +1,12 @@
 package org.skysongdev.skysongnpcs.apiimpl;
 
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
+import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 import org.skysongdev.skysongnpcs.api.sheet.NpcSheets;
 import org.skysongdev.skysongnpcs.sheets.NpcSheetService;
+import org.skysongdev.skysongnpcs.sheets.SheetFooters;
 import org.skysongdev.skysongnpcs.templates.NpcTemplate;
 import org.skysongdev.skysongnpcs.templates.TemplateRegistry;
 import org.skysongdev.skysongstats.api.CharacterId;
@@ -12,15 +15,18 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
 
 /** {@link NpcSheets} over the plugin's {@link NpcSheetService}. */
 final class NpcSheetsImpl implements NpcSheets {
     private final NpcSheetService sheets;
     private final TemplateRegistry templates;
+    private final SheetFooters footers;
 
-    NpcSheetsImpl(NpcSheetService sheets, TemplateRegistry templates) {
+    NpcSheetsImpl(NpcSheetService sheets, TemplateRegistry templates, SheetFooters footers) {
         this.sheets = sheets;
         this.templates = templates;
+        this.footers = footers;
     }
 
     @Override
@@ -55,6 +61,19 @@ final class NpcSheetsImpl implements NpcSheets {
     public void recountItems(@NotNull UUID npc) {
         mainThread();
         sheets.recount(Objects.requireNonNull(npc, "npc"));
+    }
+
+    @Override
+    public @NotNull String registerFooter(@NotNull Plugin plugin, @NotNull String name,
+                                          @NotNull Function<UUID, Optional<Component>> line) {
+        mainThread();
+        return footers.register(plugin, name, line);
+    }
+
+    @Override
+    public boolean unregisterFooter(@NotNull Plugin plugin, @NotNull String name) {
+        mainThread();
+        return footers.unregister(plugin, name);
     }
 
     private static CharacterId idOf(UUID npc) {

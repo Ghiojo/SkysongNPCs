@@ -13,6 +13,7 @@ import org.skysongdev.skysongnpcs.api.access.NpcAction;
 import org.skysongdev.skysongnpcs.config.PluginConfiguration;
 import org.skysongdev.skysongnpcs.npc.NpcRecord;
 import org.skysongdev.skysongnpcs.sheets.NpcSheetService;
+import org.skysongdev.skysongnpcs.sheets.SheetFooters;
 import org.skysongdev.skysongnpcs.templates.NpcTemplate;
 import org.skysongdev.skysongnpcs.templates.TemplateRegistry;
 
@@ -39,6 +40,7 @@ public final class SheetCommand implements SubCommand {
     private final PluginConfiguration configuration;
     // M16: abilities
     private final Function<UUID, Optional<Component>> footer;
+    private final Function<UUID, List<Component>> otherFooters;
 
     public SheetCommand(NpcTargeting targeting, AccessService access, NpcSheetService sheets,
                         TemplateRegistry templates, PluginConfiguration configuration) {
@@ -51,11 +53,23 @@ public final class SheetCommand implements SubCommand {
     public SheetCommand(NpcTargeting targeting, AccessService access, NpcSheetService sheets,
                         TemplateRegistry templates, PluginConfiguration configuration,
                         Function<UUID, Optional<Component>> footer) {
+        this(targeting, access, sheets, templates, configuration, footer, npc -> List.of());
+    }
+
+    /**
+     * @param footer       a line shown under an NPC's sheet, such as its abilities (M16); empty for none
+     * @param otherFooters the lines other plugins show after it ({@link SheetFooters#lines})
+     */
+    public SheetCommand(NpcTargeting targeting, AccessService access, NpcSheetService sheets,
+                        TemplateRegistry templates, PluginConfiguration configuration,
+                        Function<UUID, Optional<Component>> footer,
+                        Function<UUID, List<Component>> otherFooters) {
         this.targeting = new SheetTargeting(targeting, sheets);
         this.access = access;
         this.templates = templates;
         this.configuration = configuration;
         this.footer = footer;
+        this.otherFooters = otherFooters;
     }
 
     @Override
@@ -113,6 +127,8 @@ public final class SheetCommand implements SubCommand {
         rendered.get().forEach(sender::sendMessage);
         // M16: the NPC's abilities, each a word with its description on hover.
         footer.apply(npc.id()).ifPresent(sender::sendMessage);
+        // Lines other plugins add through the API, such as SkysongEconomy's upkeep state.
+        otherFooters.apply(npc.id()).forEach(sender::sendMessage);
     }
 
     private void create(CommandSender sender, String templateId) {

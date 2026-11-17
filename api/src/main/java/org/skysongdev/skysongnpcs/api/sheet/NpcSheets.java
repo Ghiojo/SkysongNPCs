@@ -1,5 +1,7 @@
 package org.skysongdev.skysongnpcs.api.sheet;
 
+import net.kyori.adventure.text.Component;
+import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.skysongdev.skysongstats.api.CharacterId;
@@ -7,6 +9,7 @@ import org.skysongdev.skysongstats.api.CharacterId;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
 
 /**
  * Managed NPCs' stat sheets. A sheet is a SkysongStats plugin character owned by SkysongNPCs,
@@ -74,4 +77,31 @@ public interface NpcSheets {
      * @param npc the NPC's Citizens UUID; nothing happens when it has no sheet
      */
     void recountItems(@NotNull UUID npc);
+
+    /**
+     * Adds a line under every NPC's sheet, after its abilities, wherever the sheet is shown:
+     * {@code /snpc sheet} and the NPC menu's Sheet button. Lines show in the order they were
+     * added. It is removed again when the plugin disables. A footer that throws is skipped
+     * for that sheet and logged.
+     *
+     * @param plugin the plugin that owns the line; its name, in lower case, starts the id
+     * @param name   the line's name inside the plugin: lower-case letters, digits, {@code _} and {@code -}
+     * @param line   the line for an NPC, by its Citizens UUID, called each time a sheet is shown;
+     *               empty to show nothing under that NPC's sheet
+     * @return the line's id, {@code <plugin>:<name>}
+     * @throws IllegalArgumentException when the name is not valid or the plugin already has a line with it
+     * @since 0.24.0
+     */
+    @NotNull String registerFooter(@NotNull Plugin plugin, @NotNull String name,
+                                   @NotNull Function<UUID, Optional<Component>> line);
+
+    /**
+     * Removes a line added with {@link #registerFooter}.
+     *
+     * @param plugin the plugin that registered it
+     * @param name   its name inside that plugin
+     * @return true when it was there
+     * @since 0.24.0
+     */
+    boolean unregisterFooter(@NotNull Plugin plugin, @NotNull String name);
 }

@@ -19,6 +19,7 @@ import org.skysongdev.skysongnpcs.api.movement.NpcMovement;
 import org.skysongdev.skysongnpcs.api.items.NpcItems;
 import org.skysongdev.skysongnpcs.api.npc.Npcs;
 import org.skysongdev.skysongnpcs.api.sheet.NpcSheets;
+import org.skysongdev.skysongnpcs.sheets.SheetFooters;
 import org.skysongdev.skysongnpcs.items.Blueprints;
 import org.skysongdev.skysongnpcs.items.NpcFactory;
 import org.skysongdev.skysongnpcs.items.NpcPickup;
@@ -39,7 +40,7 @@ import org.skysongdev.skysongnpcs.picks.ProficiencyPicks;
 /** The plugin's implementation of {@link SkysongNpcsApi}; each milestone adds its part here. */
 public final class SkysongNpcsApiImpl implements SkysongNpcsApi {
     /** Raised with every change to the api module, as {@link SkysongNpcsApi#apiVersion()} describes. */
-    public static final String API_VERSION = "0.23.0";
+    public static final String API_VERSION = "0.24.0";
 
     private final Npcs npcs;
     private final Access access;
@@ -73,11 +74,12 @@ public final class SkysongNpcsApiImpl implements SkysongNpcsApi {
                               NpcPickup pickup, StatPoints points, ChoiceMenu choiceMenu,
                               ProficiencyPicks picks,
                               AbilityService abilities, AbilitiesMenu abilitiesMenu,
-                              org.skysongdev.skysongnpcs.abilities.AbilityChoiceService abilityChoices) {
+                              org.skysongdev.skysongnpcs.abilities.AbilityChoiceService abilityChoices,
+                              SheetFooters footers) {
         this.npcs = new NpcsImpl(registry, citizens, factory, remover, spots);
         this.access = new AccessImpl(registry, access);
         this.menu = menu;
-        this.sheets = new NpcSheetsImpl(sheets, templates);
+        this.sheets = new NpcSheetsImpl(sheets, templates, footers);
         this.items = new NpcItemsImpl(blueprints, factory, pickup);
         this.policies = new PoliciesImpl(registry, policies);
         this.inventories = inventories;
