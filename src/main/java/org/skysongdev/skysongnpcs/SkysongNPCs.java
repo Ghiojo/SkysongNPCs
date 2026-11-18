@@ -73,6 +73,7 @@ import org.skysongdev.skysongnpcs.commands.StatsCommand;
 import org.skysongdev.skysongnpcs.sheets.CarriedItems;
 import org.skysongdev.skysongnpcs.sheets.NpcSheetService;
 import org.skysongdev.skysongnpcs.sheets.SheetButton;
+import org.skysongdev.skysongnpcs.sheets.SheetFooters;
 import org.skysongdev.skysongnpcs.sheets.SheetGuarantee;
 import org.skysongdev.skysongnpcs.sheets.SkysongStatsSheets;
 import org.skysongdev.skysongnpcs.sheets.StatSheets;
@@ -389,8 +390,11 @@ public class SkysongNPCs extends JavaPlugin {
         };
 
         // The NPC menu's Sheet button shows the sheet as /snpc sheet does.
+        // Other plugins add lines under the sheet through sheets().registerFooter.
+        SheetFooters sheetFooters = new SheetFooters(getLogger());
+        getServer().getPluginManager().registerEvents(sheetFooters, this);
         SheetCommand sheetCommand = new SheetCommand(targeting, access, sheets, templates, configuration,
-                npc -> abilityText.sheetLine(abilities.of(npc)));
+                npc -> abilityText.sheetLine(abilities.of(npc)), sheetFooters::lines);
         new SheetButton(configuration, npc -> citizens.name(npc.id()), sheetCommand::showSheet)
                 .register(this, menu, access);
 
@@ -541,7 +545,7 @@ public class SkysongNPCs extends JavaPlugin {
         getServer().getServicesManager().register(SkysongNpcsApi.class, new SkysongNpcsApiImpl(registry, citizens, remover, spots, access, menu,
                         sheets, templates, factory, blueprints, policies,
                         containers, movement, groups, effects, appearance,
-                        pickup, statPoints, choiceMenu, picks, abilities, abilitiesMenu, abilityChoices),
+                        pickup, statPoints, choiceMenu, picks, abilities, abilitiesMenu, abilityChoices, sheetFooters),
                 this, ServicePriority.Normal);
     }
 
