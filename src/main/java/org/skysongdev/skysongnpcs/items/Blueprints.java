@@ -1,5 +1,6 @@
 package org.skysongdev.skysongnpcs.items;
 
+import net.kyori.adventure.text.Component;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,6 +60,11 @@ public final class Blueprints {
     public void makeNpcItem(ItemStack item, UUID npc, UUID ticket) {
         tags.setDetached(item, BlueprintTags.NPC_ID, npc.toString());
         tags.setDetached(item, BlueprintTags.TICKET, ticket.toString());
+    }
+
+    /** Sets SkysongNPCs' lore lines on an NPC item nobody holds yet, where SkysongItems keeps them. */
+    public void setNpcLore(ItemStack item, NpcLorePosition position, List<Component> lines) {
+        tags.setLore(item, position, lines);
     }
 
     private Optional<UUID> uuid(@Nullable ItemStack item, String tag) {

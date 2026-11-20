@@ -3,6 +3,7 @@ package org.skysongdev.skysongnpcs.items;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
+import org.skysongdev.skysongitems.api.OnTransform;
 import org.skysongdev.skysongitems.api.TagType;
 import org.skysongdev.skysongitems.api.event.SkysongItemsRegisterEvent;
 
@@ -33,6 +34,8 @@ public final class BlueprintTags implements Listener {
     public static final String ABILITIES = "npc_abilities";
 
     static final List<String> ALL = List.of(BLUEPRINT, NAME, NPC_ID, TICKET, POINTS, ABILITIES);
+    /** The tags an item keeps when it transforms (SkysongItems 1.3.0): the NPC it holds and its ticket. */
+    static final List<String> KEPT_ON_TRANSFORM = List.of(NPC_ID, TICKET);
 
     private final Plugin plugin;
 
@@ -43,7 +46,9 @@ public final class BlueprintTags implements Listener {
     @EventHandler
     public void onRegister(SkysongItemsRegisterEvent event) {
         for (String tag : ALL) {
-            if (!event.registerTag(plugin, tag, TagType.STRING)) {
+            // An NPC item still holds its NPC after it transforms into another form.
+            OnTransform onTransform = KEPT_ON_TRANSFORM.contains(tag) ? OnTransform.KEEP : OnTransform.DROP;
+            if (!event.registerTag(plugin, tag, TagType.STRING, onTransform)) {
                 plugin.getLogger().warning("SkysongItems refused the " + tag
                         + " tag, probably because another tag has that id. Blueprint items cannot use it.");
             }

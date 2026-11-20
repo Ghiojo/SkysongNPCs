@@ -16,6 +16,7 @@ import org.mockbukkit.mockbukkit.MockBukkit;
 import org.mockbukkit.mockbukkit.ServerMock;
 import org.mockbukkit.mockbukkit.entity.PlayerMock;
 import org.mockbukkit.mockbukkit.world.WorldMock;
+import org.skysongdev.skysongnpcs.FakeItemTags;
 import org.skysongdev.skysongnpcs.FakeNpcSpawner;
 import org.skysongdev.skysongnpcs.FakeSavedItems;
 import org.skysongdev.skysongnpcs.OfflineSkysongNPCs;
@@ -266,6 +267,29 @@ class PickupItemsTest {
 
         assertEquals(List.of("templates/guard.yml"), items.templates().reload());
         assertEquals(Optional.of("npcs/guard_token"), items.templates().of("guard"));
+    }
+
+    @Test
+    void theLoreLinesGoWhereConfigSaysThroughSkysongItems() {
+        UUID npc = adopted("Old Tom");
+        ItemStack first = pickup.pickUp(npc);
+        assertEquals(Optional.of(NpcLorePosition.AFTER_TRAITS), FakeItemTags.lorePosition(first));
+
+        plugin.configuration().config().set("pickup.lore-position", "below-physical");
+        ItemStack second = pickup.reissue(npc);
+
+        assertEquals(Optional.of(NpcLorePosition.BELOW_PHYSICAL), FakeItemTags.lorePosition(second));
+        assertEquals(List.of("Holds Old Tom", "Owner: Alice (Default)"), lore(second));
+    }
+
+    @Test
+    void lorePositionsParseAsConfigWritesThem() {
+        for (NpcLorePosition position : NpcLorePosition.values()) {
+            assertEquals(position, NpcLorePosition.parse(position.key()));
+        }
+        assertEquals(NpcLorePosition.ABOVE_SKILL, NpcLorePosition.parse(" Above-Skill "));
+        assertEquals(NpcLorePosition.AFTER_TRAITS, NpcLorePosition.parse("sideways"));
+        assertEquals(NpcLorePosition.AFTER_TRAITS, NpcLorePosition.parse(null));
     }
 
     @Test

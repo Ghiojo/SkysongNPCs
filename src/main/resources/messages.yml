@@ -457,7 +457,8 @@ pickup:
   not-allowed: "<prefix><red>You may not pick <npc> up."
   already-stored: "<prefix><red><npc> is picked up already."
   failed: "<prefix><red>Could not pick <npc> up: Citizens does not have it. Tell staff."
-  # Lines added to the NPC item's lore. <owner>: who owns the NPC.
+  # Lines added to the NPC item's lore, where config.yml's pickup.lore-position says.
+  # SkysongItems keeps them through lore redraws (not through a transform). <owner>: who owns the NPC.
   item:
     # The item's name, only when it is config.yml's pickup.item material (a saved item or a
     # blueprint keeps its own name).

@@ -714,7 +714,7 @@ public class SkysongNPCs extends JavaPlugin {
     /** Registers the blueprint tags with SkysongItems and returns how blueprints are read. */
     protected ItemTagGateway hookItemTags() {
         getServer().getPluginManager().registerEvents(new BlueprintTags(this), this);
-        return new SkysongItemsTagGateway();
+        return new SkysongItemsTagGateway(this);
     }
 
     /** SkysongItems' saved items, which NPCs are picked up into. */
