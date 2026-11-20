@@ -90,4 +90,34 @@ class SqlNpcItemStoreTest {
         assertTrue(store().loadAll().isEmpty());
         assertEquals(1, log.size());
     }
+
+    @Test
+    void savesAndLoadsThePickupItem() {
+        store().save(NPC, new StoredItem(null, null, null, "npcs/guard_token"));
+
+        assertEquals("npcs/guard_token", store().loadAll().get(NPC).pickupItem());
+    }
+
+    @Test
+    void aTableFromBeforePickupItemsGetsTheColumn() throws SQLException {
+        try (Connection connection = dataSource.getConnection(); Statement statement = connection.createStatement()) {
+            statement.execute("""
+                    CREATE TABLE snpc_items (
+                      npc CHAR(36) NOT NULL,
+                      blueprint MEDIUMBLOB NULL,
+                      ticket CHAR(36) NULL,
+                      resume_state VARCHAR(16) NULL,
+                      PRIMARY KEY (npc)
+                    )""");
+            statement.execute("INSERT INTO snpc_items (npc, ticket, resume_state) VALUES ('" + NPC + "', NULL, 'PLACED')");
+        }
+
+        StoredItem old = store().loadAll().get(NPC);
+        assertEquals(NpcState.PLACED, old.resume());
+        assertNull(old.pickupItem());
+
+        store().save(NPC, new StoredItem(null, null, NpcState.PLACED, "npc_token"));
+        // A second start finds the column and leaves it.
+        assertEquals("npc_token", store().loadAll().get(NPC).pickupItem());
+    }
 }

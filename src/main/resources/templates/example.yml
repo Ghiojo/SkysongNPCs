@@ -50,3 +50,8 @@ proficiency-picks: []
 # M16: abilities from abilities.yml the NPC starts with. A blueprint's npc_abilities
 # tag (a comma list) replaces this list.
 abilities: []
+
+# The SkysongItems saved item (an id /si loaditem takes) NPCs made from this template are
+# picked up into, unless staff set one for the NPC with /snpc pickupitem. Leave it out for
+# the blueprint the NPC was placed from, or config.yml's pickup.skysong-item.
+#   pickup-item: npcs/guard_token

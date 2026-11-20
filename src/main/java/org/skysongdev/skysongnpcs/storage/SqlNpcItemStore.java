@@ -27,19 +27,23 @@ public final class SqlNpcItemStore implements NpcItemStore {
               blueprint MEDIUMBLOB NULL,
               ticket CHAR(36) NULL,
               resume_state VARCHAR(16) NULL,
+              pickup_item VARCHAR(255) NULL,
               PRIMARY KEY (npc)
             )""";
-    private static final String LOAD_ALL = "SELECT npc, blueprint, ticket, resume_state FROM snpc_items";
-    private static final String SAVE = "INSERT INTO snpc_items (npc, blueprint, ticket, resume_state) VALUES (?, ?, ?, ?) "
+    /** Tables made before the pickup item existed get its column. */
+    static final String ADD_PICKUP_ITEM = "ALTER TABLE snpc_items ADD COLUMN pickup_item VARCHAR(255) NULL";
+    private static final String LOAD_ALL = "SELECT npc, blueprint, ticket, resume_state, pickup_item FROM snpc_items";
+    private static final String SAVE = "INSERT INTO snpc_items (npc, blueprint, ticket, resume_state, pickup_item) "
+            + "VALUES (?, ?, ?, ?, ?) "
             + "ON DUPLICATE KEY UPDATE blueprint = VALUES(blueprint), ticket = VALUES(ticket), "
-            + "resume_state = VALUES(resume_state)";
+            + "resume_state = VALUES(resume_state), pickup_item = VALUES(pickup_item)";
     private static final String DELETE = "DELETE FROM snpc_items WHERE npc = ?";
 
     private final DataSource dataSource;
     private final Consumer<String> log;
 
     /**
-     * Creates the table when it is missing.
+     * Creates the table when it is missing, and adds columns a table from an older version lacks.
      *
      * @param log hears about rows that cannot be read, which are skipped
      */
@@ -49,9 +53,25 @@ public final class SqlNpcItemStore implements NpcItemStore {
         try (Connection connection = dataSource.getConnection();
              Statement statement = connection.createStatement()) {
             statement.execute(CREATE_TABLE);
+            if (!hasColumn(connection, "pickup_item")) {
+                statement.execute(ADD_PICKUP_ITEM);
+            }
         } catch (SQLException e) {
             throw new StorageException("Unable to create the snpc_items table", e);
         }
+    }
+
+    /** Whether snpc_items has the column; databases differ in the case they report names in. */
+    private static boolean hasColumn(Connection connection, String column) throws SQLException {
+        try (ResultSet columns = connection.getMetaData().getColumns(connection.getCatalog(), null, null, null)) {
+            while (columns.next()) {
+                if ("snpc_items".equalsIgnoreCase(columns.getString("TABLE_NAME"))
+                        && column.equalsIgnoreCase(columns.getString("COLUMN_NAME"))) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     @Override
@@ -67,7 +87,7 @@ public final class SqlNpcItemStore implements NpcItemStore {
                     String resume = results.getString("resume_state");
                     items.put(UUID.fromString(npc), new StoredItem(results.getBytes("blueprint"),
                             ticket == null ? null : UUID.fromString(ticket),
-                            resume == null ? null : NpcState.valueOf(resume)));
+                            resume == null ? null : NpcState.valueOf(resume), results.getString("pickup_item")));
                 } catch (IllegalArgumentException unreadable) {
                     log.accept("Skipped the item row of NPC " + npc + ", which could not be read: "
                             + unreadable.getMessage());
@@ -91,6 +111,7 @@ public final class SqlNpcItemStore implements NpcItemStore {
             }
             statement.setString(3, item.ticket() == null ? null : item.ticket().toString());
             statement.setString(4, item.resume() == null ? null : item.resume().name());
+            statement.setString(5, item.pickupItem());
             statement.executeUpdate();
         } catch (SQLException e) {
             throw new StorageException("Unable to save the item of NPC " + npc, e);

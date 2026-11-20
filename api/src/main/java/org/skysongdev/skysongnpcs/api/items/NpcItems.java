@@ -21,6 +21,12 @@ import java.util.UUID;
  * tags added. Only the item with the NPC's current ticket places it again; any other copy is
  * refused. Placing it again keeps the ticket, so a copy finds the NPC already placed.
  *
+ * <p>Pickup items (since 0.25.0): the item an NPC is picked up into is the first of these that
+ * is set and exists: the NPC's own SkysongItems saved item ({@link #setPickupItem}), its
+ * template's {@code pickup-item:}, the blueprint it was placed from, config.yml's
+ * {@code pickup.skysong-item}, and last config.yml's {@code pickup.item} material. Saved items
+ * are ids as {@code /si loaditem} takes them, looked up each time an item is made.
+ *
  * <p>Must be called on the server's main thread.
  *
  * <p>SkysongNPCs implements this interface; other plugins must not.
@@ -98,4 +104,49 @@ public interface NpcItems {
      * @since 0.13.0
      */
     @NotNull ItemStack reissue(@NotNull UUID npc);
+
+    // Pickup items: SkysongItems saved items
+
+    /**
+     * The SkysongItems saved item the NPC has of its own, set with {@link #setPickupItem} or
+     * {@code /snpc pickupitem set}.
+     *
+     * @param npc a managed NPC's Citizens UUID
+     * @return the saved item's id; empty when it uses its template's, blueprint's or the default
+     * @throws IllegalArgumentException when the NPC is not managed
+     * @since 0.25.0
+     */
+    @NotNull Optional<String> pickupItem(@NotNull UUID npc);
+
+    /**
+     * Sets the SkysongItems saved item the NPC is picked up into from now on. Items made before
+     * keep working and keep their look; {@link #reissue} remakes a picked-up NPC's item.
+     *
+     * @param npc       a managed NPC's Citizens UUID
+     * @param savedItem a saved item's id as {@code /si loaditem} takes it (case does not matter
+     *                  when only one id matches), or null to go back to its template's,
+     *                  blueprint's or the default
+     * @return the id as SkysongItems has it; null after clearing
+     * @throws IllegalArgumentException when the NPC is not managed or SkysongItems has no such saved item
+     * @since 0.25.0
+     */
+    @Nullable String setPickupItem(@NotNull UUID npc, @Nullable String savedItem);
+
+    /**
+     * The SkysongItems saved item the NPC's item would be made from now, after its own, its
+     * template's, its blueprint and the default are tried in that order, skipping saved items
+     * that do not exist.
+     *
+     * @param npc a managed NPC's Citizens UUID
+     * @return the saved item's id; empty when the item would be its blueprint or the fallback material
+     * @throws IllegalArgumentException when the NPC is not managed
+     * @since 0.25.0
+     */
+    @NotNull Optional<String> effectivePickupItem(@NotNull UUID npc);
+
+    /**
+     * @return config.yml's {@code pickup.skysong-item}; empty when it is blank
+     * @since 0.25.0
+     */
+    @NotNull Optional<String> defaultPickupItem();
 }

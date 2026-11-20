@@ -3,7 +3,6 @@ package org.skysongdev.skysongnpcs.items;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.PluginManager;
@@ -30,7 +29,8 @@ import java.util.function.Function;
 /**
  * Picks NPCs up into items and places them again (M18). Picking up despawns the NPC, keeping
  * it in Citizens with everything it has, puts it in state STORED, and makes its NPC item: the
- * blueprint it was placed from with the NPC, a fresh ticket and lore lines added. Only the item
+ * item {@link PickupItems} chooses (a SkysongItems saved item, or the blueprint it was placed
+ * from) with the NPC, a fresh ticket and lore lines added. Only the item
  * with the current ticket places it again, so a duplicated item or one kept from an earlier
  * pickup is refused. {@code /snpc reissue} makes a new item and voids the old one.
  */
@@ -54,10 +54,11 @@ public final class NpcPickup {
     private final Function<NpcOwner, String> ownerNames;
     private final PluginConfiguration configuration;
     private final PluginManager events;
+    private final PickupItems items;
 
     public NpcPickup(NpcRegistry registry, NpcTickets tickets, Blueprints blueprints, NpcSpawner spawner,
                      AccessService access, NpcLookup citizens, Function<NpcOwner, String> ownerNames,
-                     PluginConfiguration configuration, PluginManager events) {
+                     PluginConfiguration configuration, PluginManager events, PickupItems items) {
         this.registry = registry;
         this.tickets = tickets;
         this.blueprints = blueprints;
@@ -67,6 +68,12 @@ public final class NpcPickup {
         this.ownerNames = ownerNames;
         this.configuration = configuration;
         this.events = events;
+        this.items = items;
+    }
+
+    /** Which item each NPC is picked up into. */
+    public PickupItems items() {
+        return items;
     }
 
     /** Picks it up for the player and tells them how it went. Used by the command and the menu button. */
@@ -186,16 +193,16 @@ public final class NpcPickup {
         return Optional.of(item(record, ticket));
     }
 
-    /** The NPC item: its blueprint, or config.yml's pickup.item, with the NPC, ticket and lore. */
+    /** The NPC item: the item {@link PickupItems} chooses, with the NPC, ticket and lore. */
     private ItemStack item(NpcRecord record, UUID ticket) {
         Messages messages = configuration.messages();
         Map<String, String> placeholders = Map.of(
                 "npc", citizens.name(record.id()), "owner", ownerNames.apply(record.owner()));
-        Optional<ItemStack> blueprint = tickets.blueprint(record.id());
-        ItemStack item = blueprint.orElseGet(() -> new ItemStack(fallbackMaterial()));
+        PickupItems.Made made = items.make(record);
+        ItemStack item = made.item();
         blueprints.makeNpcItem(item, record.id(), ticket);
         item.editMeta(meta -> {
-            if (blueprint.isEmpty()) {
+            if (made.choice().source() == PickupItems.Source.MATERIAL) {
                 meta.displayName(itemText(messages.get("pickup.item.name", placeholders)));
             }
             List<Component> lore = new ArrayList<>(meta.hasLore() ? meta.lore() : List.of());
@@ -203,11 +210,6 @@ public final class NpcPickup {
             meta.lore(lore);
         });
         return item;
-    }
-
-    private Material fallbackMaterial() {
-        Material material = Material.matchMaterial(configuration.config().getString("pickup.item", "ARMOR_STAND"));
-        return material == null || !material.isItem() || material.isAir() ? Material.ARMOR_STAND : material;
     }
 
     private static void give(Player player, ItemStack item) {

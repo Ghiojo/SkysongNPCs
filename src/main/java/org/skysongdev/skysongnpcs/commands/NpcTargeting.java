@@ -121,6 +121,11 @@ public final class NpcTargeting {
         return configuration.messages().plain("owner-name.server", Map.of());
     }
 
+    /** A messages.yml text as plain text, to fill into another text. */
+    String text(String key) {
+        return configuration.messages().plain(key, Map.of());
+    }
+
     void send(CommandSender sender, String key, Map<String, String> placeholders) {
         configuration.messages().send(sender, key, placeholders);
     }

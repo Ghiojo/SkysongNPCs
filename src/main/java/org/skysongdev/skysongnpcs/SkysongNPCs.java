@@ -120,10 +120,15 @@ import org.skysongdev.skysongnpcs.movement.MovementSettings;
 import org.skysongdev.skysongnpcs.movement.NpcMover;
 // M18: pickup and anti-clone
 import org.skysongdev.skysongnpcs.commands.PickupCommand;
+import org.skysongdev.skysongnpcs.commands.PickupItemCommand;
 import org.skysongdev.skysongnpcs.commands.ReissueCommand;
 import org.skysongdev.skysongnpcs.items.NpcItemListener;
 import org.skysongdev.skysongnpcs.items.NpcPickup;
 import org.skysongdev.skysongnpcs.items.NpcTickets;
+import org.skysongdev.skysongnpcs.items.PickupItems;
+import org.skysongdev.skysongnpcs.items.SavedItems;
+import org.skysongdev.skysongnpcs.items.SkysongSavedItems;
+import org.skysongdev.skysongnpcs.items.TemplatePickupItems;
 import org.skysongdev.skysongnpcs.items.PickupButton;
 import org.skysongdev.skysongnpcs.storage.NpcItemStore;
 // M14: choices and first setup
@@ -376,6 +381,9 @@ public class SkysongNPCs extends JavaPlugin {
         // Brought in line with abilities.yml further down, once stat points and picks exist.
         TemplateAbilities templateAbilities = new TemplateAbilities(new File(getDataFolder(), "templates"), getLogger());
         templateAbilities.reload();
+        // Each template's pickup-item: saved item.
+        TemplatePickupItems templatePickupItems = new TemplatePickupItems(new File(getDataFolder(), "templates"), getLogger());
+        templatePickupItems.reload();
         AbilityText abilityText = new AbilityText(configuration);
         abilitiesMenu = new AbilitiesMenu(registry, citizens, abilities, abilityText, configuration);
         getServer().getPluginManager().registerEvents(abilitiesMenu, this);
@@ -400,7 +408,7 @@ public class SkysongNPCs extends JavaPlugin {
 
         List<SubCommand> subCommands = List.of(
                 new ReloadCommand(configuration, List.of(templates, choiceSettings, templateChoices, templatePicks,
-                        templateAbilities, abilityReload)),
+                        templateAbilities, abilityReload, templatePickupItems)),
                 new AdoptCommand(targeting),
                 new ReleaseCommand(targeting),
                 new OwnerCommand(targeting),
@@ -451,7 +459,8 @@ public class SkysongNPCs extends JavaPlugin {
         // M18: pickup and anti-clone (/snpc pickup, /snpc reissue).
         subCommands = Stream.concat(subCommands.stream(), Stream.of(
                 new PickupCommand(targeting, () -> pickup),
-                new ReissueCommand(targeting, () -> pickup, getLogger()))).toList();
+                new ReissueCommand(targeting, () -> pickup, getLogger()),
+                new PickupItemCommand(targeting, () -> pickup))).toList();
         // M14: choices and first setup.
         Function<NpcRecord, TemplateChoices> templateOf = npc -> npc.template()
                 .map(templateChoices::get).orElseGet(() -> TemplateChoices.none(""));
@@ -535,8 +544,10 @@ public class SkysongNPCs extends JavaPlugin {
         // M18: picking NPCs up into items, and placing them again only from the current item.
         NpcTickets tickets = new NpcTickets(itemStore, getLogger());
         tickets.load();
+        PickupItems pickupItems = new PickupItems(tickets, templatePickupItems, hookSavedItems(),
+                configuration::config, getLogger());
         pickup = new NpcPickup(registry, tickets, blueprints, spawner, access, citizens, targeting::ownerName,
-                configuration, getServer().getPluginManager());
+                configuration, getServer().getPluginManager(), pickupItems);
         placer.usePickup(pickup);
         getServer().getPluginManager().registerEvents(new NpcItemListener(pickup), this);
         new PickupButton(pickup, access, configuration).register(this, menu);
@@ -704,6 +715,11 @@ public class SkysongNPCs extends JavaPlugin {
     protected ItemTagGateway hookItemTags() {
         getServer().getPluginManager().registerEvents(new BlueprintTags(this), this);
         return new SkysongItemsTagGateway();
+    }
+
+    /** SkysongItems' saved items, which NPCs are picked up into. */
+    protected SavedItems hookSavedItems() {
+        return new SkysongSavedItems();
     }
 
     /** How new NPCs are made in Citizens. */
