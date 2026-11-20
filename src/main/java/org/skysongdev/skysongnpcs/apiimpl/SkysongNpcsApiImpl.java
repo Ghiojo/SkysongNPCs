@@ -80,7 +80,7 @@ public final class SkysongNpcsApiImpl implements SkysongNpcsApi {
         this.access = new AccessImpl(registry, access);
         this.menu = menu;
         this.sheets = new NpcSheetsImpl(sheets, templates, footers);
-        this.items = new NpcItemsImpl(blueprints, factory, pickup);
+        this.items = new NpcItemsImpl(blueprints, factory, pickup, registry);
         this.policies = new PoliciesImpl(registry, policies);
         this.inventories = inventories;
         this.movement = movement;

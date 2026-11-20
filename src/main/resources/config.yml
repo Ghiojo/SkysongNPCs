@@ -119,9 +119,20 @@ citizens-commands:
   # Their subcommands anyone may still use, because they do not change the selected NPC.
   open: [help, list, select, sel, create]
 # --- M18: picking NPCs up into items ---
-# Picking an NPC up gives back the blueprint it was placed from, holding the NPC. NPCs not
-# placed from a blueprint (adopted, or made by a plugin) come back as this item instead.
+# Picking an NPC up gives back an item holding it. The item is the first of these that is
+# set and exists:
+#   1. the NPC's own SkysongItems saved item (/snpc pickupitem set <id>, staff);
+#   2. its template's pickup-item: (templates/<id>.yml);
+#   3. the blueprint it was placed from;
+#   4. skysong-item below;
+#   5. the item material below.
+# Saved items are ids as /si loaditem takes them (npc_token, or npcs/npc_token for one saved
+# into a folder). They are looked up each time an item is made, so re-saving one with
+# /si saveitem changes every item made after; /snpc reissue remakes a picked-up NPC's item.
 pickup:
+  # The default SkysongItems saved item. Empty: none.
+  skysong-item: ""
+  # The material used when nothing above is set or exists. Named with messages.yml's pickup.item.name.
   item: ARMOR_STAND
 
 # --- M14: choices ---

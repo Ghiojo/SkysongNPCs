@@ -8,6 +8,8 @@ import org.skysongdev.skysongnpcs.api.items.NpcItems;
 import org.skysongdev.skysongnpcs.items.Blueprints;
 import org.skysongdev.skysongnpcs.items.NpcFactory;
 import org.skysongdev.skysongnpcs.items.NpcPickup;
+import org.skysongdev.skysongnpcs.npc.NpcRecord;
+import org.skysongdev.skysongnpcs.npc.NpcRegistry;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -19,11 +21,13 @@ final class NpcItemsImpl implements NpcItems {
     private final NpcFactory factory;
     // M18
     private final NpcPickup pickup;
+    private final NpcRegistry registry;
 
-    NpcItemsImpl(Blueprints blueprints, NpcFactory factory, NpcPickup pickup) {
+    NpcItemsImpl(Blueprints blueprints, NpcFactory factory, NpcPickup pickup, NpcRegistry registry) {
         this.blueprints = blueprints;
         this.factory = factory;
         this.pickup = pickup;
+        this.registry = registry;
     }
 
     @Override
@@ -73,6 +77,37 @@ final class NpcItemsImpl implements NpcItems {
     public @NotNull ItemStack reissue(@NotNull UUID npc) {
         mainThread();
         return pickup.reissue(Objects.requireNonNull(npc, "npc"));
+    }
+
+    // Pickup items: SkysongItems saved items
+
+    @Override
+    public @NotNull Optional<String> pickupItem(@NotNull UUID npc) {
+        mainThread();
+        return pickup.items().own(record(npc).id());
+    }
+
+    @Override
+    public @Nullable String setPickupItem(@NotNull UUID npc, @Nullable String savedItem) {
+        mainThread();
+        return pickup.items().setOwn(record(npc).id(), savedItem);
+    }
+
+    @Override
+    public @NotNull Optional<String> effectivePickupItem(@NotNull UUID npc) {
+        mainThread();
+        return Optional.ofNullable(pickup.items().choice(record(npc)).savedItem());
+    }
+
+    @Override
+    public @NotNull Optional<String> defaultPickupItem() {
+        mainThread();
+        return pickup.items().defaultItem();
+    }
+
+    private NpcRecord record(UUID npc) {
+        Objects.requireNonNull(npc, "npc");
+        return registry.get(npc).orElseThrow(() -> new IllegalArgumentException("NPC " + npc + " is not managed"));
     }
 
     private static void mainThread() {

@@ -53,6 +53,7 @@ public class OfflineSkysongNPCs extends SkysongNPCs {
     private final FakeSheetEffects fakeEffects = new FakeSheetEffects();
     // M17
     private final FakeItemTags fakeItemTags = new FakeItemTags();
+    private final FakeSavedItems fakeSavedItems = new FakeSavedItems();
     private final FakeNpcSpawner fakeSpawner = new FakeNpcSpawner();
     // M9: inventory and equipment
     private final FakeNpcContainers fakeContainers = new FakeNpcContainers();
@@ -142,6 +143,15 @@ public class OfflineSkysongNPCs extends SkysongNPCs {
     @Override
     protected ItemTagGateway hookItemTags() {
         return fakeItemTags;
+    }
+
+    @Override
+    protected org.skysongdev.skysongnpcs.items.SavedItems hookSavedItems() {
+        return fakeSavedItems;
+    }
+
+    public FakeSavedItems fakeSavedItems() {
+        return fakeSavedItems;
     }
 
     @Override

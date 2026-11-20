@@ -80,6 +80,23 @@ class NpcTicketsTest {
         assertTrue(store.loadAll().isEmpty());
     }
 
+    @Test
+    void theNpcsOwnPickupItemSurvivesARestartAndNewTickets() {
+        NpcTickets tickets = tickets();
+        tickets.setPickupItem(NPC, "npcs/guard_token");
+        tickets.rememberBlueprint(NPC, new ItemStack(Material.PAPER));
+        tickets.issue(NPC, NpcState.PLACED);
+
+        NpcTickets restarted = tickets();
+        restarted.load();
+
+        assertEquals(java.util.Optional.of("npcs/guard_token"), restarted.pickupItem(NPC));
+        assertTrue(restarted.hasBlueprint(NPC));
+        restarted.setPickupItem(NPC, null);
+        assertTrue(restarted.pickupItem(NPC).isEmpty());
+        assertTrue(restarted.blueprint(NPC).isPresent());
+    }
+
     private NpcTickets tickets() {
         return new NpcTickets(store, Logger.getLogger("test"));
     }

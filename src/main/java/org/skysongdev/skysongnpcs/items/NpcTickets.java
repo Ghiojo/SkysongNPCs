@@ -1,6 +1,7 @@
 package org.skysongdev.skysongnpcs.items;
 
 import org.bukkit.inventory.ItemStack;
+import org.jetbrains.annotations.Nullable;
 import org.skysongdev.skysongnpcs.api.npc.NpcState;
 import org.skysongdev.skysongnpcs.storage.NpcItemStore;
 import org.skysongdev.skysongnpcs.storage.NpcItemStore.StoredItem;
@@ -16,7 +17,8 @@ import java.util.logging.Logger;
 /**
  * Each NPC's item data, kept in memory and written through to the {@link NpcItemStore}: the
  * blueprint it was placed from, which its NPC item is made from, and while it is picked up the
- * ticket of the one item that may place it again, with the state it goes back to.
+ * ticket of the one item that may place it again, with the state it goes back to; and the
+ * SkysongItems saved item staff chose for its NPC item.
  */
 public final class NpcTickets {
     private static final StoredItem NONE = new StoredItem(null, null, null);
@@ -39,7 +41,12 @@ public final class NpcTickets {
     /** Remembers the blueprint a new NPC was placed from, one item of it. */
     public void rememberBlueprint(UUID npc, ItemStack blueprint) {
         StoredItem row = row(npc);
-        save(npc, new StoredItem(blueprint.asOne().serializeAsBytes(), row.ticket(), row.resume()));
+        save(npc, new StoredItem(blueprint.asOne().serializeAsBytes(), row.ticket(), row.resume(), row.pickupItem()));
+    }
+
+    /** Whether a blueprint was remembered for the NPC, readable or not. */
+    public boolean hasBlueprint(UUID npc) {
+        return row(npc).blueprint() != null;
     }
 
     /** The blueprint the NPC was placed from; empty when it was not placed from one. */
@@ -52,7 +59,7 @@ public final class NpcTickets {
             return Optional.of(ItemStack.deserializeBytes(bytes));
         } catch (RuntimeException unreadable) {
             logger.log(Level.WARNING, "The blueprint NPC " + npc + " was placed from could not be read,"
-                    + " so its item is made from config.yml's pickup.item instead.", unreadable);
+                    + " so its item is made from the next pickup item choice instead.", unreadable);
             return Optional.empty();
         }
     }
@@ -65,7 +72,8 @@ public final class NpcTickets {
      */
     public UUID issue(UUID npc, NpcState resume) {
         UUID ticket = UUID.randomUUID();
-        save(npc, new StoredItem(row(npc).blueprint(), ticket, resume));
+        StoredItem row = row(npc);
+        save(npc, new StoredItem(row.blueprint(), ticket, resume, row.pickupItem()));
         return ticket;
     }
 
@@ -78,6 +86,17 @@ public final class NpcTickets {
     public NpcState resume(UUID npc) {
         NpcState resume = row(npc).resume();
         return resume == null ? NpcState.PLACED : resume;
+    }
+
+    /** The saved item staff chose for the NPC's item; empty when it uses its template's, blueprint's or the default. */
+    public Optional<String> pickupItem(UUID npc) {
+        return Optional.ofNullable(row(npc).pickupItem());
+    }
+
+    /** Sets the saved item the NPC's item is made from; null goes back to its template's, blueprint's or the default. */
+    public void setPickupItem(UUID npc, @Nullable String savedItem) {
+        StoredItem row = row(npc);
+        save(npc, new StoredItem(row.blueprint(), row.ticket(), row.resume(), savedItem));
     }
 
     /** Forgets everything about an NPC that was deleted; its items stop working. */

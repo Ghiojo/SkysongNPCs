@@ -459,8 +459,8 @@ pickup:
   failed: "<prefix><red>Could not pick <npc> up: Citizens does not have it. Tell staff."
   # Lines added to the NPC item's lore. <owner>: who owns the NPC.
   item:
-    # The item's name, only for NPCs that were not placed from a blueprint
-    # (their item is config.yml's pickup.item).
+    # The item's name, only when it is config.yml's pickup.item material (a saved item or a
+    # blueprint keeps its own name).
     name: "<white><npc>"
     lore:
       - "<gray>Holds <white><npc></white>"
@@ -490,6 +490,23 @@ reissue:
   placed: "<prefix><red><npc> is out in the world, not picked up. Use /snpc pickup instead."
   not-online: "<prefix><red><player> is not online."
   who: "<prefix><red>Name the player who gets the item: /snpc reissue <white>player</white>."
+
+# /snpc pickupitem [set <saved item> | clear | preview] (staff): the SkysongItems saved item
+# the selected NPC is picked up into. <npc>: the NPC's name. <item>: the saved item's id
+# (- for a blueprint or the material). <source>: where it comes from, one of the texts below.
+pickup-item:
+  show: "<prefix><gray><npc> is picked up into <white><item></white> <dark_gray>(<source>)</dark_gray>."
+  set: "<prefix><green><npc> is now picked up into <item>. Use /snpc reissue to remake its item if it is picked up."
+  unknown: "<prefix><red>SkysongItems has no saved item <item>. Save one with /si saveitem first."
+  cleared: "<prefix><green><npc> no longer has its own item; it is picked up into <item> <dark_gray>(<source>)</dark_gray>."
+  not-set: "<prefix><yellow><npc> has no item of its own; it is picked up into <item> <dark_gray>(<source>)</dark_gray>."
+  preview: "<prefix><gray>Gave you <npc>'s item as it would be made now <dark_gray>(<source>)</dark_gray>. It holds no NPC."
+  source:
+    npc: "set for this NPC"
+    template: "from its template"
+    blueprint: "the blueprint it was placed from"
+    default: "config.yml's default"
+    material: "config.yml's pickup.item material"
 
 # --- M14: choices and first setup ---
 # <npc>: the NPC's name. <points>: stat points. <stat>: a stat's id.

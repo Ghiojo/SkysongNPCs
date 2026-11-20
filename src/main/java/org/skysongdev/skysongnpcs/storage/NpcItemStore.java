@@ -8,7 +8,8 @@ import java.util.UUID;
 
 /**
  * Where each NPC's item data is kept between restarts (M18): the blueprint it was placed
- * from, and while it is picked up, the ticket of the one item that may place it again.
+ * from, and while it is picked up, the ticket of the one item that may place it again; and
+ * the SkysongItems saved item staff chose for its NPC item.
  */
 public interface NpcItemStore extends AutoCloseable {
 
@@ -31,7 +32,15 @@ public interface NpcItemStore extends AutoCloseable {
      * @param blueprint the blueprint it was placed from, as Paper's item bytes; null when it was not placed from one
      * @param ticket    the id the NPC's current item carries; null before its first pickup
      * @param resume    the state it goes back to when placed again: SETUP or PLACED; null before its first pickup
+     * @param pickupItem the SkysongItems saved item its NPC item is made from; null for its template's,
+     *                   blueprint's or config.yml's
      */
-    record StoredItem(byte @Nullable [] blueprint, @Nullable UUID ticket, @Nullable NpcState resume) {
+    record StoredItem(byte @Nullable [] blueprint, @Nullable UUID ticket, @Nullable NpcState resume,
+                      @Nullable String pickupItem) {
+
+        /** A row with no saved item of its own. */
+        public StoredItem(byte @Nullable [] blueprint, @Nullable UUID ticket, @Nullable NpcState resume) {
+            this(blueprint, ticket, resume, null);
+        }
     }
 }
