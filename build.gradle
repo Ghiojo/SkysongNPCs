@@ -55,7 +55,7 @@ repositories {
 // The other Skysong plugins' APIs, at their release tags. Each ships inside its own plugin
 // jar on the server, so they are compileOnly and never shaded.
 def skysongStatsApi = 'com.github.Ghiojo:SkysongStats:1.4.0'
-def skysongItemsApi = 'com.github.Ghiojo:Skysong-Special-Items:1.0.1'
+def skysongItemsApi = 'com.github.Ghiojo:Skysong-Special-Items:1.3.0'
 def skysongWardrobeApi = 'com.github.Ghiojo:SkysongWardrobe:1.0.0'
 // 2.0.43 is the last Citizens built for 1.21.11. citizens-main carries the API too, and its
 // own dependencies all ship inside the Citizens jar, so none are pulled in.

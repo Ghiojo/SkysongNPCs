@@ -134,6 +134,10 @@ pickup:
   skysong-item: ""
   # The material used when nothing above is set or exists. Named with messages.yml's pickup.item.name.
   item: ARMOR_STAND
+  # Where messages.yml's pickup.item.lore lines go on the item. SkysongItems keeps them there
+  # whenever it redraws the item's lore. One of: after-traits, above-physical, below-physical,
+  # above-functional, below-functional, above-skill, below-skill.
+  lore-position: after-traits
 
 # --- M14: choices ---
 # Stat points: 1 point = +1 base on an eligible stat. A template may override both lists

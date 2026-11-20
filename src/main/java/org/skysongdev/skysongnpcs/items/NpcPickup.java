@@ -18,8 +18,6 @@ import org.skysongdev.skysongnpcs.npc.NpcLookup;
 import org.skysongdev.skysongnpcs.npc.NpcRecord;
 import org.skysongdev.skysongnpcs.npc.NpcRegistry;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
@@ -200,15 +198,13 @@ public final class NpcPickup {
                 "npc", citizens.name(record.id()), "owner", ownerNames.apply(record.owner()));
         PickupItems.Made made = items.make(record);
         ItemStack item = made.item();
+        if (made.choice().source() == PickupItems.Source.MATERIAL) {
+            item.editMeta(meta -> meta.displayName(itemText(messages.get("pickup.item.name", placeholders))));
+        }
+        // SkysongItems stores these lines on the item and draws them again whenever it redraws the lore.
+        blueprints.setNpcLore(item, NpcLorePosition.parse(configuration.config().getString("pickup.lore-position")),
+                messages.lines("pickup.item.lore", placeholders).stream().map(NpcPickup::itemText).toList());
         blueprints.makeNpcItem(item, record.id(), ticket);
-        item.editMeta(meta -> {
-            if (made.choice().source() == PickupItems.Source.MATERIAL) {
-                meta.displayName(itemText(messages.get("pickup.item.name", placeholders)));
-            }
-            List<Component> lore = new ArrayList<>(meta.hasLore() ? meta.lore() : List.of());
-            messages.lines("pickup.item.lore", placeholders).stream().map(NpcPickup::itemText).forEach(lore::add);
-            meta.lore(lore);
-        });
         return item;
     }
 
